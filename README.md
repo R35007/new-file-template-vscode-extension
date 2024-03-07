@@ -2,12 +2,26 @@
 
 Create new file or folders from a custom Template.
 
+## Preview
+
+## Create New File From Template
+
+![New_File_From_Template](https://github.com/R35007/new-file-template-vscode-extension/assets/23217228/1d29563b-d64f-4367-b90a-b0ae295546a4)
+
+### Create New Sample Template
+
+![New_Sample_Template](https://github.com/R35007/new-file-template-vscode-extension/assets/23217228/4a8e60c2-e21e-4be4-9118-f9afb3f51967)
+
+## Simple Demo of Angular Component Template files generation
+
+![Angular_Component_From_Templates](https://github.com/R35007/new-file-template-vscode-extension/assets/23217228/94869500-bcad-4514-813c-d6d3186ed1f7)
+
 # Usage
 
 - Create a folder inside `./vscode/Templates`. Ex: `./vscode/Templates/MyTemplate`
-- Create a new file or folder inside the `./vscode/Templates/MyTemplate` folder. Ex: `./vscode/Templates/MyTemplate/${input.fileName}.ts`
+- Create a new file or folder inside the `./vscode/Templates/MyTemplate` folder. Ex: `./vscode/Templates/MyTemplate/${input.componentName}/${input.fileName}.ts`
 - Now right click any file folder where you want generate the file from template and click `New File From Template`
-- This will prompt you to pick a template name and needed variables like `${input.fileName}`
+- This will prompt you to pick a template name and needed variables like `${input.componentName}`, `${input.fileName}`
 - Once all the inputs are given, this will generate you a new file from the selected template.
 
 ## Helper String Methods
