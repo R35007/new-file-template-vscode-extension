@@ -1,10 +1,11 @@
+import * as fsx from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Settings } from './Settings';
 import * as caseConvert from './case';
 import { toSuperTitleCase } from './case';
-import { getPathsList } from './getPathsList';
 import { Commands } from './enum';
+import { getPathsList } from './getPathsList';
 
 export const getWorkSpaceFolder = () => vscode.workspace.workspaceFolders?.[0].uri.fsPath || './';
 
@@ -104,3 +105,8 @@ export const getAllCases = (inputName: string, value: string) => ({
     [`${inputName}_toDotCase`]: caseConvert.toDotCase(value),
     [`${inputName}_toSuperTitleCase`]: caseConvert.toSuperTitleCase(value),
 });
+
+export const copyFile = (fromPath: string, toPath: string) => {
+    fsx.ensureFileSync(toPath);
+    fsx.writeFileSync(toPath, fsx.readFileSync(fromPath, 'utf-8'));
+};

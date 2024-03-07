@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { Settings } from './Settings';
 import * as caseConvert from './case';
 import { PathDetails, WithParsedPathDetails, getStats } from './getPathsList';
-import { getAllCases, getInput, getTemplateName, getWorkSpaceFolder, interpolate, resolveWithWorkspaceFolder, selectTemplateFile as selectTemplateFiles, selectTemplateFolder } from './utils';
+import { copyFile, getAllCases, getInput, getTemplateName, getWorkSpaceFolder, interpolate, resolveWithWorkspaceFolder, selectTemplateFile as selectTemplateFiles, selectTemplateFolder } from './utils';
 
 export class NewTemplates {
     configs: Record<string, any> = {
@@ -26,21 +26,39 @@ export class NewTemplates {
     }
 
     async createTemplate() {
-        const templateName = await getTemplateName();
-        if (!templateName) return;
-
-        const newTemplatePath = path.join(Settings.templatesPath, templateName);
-        if (fsx.existsSync(newTemplatePath)) return vscode.window.showErrorMessage("Template already exists.");
-
-        const exampleTemplatePath = path.resolve(__dirname, "../Templates");
-        fsx.ensureDirSync(newTemplatePath);
-        fsx.copySync(exampleTemplatePath, newTemplatePath);
-
-        const indexPath = path.join(exampleTemplatePath, "./${input.componentName}/${input.fileName}.ts");
-        const newFile = await vscode.workspace.openTextDocument(indexPath);
-        await vscode.window.showTextDocument(newFile, undefined, true);
-
-        vscode.window.showInformationMessage(`${templateName} template is created successfully.`);
+        try {
+            const templateName = await getTemplateName();
+            if (!templateName) return;
+    
+            const newTemplatePath = path.join(Settings.templatesPath, templateName);
+            if (fsx.existsSync(newTemplatePath)) return vscode.window.showErrorMessage("Template already exists.");
+    
+            const exampleTemplatePath = path.resolve(__dirname, "../Templates");
+            
+            const exampleReactComponentPath = path.join(exampleTemplatePath, `./ReactComponent/ReactComponent.txt`);
+            const newReactComponentPath = path.join(newTemplatePath, './${input.componentName}/${componentName}.tsx');
+            copyFile(exampleReactComponentPath, newReactComponentPath);
+            
+            const exampleReactComponentStoriesPath = path.join(exampleTemplatePath, `./ReactComponent/ReactComponent.stories.txt`);
+            const newReactComponentStoriesPath = path.join(newTemplatePath, './${input.componentName}/${componentName}.stories${input.ext}');
+            copyFile(exampleReactComponentStoriesPath, newReactComponentStoriesPath);
+            
+            const exampleIndexPath = path.join(exampleTemplatePath, `./ReactComponent/index.txt`);
+            const newIndexPath = path.join(newTemplatePath, './${input.componentName}/${input.fileName}.ts');
+            copyFile(exampleIndexPath, newIndexPath);
+            
+            const exampleConfigPath = path.join(exampleTemplatePath, `./_config.json`);
+            const newConfigPath = path.join(newTemplatePath, './_config.json');
+            copyFile(exampleConfigPath, newConfigPath);
+    
+            const newFile = await vscode.workspace.openTextDocument(newIndexPath);
+            await vscode.window.showTextDocument(newFile, undefined, true);
+    
+            vscode.window.showInformationMessage(`${templateName} template is created successfully.`);
+        } catch (err: unknown) {
+            if (!(err instanceof Error) || err.message === "Exit") return;
+            vscode.window.showErrorMessage(err.message);
+        }
     }
 
     async newFilesFromTemplate(args: any) {
