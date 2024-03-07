@@ -29,6 +29,7 @@
     "New Template",
     "New File Template",
     "New Folder Template",
+    "Create Template",
     "File Template",
     "Folder Template",
     "Blueprint",
@@ -45,8 +46,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "new-file-template.createTemplate",
-        "title": "Create New Template"
+        "command": "new-file-template.createSampleTemplate",
+        "title": "Create New Sample Template"
       },
       {
         "command": "new-file-template.newFilesFromTemplate",

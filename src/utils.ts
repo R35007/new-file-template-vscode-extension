@@ -45,11 +45,11 @@ export const selectTemplateFolder = async () => {
 
     // If there is not template prompt to Create a template
     if(!folders?.length) {
-        const action = "Create New Template";
+        const action = "Create New Sample Template";
         return vscode.window.showErrorMessage(`No Templates Found ! 
-        Click the "${action}" button to create a sample template files.`, { modal: true }, action).then(selectedAction => {
+        Click the below button to create a new sample template.`, { modal: true }, action).then(selectedAction => {
             if (selectedAction !== action) throw Error("Exit");
-            vscode.commands.executeCommand(Commands.CREATE_TEMPLATE);
+            vscode.commands.executeCommand(Commands.CREATE_SAMPLE_TEMPLATE);
         });
     }
 
