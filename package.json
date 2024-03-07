@@ -147,6 +147,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
     "@types/vscode": "^1.87.0",
@@ -161,7 +162,6 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@types/fs-extra": "^11.0.4",
     "fs-extra": "^11.2.0"
   }
 }
