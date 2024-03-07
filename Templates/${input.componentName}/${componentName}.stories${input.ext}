@@ -1,0 +1,19 @@
+import { ComponentStory, ComponentMeta } from '@storybook/react';
+import React from 'react';
+
+import { ${componentName} } from './${componentName}';
+
+export default {
+  title: 'Components/${componentName}',
+  component: ${componentName},
+  args: {
+
+  },
+} as ComponentMeta<typeof ${componentName}>;
+
+const Template: ComponentStory<typeof ${componentName}> = (args) => (
+  <${componentName} {...args} />
+);
+
+export const Story = Template.bind({});
+Story.args = {};

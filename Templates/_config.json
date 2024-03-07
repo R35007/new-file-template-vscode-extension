@@ -1,0 +1,26 @@
+{
+  "input": {
+    "fileName": "index"
+  },
+  "package": {
+    "version": "1.0.0"
+  },
+  "variables": {
+    "foobar": "foo bar",
+    "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit."
+  },
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "inputDetails": {
+    "ext": {
+      "description": "Please select the file Extension",
+      "options": [".js", ".jsx", ".ts", ".tsx", ".json", ".java", ".txt", ".md"]
+    },
+    "componentName": {
+      "default": "MyComponent",
+      "description": "Please provide a componentName in pascal case",
+      "convert": "toPascalCase"
+    }
+  }
+}

@@ -1,0 +1,166 @@
+{
+  "name": "new-file-template",
+  "displayName": "New File Template",
+  "description": "Create a new file or folder from custom templates",
+  "version": "1.0.0",
+  "icon": "images/new-file-template-logo.png",
+  "engines": {
+    "vscode": "^1.87.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "publisher": "Thinker",
+  "license": "MIT",
+  "author": {
+    "name": "Sivaraman",
+    "email": "sendmsg2siva@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/R35007/new-file-template-vscode-extension"
+  },
+  "files": [
+    "dist",
+    "images",
+    "Templates"
+  ],
+  "keywords": [
+    "New Template",
+    "New File Template",
+    "New Folder Template",
+    "File Template",
+    "Folder Template",
+    "Blueprint",
+    "Template",
+    "explorer",
+    "Module Template",
+    "React Template",
+    "Storybook Template"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "new-file-template.createTemplate",
+        "title": "Create New Template"
+      },
+      {
+        "command": "new-file-template.newFilesFromTemplate",
+        "title": "New File From Template"
+      }
+    ],
+    "configuration": {
+      "title": "New File Template",
+      "properties": {
+        "new-file-template.settings.templatesPath": {
+          "type": "string",
+          "default": "./.vscode/templates",
+          "description": "Set custom templates folder."
+        },
+        "new-file-template.settings.overwriteExistingFile": {
+          "type": "boolean",
+          "default": false,
+          "description": "Set to true to overwrite the existing file."
+        },
+        "new-file-template.settings.variables": {
+          "type": "object",
+          "default": {},
+          "examples": [
+            {},
+            {
+              "foobar": "foo bar",
+              "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit."
+            }
+          ],
+          "description": "Set custom variables. These variable can be accessed using ${variables.<Your variable name>}."
+        },
+        "new-file-template.settings.inputDetails": {
+          "type": "object",
+          "default": {},
+          "examples": [
+            {},
+            {
+              "ext": {
+                "description": "Please select the file Extension",
+                "options": [
+                  ".js",
+                  ".jsx",
+                  ".ts",
+                  ".tsx",
+                  ".json",
+                  ".java",
+                  ".txt",
+                  ".md"
+                ]
+              },
+              "componentName": {
+                "default": "MyComponent",
+                "description": "Please provide a componentName in pascal case",
+                "convert": "toPascalCase"
+              }
+            }
+          ],
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "description": {
+                "type": "string"
+              },
+              "default": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "menus": {
+      "explorer/context": [
+        {
+          "when": "sideBarFocus && activeViewlet == 'workbench.view.explorer'",
+          "command": "new-file-template.newFilesFromTemplate",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@types/vscode": "^1.87.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.2",
+    "@typescript-eslint/parser": "^7.0.2",
+    "@vscode/test-cli": "^0.0.6",
+    "@vscode/test-electron": "^2.3.9",
+    "eslint": "^8.56.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.90.3",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "fs-extra": "^11.2.0"
+  }
+}
