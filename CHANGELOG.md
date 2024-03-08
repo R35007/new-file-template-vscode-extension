@@ -2,7 +2,7 @@
 
 All notable changes to the "new-file-template" extension will be documented in this file.
 
-## v1.1.0
+## v2.0.0
 
 - Updated `_config.json` schema
 - Removed `inputDetails` from template `_config` and merged to `input`
