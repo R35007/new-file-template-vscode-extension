@@ -29,23 +29,26 @@
  * @date ${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}
  * 
  * Helper methods
- * @toAlphaNumericCase ${_.toAlphaNumericCase(variables.foobar)}
- * @toSnakeCase ${_.toSnakeCase(variables.foobar)}
- * @toCamelCase ${_.toCamelCase(variables.foobar)}
- * @toPascalCase ${_.toPascalCase(variables.foobar)}
- * @toKebabCase ${_.toKebabCase(variables.foobar)}
- * @toTitleCase ${_.toTitleCase(variables.foobar)}
- * @toSentenceCase ${_.toSentenceCase(variables.foobar)}
- * @toUppercase ${_.toUppercase(variables.foobar)}
- * @toLowercase ${_.toLowercase(variables.foobar)}
- * @toCapitalizedWords ${_.toCapitalizedWords(variables.foobar)}
- * @toStudlyCaps ${_.toStudlyCaps(variables.foobar)}
- * @toTrainCase ${_.toTrainCase(variables.foobar)}
- * @toScreamingSnakeCase ${_.toScreamingSnakeCase(variables.foobar)}
- * @toScreamingKebabCase ${_.toScreamingKebabCase(variables.foobar)}
- * @toDotCase ${_.toDotCase(variables.foobar)}
- * @toSuperTitleCase ${_.toSuperTitleCase(variables.foobar)}
+ * @toAlphaNumericCase ${_toAlphaNumericCase(variables.foobar)}
+ * @toSpaceCase ${_toSpaceCase(variables.foobar)}
+ * @toTitleCase ${_toTitleCase(variables.foobar)}
+ * @toCamelCase ${_toCamelCase(variables.foobar)}
+ * @toPascalCase ${_toPascalCase(variables.foobar)}
+ * @toSnakeCase ${_toSnakeCase(variables.foobar)}
+ * @toSnakeUpperCase ${_toSnakeUpperCase(variables.foobar)}
+ * @toSnakeTitleCase ${_toSnakeTitleCase(variables.foobar)}
+ * @toKebabCase ${_toKebabCase(variables.foobar)}
+ * @toKebabUpperCase ${_toKebabUpperCase(variables.foobar)}
+ * @toKebabTitleCase ${_toKebabTitleCase(variables.foobar)}
+ * @toDotCase ${_toDotCase(variables.foobar)}
+ * @toDotUpperCase ${_toDotUpperCase(variables.foobar)}
+ * @toDotTitleCase ${_toDotTitleCase(variables.foobar)}
+ * @toSentenceCase ${_toSentenceCase(variables.foobar)}
+ * @toCapitalizedWords ${_toCapitalizedWords(variables.foobar)}
+ * @toStudlyCaps ${_toStudlyCaps(variables.foobar)}
+ * @toUpperCase ${_toUpperCase(variables.foobar)}
+ * @toLowerCase ${_toLowerCase(variables.foobar)}
  * 
  * */
 
-export * from "./${componentName}"
+export * from "./${componentName_toPascalCase}"

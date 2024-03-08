@@ -4,17 +4,7 @@ Create new file or folders from a custom Template.
 
 ## Preview
 
-## Create New File From Template
-
-![New_File_From_Template](https://github.com/R35007/new-file-template-vscode-extension/assets/23217228/1d29563b-d64f-4367-b90a-b0ae295546a4)
-
-### Create New Sample Template
-
-![New_Sample_Template](https://github.com/R35007/new-file-template-vscode-extension/assets/23217228/4a8e60c2-e21e-4be4-9118-f9afb3f51967)
-
-## Simple Demo of Angular Component Template files generation
-
-![Angular_Component_From_Templates](https://github.com/R35007/new-file-template-vscode-extension/assets/23217228/94869500-bcad-4514-813c-d6d3186ed1f7)
+![New_Templates_Demo-1709932609860](https://github.com/R35007/new-file-template-vscode-extension/assets/23217228/3a5beb54-bf48-404c-ad68-b3c88bec77eb)
 
 # Usage
 
@@ -26,24 +16,27 @@ Create new file or folders from a custom Template.
 
 ## Helper String Methods
 
-| **Method**                                 | **Example Input** | **Example Output** |
-| ------------------------------------------ | ----------------- | ------------------ |
-| \_.toAlphaNumericCase ( value?: string )   | "foo-123-bar"     | "foo123bar"        |
-| \_.toSnakeCase ( value?: string )          | "foo bar"         | "foo_bar"          |
-| \_.toCamelCase ( value?: string )          | "foo bar"         | "fooBar"           |
-| \_.toPascalCase ( value?: string )         | "foo-bar"         | "FooBar"           |
-| \_.toKebabCase ( value?: string )          | "foo bar"         | "foo-bar"          |
-| \_.toTitleCase ( value?: string )          | "foo bar"         | "Foo Bar"          |
-| \_.toSentenceCase ( value?: string )       | "foo bar"         | "Foo bar"          |
-| \_.toUppercase ( value?: string )          | "foo bar"         | "FOO BAR"          |
-| \_.toLowercase ( value?: string )          | "Foo Bar"         | "foo bar"          |
-| \_.toCapitalizedWords ( value?: string )   | "foo bar"         | "Foo Bar"          |
-| \_.toStudlyCaps ( value?: string )         | "foo bar"         | "FoO BaR"          |
-| \_.toTrainCase ( value?: string )          | "foo bar"         | "Foo-bar"          |
-| \_.toScreamingSnakeCase ( value?: string ) | "foo bar"         | "FOO_BAR"          |
-| \_.toScreamingKebabCase ( value?: string ) | "foo bar"         | "FOO-BAR"          |
-| \_.toDotCase ( value?: string )            | "foo bar"         | "foo.bar"          |
-| \_.toSuperTitleCase ( value?: string )     | "foo-bar"         | "Foo Bar"          |
+| Function              | Example Input            | Output                  |
+| --------------------- | ------------------------ | ----------------------- |
+| `_toAlphaNumericCase` | Foo--123-Bar-@-Qux-Baz   | Foo 123 Bar Qux Baz     |
+| `_toSpaceCase`        | fooBarQuxBaz             | Foo Bar Qux Baz         |
+| `_toTitleCase`        | FooBar-Qux\_\_Baz-fooBar | Foo Bar Qux Baz Foo Bar |
+| `_toCamelCase`        | FooBar-Qux\_\_Baz        | fooBarQuxBaz            |
+| `_toPascalCase`       | FooBar-Qux\_\_Baz-fooBar | FooBarQuxBazFooBar      |
+| `_toSnakeCase`        | FooBar-Qux\_\_Baz-fooBar | foo_bar_qux_baz_foo_bar |
+| `_toSnakeUpperCase`   | FooBar-Qux\_\_Baz-fooBar | FOO_BAR_QUX_BAZ_FOO_BAR |
+| `_toSnakeTitleCase`   | FooBar-Qux\_\_Baz-fooBar | Foo_Bar_Qux_Baz_Foo_Bar |
+| `_toKebabCase`        | FooBar-Qux\_\_Baz-fooBar | foo-bar-qux-baz-foo-bar |
+| `_toKebabUpperCase`   | FooBar-Qux\_\_Baz-fooBar | FOO-BAR-QUX-BAZ-FOO-BAR |
+| `_toKebabTitleCase`   | FooBar-Qux\_\_Baz-fooBar | Foo_Bar_Qux_Baz_Foo_Bar |
+| `_toDotCase`          | FooBar-Qux\_\_Baz-fooBar | foo.bar.qux.baz.foo.bar |
+| `_toDotUpperCase`     | FooBar-Qux\_\_Baz-fooBar | FOO.BAR.QUX.BAZ.FOO.BAR |
+| `_toDotTitleCase`     | FooBar-Qux\_\_Baz-fooBar | Foo.Bar.Qux.Baz.Foo.Bar |
+| `_toSentenceCase`     | foo bar-qux Baz foobar   | Foo bar-qux Baz foobar  |
+| `_toCapitalizedWords` | foo bar-qux baz foobar   | Foo Bar-qux Baz Foobar  |
+| `_toStudlyCaps`       | foo bar-qux Baz foobar   | FoO BaR-QuX BaZ FoObAr  |
+| `_toUpperCase`        | fooBar                   | FOOBAR                  |
+| `_toLowerCase`        | FOOBAR                   | fooBar                  |
 
 ## Predefined Variables
 
@@ -96,12 +89,6 @@ Example: Here is the example config file `_config.json`
 
 ```jsonc
 {
-  "input": {
-    // Add prefilled value for the inputs
-    // By adding this value here, on generating a file from Template it will not prompt the user for ${input.fileName}
-    // Example: If we add "componentName":"ButtonComponent" -> Then on generating a files from template will not prompt "componentName" to the user and use this as a default value
-    "fileName": "index"
-  },
   "package": {
     // If the property is not available or the package.json is not present at the root
     // This will act as a fallback value for the package.json.
@@ -118,22 +105,48 @@ Example: Here is the example config file `_config.json`
     "foobar": "foo bar",
     "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit."
   },
-  "inputDetails": {
-    // This object helps to define the user inputs
+  // This object helps to define the user inputs
+  "input": {
+    // Add default value for the input fileName
+    // By directly setting a string here, on generating a file from Template it will not prompt the user for ${input.fileName}
+    // Example: If we add "componentName":"ButtonComponent" -> Then on generating a files from template will not prompt "componentName" to the user and use this as a default value
+    // Adding a direct value here will also generate all predefined cases. Example: ${fileName_toPascalCase}, ${fileName_toCamelCase} etc...
+    "fileName": "index",
     "ext": {
       // ${input.ext} will access this config
-      "description": "Please select the file Extension", // description of the input
-      "options": [".js", ".jsx", ".ts", ".tsx", ".json", ".java", ".txt", ".md"] // If options are given then it will prompt a quick pick
+      "title": "Extension", // Title of the Quick Pick. If not provided it shows the variable name in Title case. Ex: Ext
+      "placeHolder": "Please select the file Extension", // description of the input
+      // If options are given then it will prompt a quick pick
+      // "options": [".js", ".jsx", ".ts", ".tsx", ".json", ".java", ".txt", ".md"]
+      // or
+      "options": [
+        { "label": ".tsx", "description": "Typescript React", "value": ".tsx", "picked": true },
+        { "label": ".ts", "description": "Typescript", "value": ".ts" },
+        { "label": ".jsx", "description": "Javascript React", "value": ".jsx" },
+        { "label": ".js", "description": "Javascript", "value": ".js" },
+        { "label": ".json", "description": "Json", "value": ".json" },
+        { "label": ".java", "description": "Java", "value": ".java" },
+        { "label": ".txt", "description": "Text", "value": ".txt" },
+        { "label": ".md", "description": "Markdown", "value": ".md" }
+      ]
     },
     "componentName": {
       // ${input.componentName} will access this config
-      // Set a default value for the componentName variable
-      // Note: setting default value to a input is different form giving a value in _config.json -> input.componentName.
-      // Giving a value in _config.json -> input.componentName will not prompt the user input
-      // Adding a default value here will still prompt the user input with prefilled value.
-      "default": "MyComponent",
-      "description": "Please provide a componentName in pascal case",
-      "convert": "toPascalCase" // Provide the converted method name to convert your value by default
+      // Set a pre filled value for the componentName variable prompt
+      "value": "AppComponent",
+      // By default all inputs will prompted to the user on demand when the selected file or folder contains a text ${input.<user variable>}. Ex: ${input.componentName}
+      // If this prop is set to true then it will always prompts the user input even if file or folder  doesn't contains the text ${input.<user variable>}
+      // By setting this true we can directly access variable as ${componentName_toPascalCase} instead of ${_toPascalCase(`${input.componentName}`)},
+      "promptAlways": false,
+      "placeHolder": "Please provide a componentName in pascal case",
+      // custom validator. return a error string if validation fails else return an empty string to proceed
+      // will be validated on change
+      "validator": "${value?.trim().length >= 5 ? '' : 'Please Enter a minimum 5 characters'}",
+      // This will be invoked after the user enters the input. Here we can add prefix or suffix or return any default value
+      // In this example I have just converted the value into _toPascalCase
+      "afterInput": "${value?.trim().length ? _toPascalCase(value) : ''}"
+      // or
+      // "afterInput": "prefix-${value}-suffix"
     }
   }
 }

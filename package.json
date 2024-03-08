@@ -2,7 +2,7 @@
   "name": "new-file-template",
   "displayName": "New File Template",
   "description": "Create a new file or folder from custom templates",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "icon": "images/new-file-template-logo.png",
   "engines": {
     "vscode": "^1.87.0"
@@ -47,11 +47,13 @@
     "commands": [
       {
         "command": "new-file-template.createSampleTemplate",
-        "title": "Create New Sample Template"
+        "title": "Create New Sample Template",
+        "category": "Templates"
       },
       {
         "command": "new-file-template.newFilesFromTemplate",
-        "title": "New File From Template"
+        "title": "New File From Template",
+        "category": "Templates"
       }
     ],
     "configuration": {
@@ -79,48 +81,145 @@
           ],
           "description": "Set custom variables. These variable can be accessed using ${variables.<Your variable name>}."
         },
-        "new-file-template.settings.inputDetails": {
+        "new-file-template.settings.input": {
           "type": "object",
           "default": {},
           "examples": [
             {},
             {
+              "fileName": "index",
               "ext": {
-                "description": "Please select the file Extension",
+                "title": "Extension",
+                "placeHolder": "Please select the file Extension",
                 "options": [
-                  ".js",
-                  ".jsx",
-                  ".ts",
-                  ".tsx",
-                  ".json",
-                  ".java",
-                  ".txt",
-                  ".md"
+                  {
+                    "label": ".tsx",
+                    "description": "Typescript React",
+                    "value": ".tsx",
+                    "picked": true
+                  },
+                  {
+                    "label": ".ts",
+                    "description": "Typescript",
+                    "value": ".ts"
+                  },
+                  {
+                    "label": ".jsx",
+                    "description": "Javascript React",
+                    "value": ".jsx"
+                  },
+                  {
+                    "label": ".js",
+                    "description": "Javascript",
+                    "value": ".js"
+                  },
+                  {
+                    "label": ".json",
+                    "description": "Json",
+                    "value": ".json"
+                  },
+                  {
+                    "label": ".java",
+                    "description": "Java",
+                    "value": ".java"
+                  },
+                  {
+                    "label": ".txt",
+                    "description": "Text",
+                    "value": ".txt"
+                  },
+                  {
+                    "label": ".md",
+                    "description": "Markdown",
+                    "value": ".md"
+                  }
                 ]
               },
               "componentName": {
-                "default": "MyComponent",
-                "description": "Please provide a componentName in pascal case",
-                "convert": "toPascalCase"
+                "promptAlways": true,
+                "value": "AppComponent",
+                "placeHolder": "Please provide a componentName in pascal case",
+                "validator": "${value?.trim().length >= 5 ? '' : 'Please Enter a minimum 5 characters'}",
+                "afterInput": "${value?.trim().length ? _toPascalCase(value) : ''}"
               }
             }
           ],
           "additionalProperties": {
-            "type": "object",
-            "properties": {
-              "options": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "promptAlways": {
+                    "type": "boolean",
+                    "description": "By default all the inputs will be prompted on demand. Set this to true to prompt always."
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "Set prefill value of the input box."
+                  },
+                  "placeHolder": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "options": {
+                    "oneOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "label": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": "string"
+                            },
+                            "picked": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "label",
+                            "value"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    ]
+                  },
+                  "validator": {
+                    "type": "string",
+                    "examples": [
+                      "${value?.trim().length >= 5 ? '' : 'Please Enter a minimum 5 characters'}"
+                    ],
+                    "description": "set Custom validator. return a error string if validation fails else return an empty string to proceed"
+                  },
+                  "afterInput": {
+                    "type": "string",
+                    "examples": [
+                      "${value?.trim().length ? _toPascalCase(value) : ''}",
+                      "prefix-${value}-suffix"
+                    ],
+                    "description": "This will be invoked after the user enters the input. Here we can add prefix or suffix or return any default value."
+                  }
+                },
+                "additionalProperties": false
               },
-              "description": {
-                "type": "string"
-              },
-              "default": {
+              {
                 "type": "string"
               }
-            }
+            ]
           }
         }
       }

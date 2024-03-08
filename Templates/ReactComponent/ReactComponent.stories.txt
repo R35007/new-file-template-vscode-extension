@@ -1,19 +1,20 @@
-import { ComponentStory, ComponentMeta } from '@storybook/react';
-import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react';
 
-import { ${componentName} } from './${componentName}';
+import { ${componentName_toPascalCase} } from './${componentName_toPascalCase}';
 
-export default {
-  title: 'Components/${componentName}',
-  component: ${componentName},
+//👇 This default export determines where your story goes in the story list
+const meta: Meta<typeof ${componentName_toPascalCase}> = {
+  title: 'Components/${componentName_toPascalCase}',
+  component: ${componentName_toPascalCase},
+  tags: ['autodocs'],
+  args: {},
+};
+
+export default meta;
+type Story = StoryObj<typeof ${componentName_toPascalCase}>;
+
+export const FirstStory: Story = {
   args: {
-
+    //👇 The args you need here will depend on your component
   },
-} as ComponentMeta<typeof ${componentName}>;
-
-const Template: ComponentStory<typeof ${componentName}> = (args) => (
-  <${componentName} {...args} />
-);
-
-export const Story = Template.bind({});
-Story.args = {};
+};
