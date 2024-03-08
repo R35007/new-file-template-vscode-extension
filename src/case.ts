@@ -1,71 +1,113 @@
-// AlphaNumeric Case
-export const toAlphaNumericCase = (input: string = '') => input.trim().replace(/[^a-zA-Z0-9 ]/g, '');
+// AlphaNumeric Case -> removes any special chars and keeps only Alphabets and numbers
+/** @example "Foo--123-Bar-@-Qux-Baz" = "Foo 123 Bar Qux Baz" */
+export const _toAlphaNumericCase = (input: string = "") =>
+  input
+    .trim()
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
-// Snake Case
-export const toSnakeCase = (input: string = '') => input.trim().replace(/\s+/g, '_').toLowerCase();
+// SPACE CASE -> Adds space before uppercase chars
+/** @example "fooBarQuxBaz" = "Foo Bar Qux Baz" */
+export const _toSpaceCase = (input: string = "") =>
+  input
+    .trim()
+    .replace(/([A-Z])/g, " $1")
+    .replace(/\s+/g, " ")
+    .trim();
 
-// Camel Case
-export const toCamelCase = (input: string = '') => toAlphaNumericCase(input).replace(/(?:^\w|[A-Z]|\b\w)/g, (match, index) => {
-    return index === 0 ? match.toLowerCase() : match.toUpperCase();
-}).replace(/\s+/g, '');
+// Title CASE
+/** @example "FooBar-Qux__Baz-fooBar" = "Foo Bar Qux Baz Foo Bar" */
+export const _toTitleCase = (input: string = "") =>
+  _toSpaceCase(_toAlphaNumericCase(input)).replace(/(^|\s)\S/g, (match) => match.toUpperCase());
 
-// Pascal Case
-export const toPascalCase = (input: string = '') => toAlphaNumericCase(input)
+// Camel CASE
+/** @example "FooBar-Qux__Baz" = "fooBarQuxBaz" */
+export const _toCamelCase = (input: string = "") =>
+  _toSpaceCase(_toAlphaNumericCase(input))
+    .replace(/(?:^\w|[A-Z]|\b\w)/g, (match, index) => (index === 0 ? match.toLowerCase() : match.toUpperCase()))
+    .replace(/\s+/g, "") // remove all spaces
+    .trim();
+
+// PASCAL CASE
+/** @example "FooBar-Qux__Baz-fooBar" = "FooBarQuxBazFooBar" */
+export const _toPascalCase = (input: string = "") =>
+  _toSpaceCase(_toAlphaNumericCase(input))
     .replace(/(?:^\w|[A-Z]|\b\w)/g, (match) => match.toUpperCase())
-    .replace(/\s+/g, ''); // remove more than one space
+    .replace(/\s+/g, "") // remove all spaces
+    .trim();
 
-// Kebab Case
-export const toKebabCase = (input: string = '') => input.trim().replace(/\s+/g, '-').toLowerCase();
+// SNAKE CASE
+/** @example "FooBar-Qux__Baz-fooBar" = "foo_bar_qux_baz_foo_bar" */
+export const _toSnakeCase = (input: string = "") =>
+  _toSpaceCase(_toAlphaNumericCase(input))
+    .replace(/\s+/g, "_") // replace all spaces with underscore (_)
+    .toLowerCase();
 
-// Title Case
-export const toTitleCase = (input: string = '') => input.trim().replace(/(^|\s)\S/g, (match) => match.toUpperCase());
+// SNAKE UPPER CASE
+/** @example "FooBar-Qux__Baz-fooBar" = "FOO_BAR_QUX_BAZ_FOO_BAR" */
+export const _toSnakeUpperCase = (input: string = "") => _toSnakeCase(input).toUpperCase();
+
+// SNAKE TITLE CASE
+/** @example "FooBar-Qux__Baz-fooBar" = "Foo_Bar_Qux_Baz_Foo_Bar" */
+export const _toSnakeTitleCase = (input: string = "") => _toTitleCase(input).replace(/\s+/g, "_"); // replace all spaces with underscore (_)
+
+// KEBAB CASE
+/** @example "FooBar-Qux__Baz-fooBar" = "foo-bar-qux-baz-foo-bar" */
+export const _toKebabCase = (input: string = "") =>
+  _toSpaceCase(_toAlphaNumericCase(input))
+    .replace(/\s+/g, "-") // replace all spaces with hyphen (-)
+    .toLowerCase();
+
+// KEBAB UPPER CASE
+/** @example "FooBar-Qux__Baz-fooBar" = "FOO-BAR-QUX-BAZ-FOO-BAR" */
+export const _toKebabUpperCase = (input: string = "") => _toKebabCase(input).toUpperCase();
+
+// KEBAB TITLE CASE
+/** @example "FooBar-Qux__Baz-fooBar" = "Foo_Bar_Qux_Baz_Foo_Bar" */
+export const _toKebabTitleCase = (input: string = "") => _toTitleCase(input).replace(/\s+/g, "-"); // replace all spaces with hyphen (-)
+
+// DOT CASE
+/** @example "FooBar-Qux__Baz-fooBar" = "foo.bar.qux.baz.foo.bar" */
+export const _toDotCase = (input: string = "") =>
+  _toSpaceCase(_toAlphaNumericCase(input))
+    .replace(/\s+/g, ".") // replace all spaces with Dot (.)
+    .toLowerCase();
+
+// DOT UPPER Case
+/** @example "FooBar-Qux__Baz-fooBar" = "FOO.BAR.QUX.BAZ.FOO.BAR" */
+export const _toDotUpperCase = (input: string = "") =>
+  _toSpaceCase(_toAlphaNumericCase(input))
+    .replace(/\s+/g, ".") // replace all spaces with Dot (.)
+    .toUpperCase();
+
+// DOT TITLE Case
+/** @example "FooBar-Qux__Baz-fooBar" = "Foo.Bar.Qux.Baz.Foo.Bar" */
+export const _toDotTitleCase = (input: string = "") => _toTitleCase(input).replace(/\s+/g, "."); // replace all spaces with Dot (.)
 
 // Sentence Case
-export const toSentenceCase = (input: string = '') => input.trim().charAt(0).toUpperCase() + input.trim().slice(1);
-
-// UPPERCASE
-export const toUppercase = (input: string = '') => input.trim().toUpperCase();
-
-// lowercase
-export const toLowercase = (input: string = '') => input.trim().toLowerCase();
+/** @example "foo bar-qux Baz foobar" = "Foo bar-qux Baz foobar" */
+export const _toSentenceCase = (input: string = "") => input.trim().charAt(0).toUpperCase() + input.trim().slice(1);
 
 // Capitalized Words
-export const toCapitalizedWords = (input: string = '') => input.trim().replace(/(^|\s)\S/g, (match) => {
-    return match.charAt(0).toUpperCase() + match.slice(1).toLowerCase();
-});
+/** @example "foo bar-qux baz foobar" = "Foo Bar-qux Baz Foobar" */
+export const _toCapitalizedWords = (input: string = "") => input.trim().replace(/(^|\s)\S/g, (match) => match.toUpperCase());
 
 // Studly Caps
-export const toStudlyCaps = (input: string = '') => input.trim().split('').map((char, index) => {
-    return index % 2 === 0 ? char.toUpperCase() : char.toLowerCase();
-}).join('');
+/** @example "foo bar-qux Baz foobar" = "FoO BaR-QuX BaZ FoObAr" */
+export const _toStudlyCaps = (input: string = "") =>
+  input
+    .trim()
+    .split("")
+    .map((char, index) => {
+      return index % 2 === 0 ? char.toUpperCase() : char.toLowerCase();
+    })
+    .join("");
 
-// Train Case
-export const toTrainCase = (input: string = '') => input.trim().replace(/(^|\s)\S/g, (match) => {
-    return match.charAt(0).toUpperCase() + match.slice(1);
-}).replace(/\s+/g, '-');
+// UPPERCASE
+/** @example "fooBar" = "FOOBAR" */
+export const _toUpperCase = (input: string = "") => input.trim().toUpperCase();
 
-// SCREAMING SNAKE CASE
-export const toScreamingSnakeCase = (input: string = '') => toSnakeCase(input).toUpperCase();
-
-// SCREAMING KEBAB CASE
-export const toScreamingKebabCase = (input: string = '') => toKebabCase(input).toUpperCase();
-
-// Dot Case
-export const toDotCase = (input: string = '') => input.trim().replace(/\s+/g, '.').toLowerCase();
-
-// Super Title Case
-export const toSuperTitleCase = (input: string = '') => {
-    // Remove special characters and symbols
-    const cleanedString = input.replace(/[^a-zA-Z0-9\s]/g, ' ');
-
-    // Remove multiple spaces and replace with a single space
-    const formattedString = cleanedString.replace(/\s+/g, ' ');
-
-    // Add a space before every uppercase character
-    const spacedString = formattedString.replace(/([A-Z])/g, ' $1');
-
-    // Capitalize the first letter of each word
-    const titleCaseString = spacedString.toLowerCase().replace(/(^|\s)\S/g, (match) => match.toUpperCase());
-
-    return titleCaseString.trim();
-};
+// lowercase
+/** @example "FOOBAR" = "foobar" */
+export const _toLowerCase = (input: string = "") => input.trim().toLowerCase();

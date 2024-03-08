@@ -1,7 +1,4 @@
 {
-  "input": {
-    "fileName": "index"
-  },
   "package": {
     "version": "1.0.0"
   },
@@ -12,15 +9,28 @@
   "env": {
     "NODE_ENV": "development"
   },
-  "inputDetails": {
+  "input": {
+    "fileName": "index",
     "ext": {
-      "description": "Please select the file Extension",
-      "options": [".js", ".jsx", ".ts", ".tsx", ".json", ".java", ".txt", ".md"]
+      "title": "Extension",
+      "placeHolder": "Please select the file Extension",
+      "options": [
+        { "label": ".tsx", "description": "Typescript React", "value": ".tsx", "picked": true },
+        { "label": ".ts", "description": "Typescript", "value": ".ts" },
+        { "label": ".jsx", "description": "Javascript React", "value": ".jsx" },
+        { "label": ".js", "description": "Javascript", "value": ".js" },
+        { "label": ".json", "description": "Json", "value": ".json" },
+        { "label": ".java", "description": "Java", "value": ".java" },
+        { "label": ".txt", "description": "Text", "value": ".txt" },
+        { "label": ".md", "description": "Markdown", "value": ".md" }
+      ]
     },
     "componentName": {
-      "default": "MyComponent",
-      "description": "Please provide a componentName in pascal case",
-      "convert": "toPascalCase"
+      "promptAlways": true,
+      "value": "AppComponent",
+      "placeHolder": "Please provide a componentName in pascal case",
+      "validator": "${value?.trim().length >= 5 ? '' : 'Please Enter a minimum 5 characters'}",
+      "afterInput": "${value?.trim().length ? _toPascalCase(value) : ''}"
     }
   }
 }
