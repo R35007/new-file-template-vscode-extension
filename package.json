@@ -2,7 +2,7 @@
   "name": "new-file-template",
   "displayName": "New File Template",
   "description": "Create a new file or folder from custom templates",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "icon": "images/new-file-template-logo.png",
   "engines": {
     "vscode": "^1.87.0"

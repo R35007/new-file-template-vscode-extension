@@ -127,33 +127,30 @@ export class NewTemplates {
   }
 
   async #setTemplateConfig(templateFolderPath: string) {
-    try {
-      const templateConfigPath = path.resolve(templateFolderPath, "./_config.json");
-      if (fsx.existsSync(templateConfigPath)) {
-        const configs = JSON.parse(fsx.readFileSync(templateConfigPath, "utf-8"));
-        const input: Record<string, InputConfig> = { ...this.configs.input, ...(configs.input || {}) };
-        const allCaseInputs = Object.entries(input)
-          .filter(([, val]) => typeof val === "string")
-          .reduce((res, [inputName, value]) => ({ ...res, ...getAllCases(inputName, value as string) }), {});
+    const templateConfigPath = path.resolve(templateFolderPath, "./_config.json");
 
-        this.configs = {
-          ...allCaseInputs,
-          ...this.configs,
-          input,
-          package: { ...(configs.package || {}), ...this.configs.package },
-          env: { ...(configs.env || {}), ...this.configs.env },
-          variables: { ...this.configs.variables, ...(configs.variables || {}) },
-        };
+    if (!fsx.existsSync(templateConfigPath)) return;
 
-        const preloadInputs = Object.entries(input)
-          .filter(([, val]) => typeof val === "object" && val.promptAlways)
-          .map(([inputName]) => inputName);
+    const configs = JSON.parse(fsx.readFileSync(templateConfigPath, "utf-8"));
+    const input: Record<string, InputConfig> = { ...this.configs.input, ...(configs.input || {}) };
+    const allCaseInputs = Object.entries(input)
+      .filter(([, val]) => typeof val === "string")
+      .reduce((res, [inputName, value]) => ({ ...res, ...getAllCases(inputName, value as string) }), {});
 
-        await this.#collectUserInputs(preloadInputs.map((input) => `\${input.${input}}`));
-      }
-    } catch {
-      /* do nothing on error */
-    }
+    this.configs = {
+      ...allCaseInputs,
+      ...this.configs,
+      input,
+      package: { ...(configs.package || {}), ...this.configs.package },
+      env: { ...(configs.env || {}), ...this.configs.env },
+      variables: { ...this.configs.variables, ...(configs.variables || {}) },
+    };
+
+    const preloadInputs = Object.entries(input)
+      .filter(([, val]) => typeof val === "object" && val.promptAlways)
+      .map(([inputName]) => inputName);
+
+    await this.#collectUserInputs(preloadInputs.map((input) => `\${input.${input}}`));
   }
 
   async #generateTemplateFiles(parsedPaths: WithParsedPathDetails[], outputDir: string) {
@@ -218,7 +215,9 @@ export class NewTemplates {
         const inputConfig = this.configs.input[inputName];
 
         const value = await getInput(inputName, isPlainObject(inputConfig) ? inputConfig : {}, this.configs);
-        if (!value) throw Error("Exit");
+
+        if (!value?.trim().length) throw Error("Exit");
+
         this.configs.input[inputName] = value;
         this.configs = {
           ...getAllCases(inputName.replace(/\s/g, "_"), value),
