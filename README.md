@@ -2,11 +2,11 @@
 
 Create new file or folders from a custom Template.
 
-## Preview
+### Preview
 
 ![New_Templates_Demo-1709932609860](https://github.com/R35007/new-file-template-vscode-extension/assets/23217228/3a5beb54-bf48-404c-ad68-b3c88bec77eb)
 
-# Usage
+### Usage
 
 - Create a folder inside `./vscode/Templates`. Ex: `./vscode/Templates/MyTemplate`
 - Create a new file or folder inside the `./vscode/Templates/MyTemplate` folder. Ex: `./vscode/Templates/MyTemplate/${input.componentName}/${input.fileName}.ts`
@@ -14,71 +14,65 @@ Create new file or folders from a custom Template.
 - This will prompt you to pick a template name and needed variables like `${input.componentName}`, `${input.fileName}`
 - Once all the inputs are given, this will generate you a new file from the selected template.
 
-## Helper String Methods
+### Helper String Methods
 
-| Function              | Example Input            | Output                  |
-| --------------------- | ------------------------ | ----------------------- |
-| `_toAlphaNumericCase` | Foo--123-Bar-@-Qux-Baz   | Foo 123 Bar Qux Baz     |
-| `_toSpaceCase`        | fooBarQuxBaz             | Foo Bar Qux Baz         |
-| `_toTitleCase`        | FooBar-Qux\_\_Baz-fooBar | Foo Bar Qux Baz Foo Bar |
-| `_toCamelCase`        | FooBar-Qux\_\_Baz        | fooBarQuxBaz            |
-| `_toPascalCase`       | FooBar-Qux\_\_Baz-fooBar | FooBarQuxBazFooBar      |
-| `_toSnakeCase`        | FooBar-Qux\_\_Baz-fooBar | foo_bar_qux_baz_foo_bar |
-| `_toSnakeUpperCase`   | FooBar-Qux\_\_Baz-fooBar | FOO_BAR_QUX_BAZ_FOO_BAR |
-| `_toSnakeTitleCase`   | FooBar-Qux\_\_Baz-fooBar | Foo_Bar_Qux_Baz_Foo_Bar |
-| `_toKebabCase`        | FooBar-Qux\_\_Baz-fooBar | foo-bar-qux-baz-foo-bar |
-| `_toKebabUpperCase`   | FooBar-Qux\_\_Baz-fooBar | FOO-BAR-QUX-BAZ-FOO-BAR |
-| `_toKebabTitleCase`   | FooBar-Qux\_\_Baz-fooBar | Foo_Bar_Qux_Baz_Foo_Bar |
-| `_toDotCase`          | FooBar-Qux\_\_Baz-fooBar | foo.bar.qux.baz.foo.bar |
-| `_toDotUpperCase`     | FooBar-Qux\_\_Baz-fooBar | FOO.BAR.QUX.BAZ.FOO.BAR |
-| `_toDotTitleCase`     | FooBar-Qux\_\_Baz-fooBar | Foo.Bar.Qux.Baz.Foo.Bar |
-| `_toSentenceCase`     | foo bar-qux Baz foobar   | Foo bar-qux Baz foobar  |
-| `_toCapitalizedWords` | foo bar-qux baz foobar   | Foo Bar-qux Baz Foobar  |
-| `_toStudlyCaps`       | foo bar-qux Baz foobar   | FoO BaR-QuX BaZ FoObAr  |
-| `_toUpperCase`        | fooBar                   | FOOBAR                  |
-| `_toLowerCase`        | FOOBAR                   | fooBar                  |
+Use helper case methods to convert any variable to the defined case. Ex: **`${_toPascalCase(componentName)}`**
 
-## Predefined Variables
+| Function                 | Example Input            | Output                  |
+| ------------------------ | ------------------------ | ----------------------- |
+| **\_toAlphaNumericCase** | Foo--123-Bar-@-Qux-Baz   | Foo 123 Bar Qux Baz     |
+| **\_toSpaceCase**        | fooBarQuxBaz             | Foo Bar Qux Baz         |
+| **\_toTitleCase**        | FooBar-Qux\_\_Baz-fooBar | Foo Bar Qux Baz Foo Bar |
+| **\_toCamelCase**        | FooBar-Qux\_\_Baz        | fooBarQuxBaz            |
+| **\_toPascalCase**       | FooBar-Qux\_\_Baz-fooBar | FooBarQuxBazFooBar      |
+| **\_toSnakeCase**        | FooBar-Qux\_\_Baz-fooBar | foo_bar_qux_baz_foo_bar |
+| **\_toSnakeUpperCase**   | FooBar-Qux\_\_Baz-fooBar | FOO_BAR_QUX_BAZ_FOO_BAR |
+| **\_toSnakeTitleCase**   | FooBar-Qux\_\_Baz-fooBar | Foo_Bar_Qux_Baz_Foo_Bar |
+| **\_toKebabCase**        | FooBar-Qux\_\_Baz-fooBar | foo-bar-qux-baz-foo-bar |
+| **\_toKebabUpperCase**   | FooBar-Qux\_\_Baz-fooBar | FOO-BAR-QUX-BAZ-FOO-BAR |
+| **\_toKebabTitleCase**   | FooBar-Qux\_\_Baz-fooBar | Foo_Bar_Qux_Baz_Foo_Bar |
+| **\_toDotCase**          | FooBar-Qux\_\_Baz-fooBar | foo.bar.qux.baz.foo.bar |
+| **\_toDotUpperCase**     | FooBar-Qux\_\_Baz-fooBar | FOO.BAR.QUX.BAZ.FOO.BAR |
+| **\_toDotTitleCase**     | FooBar-Qux\_\_Baz-fooBar | Foo.Bar.Qux.Baz.Foo.Bar |
+| **\_toSentenceCase**     | foo bar-qux Baz foobar   | Foo bar-qux Baz foobar  |
+| **\_toCapitalizedWords** | foo bar-qux baz foobar   | Foo Bar-qux Baz Foobar  |
+| **\_toStudlyCaps**       | foo bar-qux Baz foobar   | FoO BaR-QuX BaZ FoObAr  |
+| **\_toUpperCase**        | fooBar                   | FOOBAR                  |
+| **\_toLowerCase**        | FOOBAR                   | fooBar                  |
 
-```js
-/**
- * @userHome ${userHome} -> process.env.HOME
- * @workspaceFolder ${workspaceFolder} -> Active vscode workspace folder
- * @cwd ${cwd} -> alias ${workspaceFolder}
- * @workspaceFolderBasename ${workspaceFolderBasename}
- * @file ${file}
- * @relativeFile ${relativeFile}
- * @relativeFileDirname ${relativeFileDirname}
- * @fileBasename ${fileBasename}
- * @fileBasenameNoExtension ${fileBasenameNoExtension}
- * @fileDirName ${fileDirName}
- * @fileExtname ${fileExtname}
- * @outputDir ${outputDir}
- * @outputDirBasename ${outputDirBasename}
- * @relativeOutputDir ${relativeOutputDir}
- * @outputFile ${outputFile}
- * @relativeOutputFile ${relativeOutputFile}
- * @outputFileBasename ${outputFileBasename}
- * @outputFileBasenameNoExtension ${outputFileBasenameNoExtension}
- * @outputFileExtname ${outputFileExtname}
- * */
-```
+### Predefined Variables
+
+- **`${userHome}`** - process.env.HOME - /home/your-username
+- **`${workspaceFolder}`** - Active vscode workspace folder - /home/your-username/your-project
+- **`*${cwd}*`** - alias **`${workspaceFolder}`** - /home/your-username/your-project
+- **`${workspaceFolderBasename}`** - your-project
+- **`${file}`** - /home/your-username/your-project/folder/file.ext
+- **`${relativeFile}`** - folder/file.ext
+- **`${relativeFileDirname}`** - folder
+- **`${fileBasename}`** - file.ext
+- **`${fileBasenameNoExtension}`** - file
+- **`${fileDirName}`** - /home/your-username/your-project/folder
+- **`${fileExtname}`** - .ext
+- **`${outputDir}`** - /home/your-username/your-project/selected-folder
+- **`${outputDirBasename}`** - selected-folder
+- **`${relativeOutputDir}`** - /your-project/selected-folder
+- **`${outputFile}`** - /home/your-username/your-project/selected-folder/selected-file.ext
+- **`${relativeOutputFile}`** - /your-project/selected-folder/selected-file.ext
+- **`${outputFileBasename}`** - selected-file.ext
+- **`${outputFileBasenameNoExtension}`** - selected-file
+- **`${outputFileExtname}`** - .ext
 
 ### Dynamic Variables
 
-```js
-/**
- * @input ${input.componentName} -> This prompts the user for 'componentName'.
- * @input ${input.componentName} -> This will not prompt the user for 'componentName' again as it was already prompted from the previous line and has the value.
- * @input ${componentName} -> Once we got the values from the user the input variables can also be access directly anywhere in the template code.
- * @inputCase ${componentName_toPascalCase} ${componentName_toCamelCase} -> All user Input will be pre cased and can be accessed by ${<input variable>_<case helper method>}
- * @package ${package.version} -> Access package.json object here. This will be available only if the package.json is at the root of the workspace folder.
- * @env ${env.USERNAME} -> All process.env variables can be accessed here
- * @variables ${variables.lorem} -> Access custom variables
- * @date ${Date.now()}
- * @dateFormatted ${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}
- * */
-```
+- **`${input.componentName}`** - This prompts the user for 'componentName'.
+- **`${input.componentName}`** - This will not prompt the user for 'componentName' again as it was already prompted from the previous line and has the value.
+- **`${componentName}`** - Once we got the values from the user the input variables can also be access directly anywhere in the template code.
+- **`${componentName_toCamelCase}`** **`${componentName_toPascalCase}`** - All user Input will be pre cased and can be accessed by `${<input variable>_<case helper method>}`
+- **`${package.version}`** - Access package.json object here. This will be available only if the package.json is at the root of the workspace folder.
+- **`${env.USERNAME}`** - All process.env variables can be accessed here
+- **`${variables.lorem}`** - Access custom variables
+- **`${Date.now()}`** - Get current date
+- **`${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`** - get formatted date
 
 ### Template Configuration
 
