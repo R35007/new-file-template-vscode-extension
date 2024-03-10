@@ -18,9 +18,6 @@ export class Settings {
     if (fsx.existsSync(resolvedPath)) return resolvedPath;
     return resolveWithWorkspaceFolder("./.vscode/templates");
   }
-  static get variables() {
-    return (Settings.getSettings("variables") as Record<string, any>) || {};
-  }
   static get input() {
     return (Settings.getSettings("input") as InputConfig) || {};
   }

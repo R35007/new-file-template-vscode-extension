@@ -1,53 +1,79 @@
 /**
- * All Available variables
+ ** All Available variables
  * 
- * @userHome ${userHome}
- * @workspaceFolder ${workspaceFolder}
- * @cwd ${cwd}
- * @workspaceFolderBasename ${workspaceFolderBasename}
- * @file ${file}
- * @relativeFile ${relativeFile}
- * @relativeFileDirname ${relativeFileDirname}
- * @fileBasename ${fileBasename}
- * @fileBasenameNoExtension ${fileBasenameNoExtension}
- * @fileDirName ${fileDirName}
- * @fileExtname ${fileExtname}
- * @outputDir ${outputDir}
- * @outputDirBasename ${outputDirBasename}
- * @relativeOutputDir ${relativeOutputDir}
- * @outputFile ${outputFile}
- * @relativeOutputFile ${relativeOutputFile}
- * @outputFileBasename ${outputFileBasename}
- * @outputFileBasenameNoExtension ${outputFileBasenameNoExtension}
- * @outputFileExtname ${outputFileExtname}
+ * @userHome - ${userHome} -> alisa \`process.env.HOME\`
+ * @workspaceFolder - ${workspaceFolder}
+ * @cwd - ${cwd} -> alias \`${workspaceFolder}\`
+ * @workspaceFolderBasename - ${workspaceFolderBasename}
+ * @file - ${file}
+ * @fileWorkspaceFolder - ${fileWorkspaceFolder}
+ * @relativeFile - ${relativeFile}
+ * @relativeFileDirname - ${relativeFileDirname}
+ * @fileBasename - ${fileBasename}
+ * @fileBasenameNoExtension - ${fileBasenameNoExtension}
+ * @fileExtname - ${fileExtname}
+ * @fileDirname - ${fileDirname}
+ * @fileDirnameBasename - ${fileDirnameBasename}
+ * @outputFile - ${outputFile}
+ * @outputFileWorkspaceFolder - ${outputFileWorkspaceFolder}
+ * @relativeOutputFile - ${relativeOutputFile}
+ * @relativeOutputFileDirname - ${relativeOutputFileDirname}
+ * @outputFileBasename - ${outputFileBasename}
+ * @outputFileBasenameNoExtension - ${outputFileBasenameNoExtension}
+ * @outputFileExtname - ${outputFileExtname}
+ * @outputFileDirname - ${outputFileDirname}
+ * @outputFileDirnameBasename - ${outputFileDirnameBasename}
+ *
+ ** Dynamic input
  * 
- * @input ${input.componentName} -> This prompts the user for 'componentName' if the value of the componentName is not present.
- * @inputCase ${componentName_toPascalCase} ${componentName_toCamelCase}  
- * @package ${package.version}
- * @env ${env.USERNAME}
- * @variables ${variables.lorem}
- * @date ${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}
+ * @inputComponentName - ${input.componentName} -> This prompts the user for 'componentName' if the value of the componentName is not present.
+ * @inputLorem - ${input.lorem} -> This will not prompt the user as the value was predefined in the _config.json -> input.lorem.
+ * @inputVariables - ${componentName} ${foobar}   -> any input variables can also be directly accessed.
+ * @inputCase - ${componentName_toPascalCase} ${componentName_toCamelCase}  -> any input variables can be converted to the given case.
+ * !Note: Input variable must not contain any spaces
+ *
+ ** Package JSON
+ *
+ * @package - ${package.version || 'v1.0.0'} -> Access package.json at the root of the workspace folder.
+ *
+ ** Node global variables
+ *
+ * @env - ${process.env.USERNAME}
+ * @env - ${process.env.NODE_ENV || 'development'}
+ * @date - ${Date.now()}
+ * @date - ${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}
+ * @math - ${Math.random()}
+ * @dirname - ${__dirname}
+ * @filename - ${__filename}
  * 
- * Helper methods
- * @toAlphaNumericCase ${_toAlphaNumericCase(variables.foobar)}
- * @toSpaceCase ${_toSpaceCase(variables.foobar)}
- * @toTitleCase ${_toTitleCase(variables.foobar)}
- * @toCamelCase ${_toCamelCase(variables.foobar)}
- * @toPascalCase ${_toPascalCase(variables.foobar)}
- * @toSnakeCase ${_toSnakeCase(variables.foobar)}
- * @toSnakeUpperCase ${_toSnakeUpperCase(variables.foobar)}
- * @toSnakeTitleCase ${_toSnakeTitleCase(variables.foobar)}
- * @toKebabCase ${_toKebabCase(variables.foobar)}
- * @toKebabUpperCase ${_toKebabUpperCase(variables.foobar)}
- * @toKebabTitleCase ${_toKebabTitleCase(variables.foobar)}
- * @toDotCase ${_toDotCase(variables.foobar)}
- * @toDotUpperCase ${_toDotUpperCase(variables.foobar)}
- * @toDotTitleCase ${_toDotTitleCase(variables.foobar)}
- * @toSentenceCase ${_toSentenceCase(variables.foobar)}
- * @toCapitalizedWords ${_toCapitalizedWords(variables.foobar)}
- * @toStudlyCaps ${_toStudlyCaps(variables.foobar)}
- * @toUpperCase ${_toUpperCase(variables.foobar)}
- * @toLowerCase ${_toLowerCase(variables.foobar)}
+ ** Helper methods
+ * @example input.foobar: $fooBar jazQux$
+ *
+ * @_toAlphaNumericCase - ${_toAlphaNumericCase(foobar)}
+ * @_toSpaceCase - ${_toSpaceCase(foobar)}
+ * @_toTitleCase - ${_toTitleCase(foobar)}
+ * @_toCamelCase - ${_toCamelCase(foobar)}
+ * @_toPascalCase - ${_toPascalCase(foobar)}
+ * @_toSnakeCase - ${_toSnakeCase(foobar)}
+ * @_toSnakeUpperCase - ${_toSnakeUpperCase(foobar)}
+ * @_toSnakeTitleCase - ${_toSnakeTitleCase(foobar)}
+ * @_toKebabCase - ${_toKebabCase(foobar)}
+ * @_toKebabUpperCase - ${_toKebabUpperCase(foobar)}
+ * @_toKebabTitleCase - ${_toKebabTitleCase(foobar)}
+ * @_toDotCase - ${_toDotCase(foobar)}
+ * @_toDotUpperCase - ${_toDotUpperCase(foobar)}
+ * @_toDotTitleCase - ${_toDotTitleCase(foobar)}
+ * @_toSentenceCase - ${_toSentenceCase(foobar)}
+ * @_toCapitalizedWords - ${_toCapitalizedWords(foobar)}
+ * @_toStudlyCaps - ${_toStudlyCaps(foobar)}
+ * @_toUpperCase - ${_toUpperCase(foobar)}
+ * @_toLowerCase - ${_toLowerCase(foobar)}
+ *
+ ** Pass custom string to case converters
+ * @example input: \$\{_toAlphaCase(\`${foobar}-123-${foobar}\`)\}
+
+ * @_toAlphaCase - ${_toAlphaCase(`${foobar}-123-${foobar}`)}
+ * @_toNumericCase - ${_toNumericCase(`${foobar}-123-${foobar}`)}
  * 
  * */
 

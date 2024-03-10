@@ -20,6 +20,8 @@ Use helper case methods to convert any variable to the defined case. Ex: **`${_t
 
 | Function                 | Example Input            | Output                  |
 | ------------------------ | ------------------------ | ----------------------- |
+| **\_toAlphaCase**        | Foo--123-Bar-@-Qux-Baz   | Foo Bar Qux Baz         |
+| **\_toNumericCase**      | Foo--123-Bar-@-Qux-Baz   | 123                     |
 | **\_toAlphaNumericCase** | Foo--123-Bar-@-Qux-Baz   | Foo 123 Bar Qux Baz     |
 | **\_toSpaceCase**        | fooBarQuxBaz             | Foo Bar Qux Baz         |
 | **\_toTitleCase**        | FooBar-Qux\_\_Baz-fooBar | Foo Bar Qux Baz Foo Bar |
@@ -51,28 +53,39 @@ Use helper case methods to convert any variable to the defined case. Ex: **`${_t
 - **`${relativeFileDirname}`** - folder
 - **`${fileBasename}`** - file.ext
 - **`${fileBasenameNoExtension}`** - file
-- **`${fileDirName}`** - /home/your-username/your-project/folder
+- **`${fileDirname}`** - /home/your-username/your-project/folder
 - **`${fileExtname}`** - .ext
-- **`${outputDir}`** - /home/your-username/your-project/selected-folder
-- **`${outputDirBasename}`** - selected-folder
-- **`${relativeOutputDir}`** - /your-project/selected-folder
-- **`${outputFile}`** - /home/your-username/your-project/selected-folder/selected-file.ext
-- **`${relativeOutputFile}`** - /your-project/selected-folder/selected-file.ext
-- **`${outputFileBasename}`** - selected-file.ext
-- **`${outputFileBasenameNoExtension}`** - selected-file
+- **`${outputDir}`** - /home/your-username/your-project/output-folder
+- **`${outputDirBasename}`** - output-folder
+- **`${relativeOutputDir}`** - /your-project/output-folder
+- **`${outputFile}`** - /home/your-username/your-project/output-folder/output-file.ext
+- **`${relativeOutputFile}`** - /your-project/output-folder/output-file.ext
+- **`${outputFileBasename}`** - output-file.ext
+- **`${outputFileBasenameNoExtension}`** - output-file
 - **`${outputFileExtname}`** - .ext
 
-### Dynamic Variables
+### Dynamic Input
 
-- **`${input.componentName}`** - This prompts the user for 'componentName'.
-- **`${input.componentName}`** - This will not prompt the user for 'componentName' again as it was already prompted from the previous line and has the value.
-- **`${componentName}`** - Once we got the values from the user the input variables can also be access directly anywhere in the template code.
-- **`${componentName_toCamelCase}`** **`${componentName_toPascalCase}`** - All user Input will be pre cased and can be accessed by `${<input variable>_<case helper method>}`
-- **`${package.version}`** - Access package.json object here. This will be available only if the package.json is at the root of the workspace folder.
-- **`${env.USERNAME}`** - All process.env variables can be accessed here
-- **`${variables.lorem}`** - Access custom variables
-- **`${Date.now()}`** - Get current date
-- **`${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`** - get formatted date
+- **`${input.componentName}`** -> This prompts the user for `componentName` if the value of the componentName is not present.
+- **`${input.lorem}`** -> This will not prompt the user as the value was predefined in the `_config.json` -> input.lorem.
+- **`${componentName}`**, **`${foobar}`** -> any input variables can also be directly accessed.
+- **`${componentName_toPascalCase}`** **`${componentName_toCamelCase}`** -> any input variables can be converted to the given case.
+
+### Package JSON
+
+Access `package.json` located at the root of the workspace folder.
+
+- **`${package.version || 'v1.0.0'}`**
+
+### Node global variables
+
+- **`${process.env.USERNAME}`**
+- **`${process.env.NODE_ENV || 'development'}`**
+- **`${Date.now()}`**
+- **`${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`**
+- **`${Math.random()}`**
+- **`${__dirname}`**
+- **`${__filename}`**
 
 ### Template Configuration
 
@@ -83,64 +96,31 @@ Example: Here is the example config file `_config.json`
 
 ```jsonc
 {
-  "package": {
-    // If the property is not available or the package.json is not present at the root
-    // This will act as a fallback value for the package.json.
-    "version": "1.0.0"
-  },
-  "env": {
-    // Add any custom process.env variables specific to a Template
-    // This will act as a fallback value for the process.env
-    "NODE_ENV": "development"
-  },
-  "variables": {
-    // Add any custom variables specific to a Template
-    // These variable can be access thru ${variables.foobar}, ${variables.lorem} ...
-    "foobar": "foo bar",
-    "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit."
-  },
-  // This object helps to define the user inputs
+  // These input variables can be accessed as ${input.componentName} or ${componentName}
   "input": {
-    // Add default value for the input fileName
-    // By directly setting a string here, on generating a file from Template it will not prompt the user for ${input.fileName}
-    // Example: If we add "componentName":"ButtonComponent" -> Then on generating a files from template will not prompt "componentName" to the user and use this as a default value
-    // Adding a direct value here will also generate all predefined cases. Example: ${fileName_toPascalCase}, ${fileName_toCamelCase} etc...
+    "foobar": "foo bar", // predefined value for ${input.foobar} or ${foobar}. This will not prompt the user input
+    "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
     "fileName": "index",
     "ext": {
-      // ${input.ext} will access this config
       "title": "Extension", // Title of the Quick Pick. If not provided it shows the variable name in Title case. Ex: Ext
       "placeHolder": "Please select the file Extension", // description of the input
       // If options are given then it will prompt a quick pick
-      // "options": [".js", ".jsx", ".ts", ".tsx", ".json", ".java", ".txt", ".md"]
-      // or
       "options": [
         { "label": ".tsx", "description": "Typescript React", "value": ".tsx", "picked": true },
         { "label": ".ts", "description": "Typescript", "value": ".ts" },
         { "label": ".jsx", "description": "Javascript React", "value": ".jsx" },
-        { "label": ".js", "description": "Javascript", "value": ".js" },
-        { "label": ".json", "description": "Json", "value": ".json" },
-        { "label": ".java", "description": "Java", "value": ".java" },
-        { "label": ".txt", "description": "Text", "value": ".txt" },
-        { "label": ".md", "description": "Markdown", "value": ".md" }
-      ]
+        { "label": ".js", "description": "Javascript", "value": ".js" }
+      ] // or "options": [".js", ".jsx", ".ts", ".tsx"]
     },
     "componentName": {
-      // ${input.componentName} will access this config
-      // Set a pre filled value for the componentName variable prompt
-      "value": "AppComponent",
-      // By default all inputs will prompted to the user on demand when the selected file or folder contains a text ${input.<user variable>}. Ex: ${input.componentName}
-      // If this prop is set to true then it will always prompts the user input even if file or folder  doesn't contains the text ${input.<user variable>}
-      // By setting this true we can directly access variable as ${componentName_toPascalCase} instead of ${_toPascalCase(`${input.componentName}`)},
-      "promptAlways": false,
+      "value": "AppComponent", // Set a pre filled value for the componentName variable prompt
+      "promptAlways": false, // Set to true to always prompts the user input even if file or folder  doesn't contains the text ${input.<user variable>}
       "placeHolder": "Please provide a componentName in pascal case",
       // custom validator. return a error string if validation fails else return an empty string to proceed
-      // will be validated on change
-      "validator": "${value?.trim().length >= 5 ? '' : 'Please Enter a minimum 5 characters'}",
+      "validator": "${value?.trim().length >= 5 ? '' : 'Please Enter a minimum 5 characters'}", // will be validated on change
       // This will be invoked after the user enters the input. Here we can add prefix or suffix or return any default value
       // In this example I have just converted the value into _toPascalCase
-      "afterInput": "${value?.trim().length ? _toPascalCase(value) : ''}"
-      // or
-      // "afterInput": "prefix-${value}-suffix"
+      "afterInput": "${value?.trim().length ? _toPascalCase(value) : ''}" // or "afterInput": "prefix-${value}-suffix"
     }
   }
 }

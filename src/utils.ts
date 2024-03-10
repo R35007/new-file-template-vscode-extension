@@ -2,11 +2,57 @@ import * as fsx from "fs-extra";
 import * as path from "path";
 import * as vscode from "vscode";
 import { Settings } from "./Settings";
-import * as caseConvert from "./case";
+import * as caseConverter from "./caseConverter";
 import { getPathsList } from "./getPathsList";
 import { Commands, InputConfig } from "./types";
 
-export const getWorkSpaceFolder = () => vscode.workspace.workspaceFolders?.[0].uri.fsPath || "./";
+export const isPlainObject = (val?: any) => !!(val && typeof val === "object" && !Array.isArray(val));
+
+export const getWorkSpaceFolder = (filePath: string = "") => {
+  const activePath: string = filePath.replaceAll("\\", "/") || "";
+  const workspaceFolders = vscode.workspace.workspaceFolders || [];
+
+  if (!activePath?.trim().length) return workspaceFolders[0]?.uri.fsPath.replaceAll("\\", "/") || "./";
+
+  return workspaceFolders.map((folder) => folder.uri.fsPath).find((folder) => activePath.includes(folder.replaceAll("\\", "/"))) || "./";
+};
+
+const handleUndefinedVariable = (errorMessage: string, format: string = "", object: Record<string, any> = {}) => {
+  let undefinedVariable = errorMessage.replace("is not defined", "").trim();
+
+  const convertToMethodName = Object.keys(caseConverter).find((methodName) => undefinedVariable.endsWith(methodName));
+
+  const transform =
+    convertToMethodName && (caseConverter[convertToMethodName as keyof typeof caseConverter] as (input?: string) => string | undefined);
+  undefinedVariable = !!transform ? undefinedVariable.replace(convertToMethodName, "").trim() : undefinedVariable;
+
+  const value = isPlainObject(object.input[undefinedVariable]) ? object.input[undefinedVariable].value : object.input[undefinedVariable];
+
+  if (value === undefined) {
+    vscode.window.showErrorMessage(errorMessage);
+    return format;
+  }
+
+  const key = !!transform ? `${undefinedVariable}${convertToMethodName}` : undefinedVariable;
+
+  return interpolate(format, { ...object, [key]: !!transform ? transform(value) : value });
+};
+
+// Helps to convert template literal strings to applied values.
+export const interpolate = (format: string = "", object: Record<string, any> = {}): string => {
+  try {
+    const keys = Object.keys(object);
+    const values = Object.values(object);
+    const interpolatedFunction = new Function(...keys, `return \`${format}\`;`);
+    return interpolatedFunction(...values);
+  } catch (error: unknown) {
+    if (!(error instanceof Error)) return format;
+    const errorMessage = error.message;
+    if (errorMessage.endsWith("is not defined")) return handleUndefinedVariable(errorMessage, format, object);
+    vscode.window.showErrorMessage(errorMessage);
+    return format;
+  }
+};
 
 export const getTemplateName = () =>
   vscode.window.showInputBox({
@@ -19,7 +65,7 @@ export const getInput = async (inputName: string, inputConfig: InputConfig = {} 
   if (inputConfig.options?.length) {
     const picked: any = await vscode.window.showQuickPick(inputConfig.options as vscode.QuickPickItem[], {
       placeHolder: inputConfig.placeHolder || `Please enter a ${inputName}`,
-      title: inputConfig.title || caseConvert._toTitleCase(inputName),
+      title: inputConfig.title || caseConverter._toTitleCase(inputName),
       canPickMany: false,
     });
 
@@ -35,7 +81,7 @@ export const getInput = async (inputName: string, inputConfig: InputConfig = {} 
 
   const input = await vscode.window.showInputBox({
     placeHolder: inputConfig.placeHolder || `Please enter a ${inputName}`,
-    title: caseConvert._toTitleCase(inputName),
+    title: caseConverter._toTitleCase(inputName),
     value: inputConfig.title || inputConfig.value,
     validateInput: inputConfig.validator?.trim().length ? validateInput : undefined,
   });
@@ -47,7 +93,7 @@ export const getInput = async (inputName: string, inputConfig: InputConfig = {} 
 export const getSelect = (inputName: string, inputOptions: string[] = []) =>
   vscode.window.showQuickPick(inputOptions, {
     placeHolder: `Please pick a ${inputName}`,
-    title: caseConvert._toTitleCase(inputName),
+    title: caseConverter._toTitleCase(inputName),
   });
 
 export const selectTemplateFolder = async () => {
@@ -77,7 +123,11 @@ export const selectTemplateFolder = async () => {
 };
 
 export const selectTemplateFile = async (templatePath: string) => {
-  const files = getPathsList(templatePath, { withFolders: false, relativeTo: templatePath, excludeFile: [`${templatePath}/_config.json`] });
+  const files = getPathsList(templatePath, {
+    withFolders: false,
+    relativeTo: templatePath,
+    excludeFile: [`${templatePath}/_config.json`],
+  });
   return vscode.window.showQuickPick(
     files.map((folder) => ({ label: folder.baseName, description: folder.relativePath, ...folder, picked: true })),
     {
@@ -95,45 +145,7 @@ export const resolveWithWorkspaceFolder = (relativePath: string) => {
   return path.resolve(workspaceFolder, relativePath);
 };
 
-// Helps to convert template literal strings to applied values.
-export const interpolate = (format: string = "", object: object = {}) => {
-  try {
-    const keys = Object.keys(object);
-    const values = Object.values(object);
-    const interpolatedFunction = new Function(...keys, `return \`${format}\`;`);
-    return interpolatedFunction(...values);
-  } catch (error: any) {
-    vscode.window.showErrorMessage(error.message);
-    return format;
-  }
-};
-
-export const getAllCases = (inputName: string, value: string) => ({
-  [inputName]: value,
-  [`${inputName}_toAlphaNumericCase`]: caseConvert._toAlphaNumericCase(value),
-  [`${inputName}_toSpaceCase`]: caseConvert._toSpaceCase(value),
-  [`${inputName}_toTitleCase`]: caseConvert._toTitleCase(value),
-  [`${inputName}_toCamelCase`]: caseConvert._toCamelCase(value),
-  [`${inputName}_toPascalCase`]: caseConvert._toPascalCase(value),
-  [`${inputName}_toSnakeCase`]: caseConvert._toSnakeCase(value),
-  [`${inputName}_toSnakeUpperCase`]: caseConvert._toSnakeUpperCase(value),
-  [`${inputName}_toSnakeTitleCase`]: caseConvert._toSnakeTitleCase(value),
-  [`${inputName}_toKebabCase`]: caseConvert._toKebabCase(value),
-  [`${inputName}_toKebabUpperCase`]: caseConvert._toKebabUpperCase(value),
-  [`${inputName}_toKebabTitleCase`]: caseConvert._toKebabTitleCase(value),
-  [`${inputName}_toDotCase`]: caseConvert._toDotCase(value),
-  [`${inputName}_toDotUpperCase`]: caseConvert._toDotUpperCase(value),
-  [`${inputName}_toDotTitleCase`]: caseConvert._toDotTitleCase(value),
-  [`${inputName}_toSentenceCase`]: caseConvert._toSentenceCase(value),
-  [`${inputName}_toCapitalizedWords`]: caseConvert._toCapitalizedWords(value),
-  [`${inputName}_toStudlyCaps`]: caseConvert._toStudlyCaps(value),
-  [`${inputName}_toUpperCase`]: caseConvert._toUpperCase(value),
-  [`${inputName}_toLowerCase`]: caseConvert._toLowerCase(value),
-});
-
 export const copyFile = (fromPath: string, toPath: string) => {
   fsx.ensureFileSync(toPath);
   fsx.writeFileSync(toPath, fsx.readFileSync(fromPath, "utf-8"));
 };
-
-export const isPlainObject = (val?: any) => !!(val && typeof val === "object" && !Array.isArray(val));

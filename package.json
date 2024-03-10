@@ -2,7 +2,7 @@
   "name": "new-file-template",
   "displayName": "New File Template",
   "description": "Create a new file or folder from custom templates",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "icon": "images/new-file-template-logo.png",
   "engines": {
     "vscode": "^1.87.0"
@@ -69,24 +69,14 @@
           "default": false,
           "description": "Set to true to overwrite the existing file."
         },
-        "new-file-template.settings.variables": {
-          "type": "object",
-          "default": {},
-          "examples": [
-            {},
-            {
-              "foobar": "foo bar",
-              "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit."
-            }
-          ],
-          "description": "Set custom variables. These variable can be accessed using ${variables.<Your variable name>}."
-        },
         "new-file-template.settings.input": {
           "type": "object",
           "default": {},
           "examples": [
             {},
             {
+              "foobar": "foo bar",
+              "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
               "fileName": "index",
               "ext": {
                 "title": "Extension",
@@ -220,7 +210,8 @@
                 "type": "string"
               }
             ]
-          }
+          },
+          "description": "Set custom input variables. These variables can be accessed using ${input.<Your variable name>} or ${<Your variable name>} "
         }
       }
     },

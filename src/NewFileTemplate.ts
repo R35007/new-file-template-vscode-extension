@@ -2,12 +2,11 @@ import * as fsx from "fs-extra";
 import * as path from "path";
 import * as vscode from "vscode";
 import { Settings } from "./Settings";
-import * as caseConvert from "./case";
+import * as caseConverter from "./caseConverter";
 import { PathDetails, WithParsedPathDetails, getStats } from "./getPathsList";
 import { InputConfig } from "./types";
 import {
   copyFile,
-  getAllCases,
   getInput,
   getTemplateName,
   getWorkSpaceFolder,
@@ -18,13 +17,20 @@ import {
   selectTemplateFolder,
 } from "./utils";
 
+const exampleTemplatePath = path.resolve(__dirname, "../Templates");
+const exampleReactComponentPath = path.join(exampleTemplatePath, `./ReactComponent/ReactComponent.txt`);
+const exampleReactComponentStoriesPath = path.join(exampleTemplatePath, `./ReactComponent/ReactComponent.stories.txt`);
+const exampleIndexPath = path.join(exampleTemplatePath, `./ReactComponent/index.txt`);
+const exampleConfigPath = path.join(exampleTemplatePath, `./_config.json`);
+
 export class NewTemplates {
   configs: Record<string, any> = {
-    ...caseConvert,
+    ...caseConverter,
+    process,
+    __dirname,
+    __filename,
     package: {},
-    env: process.env || {},
     input: Settings.input || {},
-    variables: Settings.variables || {},
   };
 
   constructor() {
@@ -46,22 +52,14 @@ export class NewTemplates {
       const newTemplatePath = path.join(Settings.templatesPath, templateName);
       if (fsx.existsSync(newTemplatePath)) return vscode.window.showErrorMessage("Template already exists.");
 
-      const exampleTemplatePath = path.resolve(__dirname, "../Templates");
-
-      const exampleReactComponentPath = path.join(exampleTemplatePath, `./ReactComponent/ReactComponent.txt`);
       const newReactComponentPath = path.join(newTemplatePath, "./${input.componentName}/${componentName}.tsx");
-      copyFile(exampleReactComponentPath, newReactComponentPath);
-
-      const exampleReactComponentStoriesPath = path.join(exampleTemplatePath, `./ReactComponent/ReactComponent.stories.txt`);
       const newReactComponentStoriesPath = path.join(newTemplatePath, "./${input.componentName}/${componentName}.stories${input.ext}");
-      copyFile(exampleReactComponentStoriesPath, newReactComponentStoriesPath);
-
-      const exampleIndexPath = path.join(exampleTemplatePath, `./ReactComponent/index.txt`);
       const newIndexPath = path.join(newTemplatePath, "./${input.componentName}/${input.fileName}.ts");
-      copyFile(exampleIndexPath, newIndexPath);
-
-      const exampleConfigPath = path.join(exampleTemplatePath, `./_config.json`);
       const newConfigPath = path.join(newTemplatePath, "./_config.json");
+
+      copyFile(exampleReactComponentPath, newReactComponentPath);
+      copyFile(exampleReactComponentStoriesPath, newReactComponentStoriesPath);
+      copyFile(exampleIndexPath, newIndexPath);
       copyFile(exampleConfigPath, newConfigPath);
 
       const newFile = await vscode.workspace.openTextDocument(newIndexPath);
@@ -80,18 +78,19 @@ export class NewTemplates {
       const selectedTemplateFolder = await selectTemplateFolder();
       if (!selectedTemplateFolder) return;
 
-      let outputDir = args?.fsPath || this.configs.workspaceFolder;
-      outputDir = getStats(outputDir)?.isFile() ? path.dirname(outputDir) : outputDir;
+      let outputFileDirname = args?.fsPath || getWorkSpaceFolder(args?.fsPath);
+      outputFileDirname = getStats(outputFileDirname)?.isFile() ? path.dirname(outputFileDirname) : outputFileDirname;
 
-      await this.#setPredefinedVariables(outputDir, args);
+      await this.#setPredefinedVariables(outputFileDirname, args);
 
       const selectedTemplateFiles = await selectTemplateFiles(selectedTemplateFolder.basePath);
       if (!selectedTemplateFiles?.length) return;
 
       await this.#setTemplateConfig(selectedTemplateFolder.basePath);
+      await this.#promptPreLoadInputs();
 
       const parsedPaths = await this.#getParsedPathList(selectedTemplateFiles);
-      await this.#generateTemplateFiles(parsedPaths, outputDir);
+      await this.#generateTemplateFiles(parsedPaths, outputFileDirname);
     } catch (err: unknown) {
       if (!(err instanceof Error) || err.message === "Exit") return;
       vscode.window.showErrorMessage(err.message);
@@ -99,8 +98,8 @@ export class NewTemplates {
     }
   }
 
-  async #setPredefinedVariables(outputDir: string = "", args?: any) {
-    const workspaceFolder = getWorkSpaceFolder();
+  async #setPredefinedVariables(outputFileDirname: string = "", args?: any) {
+    const workspaceFolder = getWorkSpaceFolder(args?.fsPath);
 
     this.configs = {
       ...this.configs,
@@ -109,20 +108,23 @@ export class NewTemplates {
       cwd: workspaceFolder,
       workspaceFolderBasename: path.basename(workspaceFolder),
       file: args?.fsPath || "",
+      fileWorkspaceFolder: workspaceFolder,
       relativeFile: args?.fsPath ? path.relative(workspaceFolder, args?.fsPath) : "",
       relativeFileDirname: args?.fsPath ? path.relative(workspaceFolder, path.dirname(args?.fsPath)) : "",
       fileBasename: args?.fsPath ? path.basename(args?.fsPath) : "",
       fileBasenameNoExtension: args?.fsPath ? path.basename(args?.fsPath, path.extname(args?.fsPath)) : "",
-      fileDirName: args?.fsPath ? path.dirname(args?.fsPath) : "",
       fileExtname: args?.fsPath ? path.extname(args?.fsPath) : "",
-      outputDir,
-      outputDirBasename: path.basename(outputDir),
-      relativeOutputDir: path.relative(workspaceFolder, outputDir),
+      fileDirname: args?.fsPath ? path.dirname(args?.fsPath) : "",
+      fileDirnameBasename: args?.fsPath ? path.basename(path.dirname(args?.fsPath)) : "",
       outputFile: "",
+      outputFileWorkspaceFolder: "",
       relativeOutputFile: "",
+      relativeOutputFileDirname: "",
       outputFileBasename: "",
       outputFileBasenameNoExtension: "",
       outputFileExtname: "",
+      outputFileDirname,
+      outputFileDirnameBasename: "",
     };
   }
 
@@ -131,32 +133,38 @@ export class NewTemplates {
 
     if (!fsx.existsSync(templateConfigPath)) return;
 
-    const configs = JSON.parse(fsx.readFileSync(templateConfigPath, "utf-8"));
-    const input: Record<string, InputConfig> = { ...this.configs.input, ...(configs.input || {}) };
-    const allCaseInputs = Object.entries(input)
-      .filter(([, val]) => typeof val === "string")
-      .reduce((res, [inputName, value]) => ({ ...res, ...getAllCases(inputName, value as string) }), {});
+    const { input = {} } = JSON.parse(fsx.readFileSync(templateConfigPath, "utf-8"));
 
     this.configs = {
-      ...allCaseInputs,
       ...this.configs,
-      input,
-      package: { ...(configs.package || {}), ...this.configs.package },
-      env: { ...(configs.env || {}), ...this.configs.env },
-      variables: { ...this.configs.variables, ...(configs.variables || {}) },
+      input: { ...this.configs.input, ...input },
     };
+  }
 
-    const preloadInputs = Object.entries(input)
-      .filter(([, val]) => typeof val === "object" && val.promptAlways)
+  async #promptPreLoadInputs() {
+    const preloadInputs = Object.entries(this.configs.input as InputConfig)
+      .filter(([, inputConfig]) => typeof inputConfig === "object" && inputConfig.promptAlways)
       .map(([inputName]) => inputName);
 
     await this.#collectUserInputs(preloadInputs.map((input) => `\${input.${input}}`));
   }
 
-  async #generateTemplateFiles(parsedPaths: WithParsedPathDetails[], outputDir: string) {
-    for (let pathDetails of parsedPaths) {
-      const newFilePath = path.join(outputDir, `./${pathDetails.parsedRelativePath}`);
+  async #getParsedPathList(pathsList: PathDetails[] = []) {
+    const updatedPathsList: WithParsedPathDetails[] = [];
+    for (let pathDetails of pathsList) {
+      await this.#collectUserInputs(pathDetails.basePath);
+      const parsedBasePath = interpolate(pathDetails.basePath, this.configs);
+      const parsedRelativePath = interpolate(pathDetails.relativePath, this.configs);
+      updatedPathsList.push({ ...pathDetails, parsedBasePath, parsedRelativePath });
+    }
+    return updatedPathsList;
+  }
 
+  async #generateTemplateFiles(parsedPaths: WithParsedPathDetails[], outputFileDirname: string) {
+    for (let pathDetails of parsedPaths) {
+      const newFilePath = path.join(outputFileDirname, `./${pathDetails.parsedRelativePath}`);
+
+      // If file already exist and shouldOverwriteExistingFile setting is false then prompt the user to overwrite the existing file
       if (fsx.existsSync(newFilePath) && !Settings.shouldOverwriteExistingFile) {
         const action = "Overwrite Existing Files ?";
         await vscode.window
@@ -170,15 +178,19 @@ export class NewTemplates {
       this.configs = {
         ...this.configs,
         outputFile: newFilePath,
-        relativeOutputFile: path.relative(this.configs.workspaceFolder, newFilePath),
+        outputFileWorkspaceFolder: getWorkSpaceFolder(newFilePath),
+        relativeOutputFile: path.relative(getWorkSpaceFolder(newFilePath), newFilePath),
+        relativeOutputFileDirname: path.relative(getWorkSpaceFolder(newFilePath), path.dirname(newFilePath)),
         outputFileBasename: path.basename(newFilePath),
         outputFileBasenameNoExtension: path.basename(newFilePath, path.extname(newFilePath)),
         outputFileExtname: path.extname(newFilePath),
+        outputFileDirname: path.dirname(newFilePath),
+        outputFileDirnameBasename: path.basename(path.dirname(newFilePath)),
       };
 
       const data = await fsx.readFile(pathDetails.basePath, "utf8");
       await this.#collectUserInputs(data);
-      const updatedData = interpolate(data, this.configs);
+      const updatedData = await interpolate(data, this.configs);
 
       fsx.ensureFileSync(newFilePath);
       fsx.writeFileSync(newFilePath, updatedData);
@@ -186,19 +198,6 @@ export class NewTemplates {
       const newFile = await vscode.workspace.openTextDocument(newFilePath);
       await vscode.window.showTextDocument(newFile, undefined, true);
     }
-  }
-
-  async #getParsedPathList(pathsList: PathDetails[] = []) {
-    const updatedPathsList: WithParsedPathDetails[] = [];
-    for (let pathDetails of pathsList) {
-      await this.#collectUserInputs(pathDetails.basePath);
-      updatedPathsList.push({
-        ...pathDetails,
-        parsedBasePath: interpolate(pathDetails.basePath, this.configs),
-        parsedRelativePath: interpolate(pathDetails.relativePath, this.configs),
-      });
-    }
-    return updatedPathsList;
   }
 
   async #collectUserInputs(strings: string | string[] = []) {
@@ -213,16 +212,9 @@ export class NewTemplates {
 
       for (const inputName of unknownInputs) {
         const inputConfig = this.configs.input[inputName];
-
         const value = await getInput(inputName, isPlainObject(inputConfig) ? inputConfig : {}, this.configs);
-
         if (!value?.trim().length) throw Error("Exit");
-
         this.configs.input[inputName] = value;
-        this.configs = {
-          ...getAllCases(inputName.replace(/\s/g, "_"), value),
-          ...this.configs,
-        };
       }
     }
   }

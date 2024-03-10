@@ -1,15 +1,7 @@
 {
-  "package": {
-    "version": "1.0.0"
-  },
-  "variables": {
-    "foobar": "foo bar",
-    "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit."
-  },
-  "env": {
-    "NODE_ENV": "development"
-  },
   "input": {
+    "foobar": "$fooBar jazQux$",
+    "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
     "fileName": "index",
     "ext": {
       "title": "Extension",
