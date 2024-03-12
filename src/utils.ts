@@ -3,8 +3,8 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { Settings } from "./Settings";
 import * as caseConverter from "./caseConverter";
+import { CONFIG_FILENAME, Commands, EXIT_CODE, InputConfig } from "./constants";
 import { getPathsList } from "./getPathsList";
-import { Commands, InputConfig } from "./types";
 
 export const isPlainObject = (val?: any) => !!(val && typeof val === "object" && !Array.isArray(val));
 
@@ -17,23 +17,24 @@ export const getWorkSpaceFolder = (filePath: string = "") => {
   return workspaceFolders.map((folder) => folder.uri.fsPath).find((folder) => activePath.includes(folder.replaceAll("\\", "/"))) || "./";
 };
 
-const handleUndefinedVariable = (errorMessage: string, format: string = "", object: Record<string, any> = {}) => {
-  let undefinedVariable = errorMessage.replace("is not defined", "").trim();
+const handleUndefinedVariable = (error: Error, format: string = "", object: Record<string, any> = {}) => {
+  const undefinedVariable = error.message.replace("is not defined", "").trim();
 
-  const convertToMethodName = Object.keys(caseConverter).find((methodName) => undefinedVariable.endsWith(methodName));
+  const convertToMethodName = Object.keys(caseConverter).find((methodName) =>
+    undefinedVariable.endsWith(methodName)
+  ) as keyof typeof caseConverter;
 
-  const transform =
-    convertToMethodName && (caseConverter[convertToMethodName as keyof typeof caseConverter] as (input?: string) => string | undefined);
-  undefinedVariable = !!transform ? undefinedVariable.replace(convertToMethodName, "").trim() : undefinedVariable;
+  const transform = convertToMethodName && (caseConverter[convertToMethodName] as (input?: string) => string | undefined);
+  const inputName = !!transform ? undefinedVariable.replace(convertToMethodName, "").trim() : undefinedVariable;
 
-  const value = isPlainObject(object.input[undefinedVariable]) ? object.input[undefinedVariable].value : object.input[undefinedVariable];
+  const key = !!transform ? `${inputName}${convertToMethodName}` : inputName;
+  const value = isPlainObject(object.input[inputName]) ? object.input[inputName].value : object.input[inputName];
 
   if (value === undefined) {
-    vscode.window.showErrorMessage(errorMessage);
-    return format;
+    vscode.window.showErrorMessage(error.message);
+    console.error(error);
+    throw Error(EXIT_CODE);
   }
-
-  const key = !!transform ? `${undefinedVariable}${convertToMethodName}` : undefinedVariable;
 
   return interpolate(format, { ...object, [key]: !!transform ? transform(value) : value });
 };
@@ -46,11 +47,11 @@ export const interpolate = (format: string = "", object: Record<string, any> = {
     const interpolatedFunction = new Function(...keys, `return \`${format}\`;`);
     return interpolatedFunction(...values);
   } catch (error: unknown) {
-    if (!(error instanceof Error)) return format;
-    const errorMessage = error.message;
-    if (errorMessage.endsWith("is not defined")) return handleUndefinedVariable(errorMessage, format, object);
+    if (error instanceof Error && error.message.endsWith("is not defined")) return handleUndefinedVariable(error, format, object);
+    const errorMessage = error instanceof Error ? error.message : `${error}`;
     vscode.window.showErrorMessage(errorMessage);
-    return format;
+    console.error(error);
+    throw Error(EXIT_CODE);
   }
 };
 
@@ -111,7 +112,7 @@ export const selectTemplateFolder = async () => {
         action
       )
       .then((selectedAction) => {
-        if (selectedAction !== action) throw Error("Exit");
+        if (selectedAction !== action) throw Error(EXIT_CODE);
         vscode.commands.executeCommand(Commands.CREATE_SAMPLE_TEMPLATE);
       });
   }
@@ -126,7 +127,7 @@ export const selectTemplateFile = async (templatePath: string) => {
   const files = getPathsList(templatePath, {
     withFolders: false,
     relativeTo: templatePath,
-    excludeFile: [`${templatePath}/_config.json`],
+    excludeFile: [`${templatePath}/${CONFIG_FILENAME}`],
   });
   return vscode.window.showQuickPick(
     files.map((folder) => ({ label: folder.baseName, description: folder.relativePath, ...folder, picked: true })),

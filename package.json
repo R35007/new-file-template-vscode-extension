@@ -2,7 +2,7 @@
   "name": "new-file-template",
   "displayName": "New File Template",
   "description": "Create a new file or folder from custom templates",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "icon": "images/new-file-template-logo.png",
   "engines": {
     "vscode": "^1.87.0"
@@ -69,14 +69,27 @@
           "default": false,
           "description": "Set to true to overwrite the existing file."
         },
+        "new-file-template.settings.variables": {
+          "type": "object",
+          "default": {},
+          "examples": [
+            {
+              "foobar": "$fooBar jazQux$",
+              "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
+              "user": {
+                "name": "r35007"
+              }
+            }
+          ],
+          "additionalProperties": true,
+          "description": "Set to true to overwrite the existing file."
+        },
         "new-file-template.settings.input": {
           "type": "object",
           "default": {},
           "examples": [
             {},
             {
-              "foobar": "foo bar",
-              "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
               "fileName": "index",
               "ext": {
                 "title": "Extension",

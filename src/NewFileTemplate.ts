@@ -3,8 +3,8 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { Settings } from "./Settings";
 import * as caseConverter from "./caseConverter";
+import { CONFIG_FILENAME, EXIT_CODE, InputConfig } from "./constants";
 import { PathDetails, WithParsedPathDetails, getStats } from "./getPathsList";
-import { InputConfig } from "./types";
 import {
   copyFile,
   getInput,
@@ -21,7 +21,7 @@ const exampleTemplatePath = path.resolve(__dirname, "../Templates");
 const exampleReactComponentPath = path.join(exampleTemplatePath, `./ReactComponent/ReactComponent.txt`);
 const exampleReactComponentStoriesPath = path.join(exampleTemplatePath, `./ReactComponent/ReactComponent.stories.txt`);
 const exampleIndexPath = path.join(exampleTemplatePath, `./ReactComponent/index.txt`);
-const exampleConfigPath = path.join(exampleTemplatePath, `./_config.json`);
+const exampleConfigPath = path.join(exampleTemplatePath, `./${CONFIG_FILENAME}`);
 
 export class NewTemplates {
   configs: Record<string, any> = {
@@ -30,6 +30,7 @@ export class NewTemplates {
     __dirname,
     __filename,
     package: {},
+    variables: Settings.variables || {},
     input: Settings.input || {},
   };
 
@@ -55,7 +56,7 @@ export class NewTemplates {
       const newReactComponentPath = path.join(newTemplatePath, "./${input.componentName}/${componentName}.tsx");
       const newReactComponentStoriesPath = path.join(newTemplatePath, "./${input.componentName}/${componentName}.stories${input.ext}");
       const newIndexPath = path.join(newTemplatePath, "./${input.componentName}/${input.fileName}.ts");
-      const newConfigPath = path.join(newTemplatePath, "./_config.json");
+      const newConfigPath = path.join(newTemplatePath, `./${CONFIG_FILENAME}`);
 
       copyFile(exampleReactComponentPath, newReactComponentPath);
       copyFile(exampleReactComponentStoriesPath, newReactComponentStoriesPath);
@@ -67,7 +68,7 @@ export class NewTemplates {
 
       vscode.window.showInformationMessage(`${templateName} template is created successfully.`);
     } catch (err: unknown) {
-      if (!(err instanceof Error) || err.message === "Exit") return;
+      if (!(err instanceof Error) || err.message === EXIT_CODE) return;
       vscode.window.showErrorMessage(err.message);
       console.error(err);
     }
@@ -92,7 +93,7 @@ export class NewTemplates {
       const parsedPaths = await this.#getParsedPathList(selectedTemplateFiles);
       await this.#generateTemplateFiles(parsedPaths, outputFileDirname);
     } catch (err: unknown) {
-      if (!(err instanceof Error) || err.message === "Exit") return;
+      if (!(err instanceof Error) || err.message === EXIT_CODE) return;
       vscode.window.showErrorMessage(err.message);
       console.error(err);
     }
@@ -129,15 +130,16 @@ export class NewTemplates {
   }
 
   async #setTemplateConfig(templateFolderPath: string) {
-    const templateConfigPath = path.resolve(templateFolderPath, "./_config.json");
+    const templateConfigPath = path.resolve(templateFolderPath, `./${CONFIG_FILENAME}`);
 
     if (!fsx.existsSync(templateConfigPath)) return;
 
-    const { input = {} } = JSON.parse(fsx.readFileSync(templateConfigPath, "utf-8"));
+    const { input = {}, variables = {} } = JSON.parse(fsx.readFileSync(templateConfigPath, "utf-8"));
 
     this.configs = {
       ...this.configs,
       input: { ...this.configs.input, ...input },
+      variables: { ...this.configs.variables, ...variables },
     };
   }
 
@@ -170,7 +172,7 @@ export class NewTemplates {
         await vscode.window
           .showErrorMessage(`${path.basename(newFilePath)} file already exist.`, { modal: true }, action)
           .then((selectedAction) => {
-            if (selectedAction !== action) throw Error("Exit");
+            if (selectedAction !== action) throw Error(EXIT_CODE);
             Settings.shouldOverwriteExistingFile = true;
           });
       }

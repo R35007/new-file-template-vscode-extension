@@ -5,6 +5,10 @@ export enum Commands {
   NEW_FILES_FROM_TEMPLATE = "new-file-template.newFilesFromTemplate",
 }
 
+export const EXIT_CODE = "Exit";
+
+export const CONFIG_FILENAME = "_config.json";
+
 export interface InputConfig {
   promptAlways?: boolean;
   value?: string;

@@ -2,6 +2,11 @@
 
 All notable changes to the "new-file-template" extension will be documented in this file.
 
+## v3.1.0
+
+- Added `variables` in both `_config.json` and in `new-file-template.settings.variables` settings.
+- Fixed - Generating template file even when an error occurred issue fixed.
+
 ## v3.0.0
 
 - Removed `variables` from `_config.json`. instead assign variables inside `input`

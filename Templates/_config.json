@@ -1,7 +1,10 @@
 {
-  "input": {
+  "variables": {
     "foobar": "$fooBar jazQux$",
     "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
+    "user": { "name": "r35007" }
+  },
+  "input": {
     "fileName": "index",
     "ext": {
       "title": "Extension",

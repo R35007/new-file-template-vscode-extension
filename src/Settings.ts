@@ -1,6 +1,6 @@
 import * as fsx from "fs-extra";
 import * as vscode from "vscode";
-import { InputConfig } from "./types";
+import { InputConfig } from "./constants";
 import { resolveWithWorkspaceFolder } from "./utils";
 
 export class Settings {
@@ -20,6 +20,9 @@ export class Settings {
   }
   static get input() {
     return (Settings.getSettings("input") as InputConfig) || {};
+  }
+  static get variables() {
+    return (Settings.getSettings("variables") as Record<string, any>) || {};
   }
 
   static get shouldOverwriteExistingFile() {

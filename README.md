@@ -67,8 +67,8 @@ Use helper case methods to convert any variable to the defined case. Ex: **`${_t
 ### Dynamic Input
 
 - **`${input.componentName}`** -> This prompts the user for `componentName` if the value of the componentName is not present.
-- **`${input.lorem}`** -> This will not prompt the user as the value was predefined in the `_config.json` -> input.lorem.
-- **`${componentName}`**, **`${foobar}`** -> any input variables can also be directly accessed.
+- **`${input.fileName}`** -> This will not prompt the user as the value was predefined in the `_config.json` -> input.fileName.
+- **`${componentName}`**, **`${fileName}${ext}`** -> any input variables can also be directly accessed.
 - **`${componentName_toPascalCase}`** **`${componentName_toCamelCase}`** -> any input variables can be converted to the given case.
 
 ### Package JSON
@@ -76,6 +76,12 @@ Use helper case methods to convert any variable to the defined case. Ex: **`${_t
 Access `package.json` located at the root of the workspace folder.
 
 - **`${package.version || 'v1.0.0'}`**
+
+### Variables
+
+- **`${variables.foobar}`**
+- **`${variables.lorem}`**
+- **`${variables.user.name}`**
 
 ### Node global variables
 
@@ -96,7 +102,13 @@ Example: Here is the example config file `_config.json`
 
 ```jsonc
 {
-  // These input variables can be accessed as ${input.componentName} or ${componentName}
+  // These variables can be accessed as ${variables.foobar}, ${variables.user.name} ...
+  "variables": {
+    "foobar": "$fooBar jazQux$",
+    "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
+    "user": { "name": "r35007" }
+  },
+  // These inputs can be accessed as ${input.componentName} or ${componentName}
   "input": {
     "foobar": "foo bar", // predefined value for ${input.foobar} or ${foobar}. This will not prompt the user input
     "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
