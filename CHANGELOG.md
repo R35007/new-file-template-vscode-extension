@@ -2,6 +2,10 @@
 
 All notable changes to the "new-file-template" extension will be documented in this file.
 
+## v4.0.0 - !Breaking Change
+
+
+
 ## v3.1.0
 
 - Added `variables` in both `_config.json` and in `new-file-template.settings.variables` settings.

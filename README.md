@@ -46,7 +46,7 @@ Use helper case methods to convert any variable to the defined case. Ex: **`${_t
 
 - **`${userHome}`** - process.env.HOME - /home/your-username
 - **`${workspaceFolder}`** - Active vscode workspace folder - /home/your-username/your-project
-- **`*${cwd}*`** - alias **`${workspaceFolder}`** - /home/your-username/your-project
+- **`${cwd}`** - alias **`${workspaceFolder}`** - /home/your-username/your-project
 - **`${workspaceFolderBasename}`** - your-project
 - **`${file}`** - /home/your-username/your-project/folder/file.ext
 - **`${relativeFile}`** - folder/file.ext

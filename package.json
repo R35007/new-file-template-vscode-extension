@@ -1,11 +1,11 @@
 {
   "name": "new-file-template",
-  "displayName": "New File Template",
+  "displayName": "new-file-template",
   "description": "Create a new file or folder from custom templates",
   "version": "3.1.0",
   "icon": "images/new-file-template-logo.png",
   "engines": {
-    "vscode": "^1.87.0"
+    "vscode": "^1.97.0"
   },
   "categories": [
     "Other"
@@ -21,7 +21,7 @@
     "url": "https://github.com/R35007/new-file-template-vscode-extension"
   },
   "files": [
-    "dist",
+    "out",
     "images",
     "Templates"
   ],
@@ -42,7 +42,7 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "main": "./dist/extension.js",
+  "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
@@ -59,15 +59,29 @@
     "configuration": {
       "title": "New File Template",
       "properties": {
-        "new-file-template.settings.templatesPath": {
-          "type": "string",
-          "default": "./.vscode/templates",
-          "description": "Set custom templates folder."
+        "new-file-template.settings.configName": {
+          "type": "array",
+          "items": "string",
+          "default": "_config",
+          "description": "Set custom templates config file or folder name without extension."
+        },
+        "new-file-template.settings.templatesPaths": {
+          "type": "array",
+          "items": "string",
+          "default": [
+            "./.vscode/templates"
+          ],
+          "description": "Set custom templates folder paths."
         },
         "new-file-template.settings.overwriteExistingFile": {
           "type": "boolean",
           "default": false,
           "description": "Set to true to overwrite the existing file."
+        },
+        "new-file-template.settings.promptTemplateFiles": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true it prompts the multiple choice picker to pick the template files to generate."
         },
         "new-file-template.settings.variables": {
           "type": "object",
@@ -239,32 +253,27 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "vscode-test"
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
-    "@types/mocha": "^10.0.6",
-    "@types/node": "18.x",
-    "@types/vscode": "^1.87.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.2",
-    "@typescript-eslint/parser": "^7.0.2",
-    "@vscode/test-cli": "^0.0.6",
-    "@vscode/test-electron": "^2.3.9",
-    "eslint": "^8.56.0",
-    "ts-loader": "^9.5.1",
-    "typescript": "^5.3.3",
-    "webpack": "^5.90.3",
-    "webpack-cli": "^5.1.4"
+    "@types/node": "20.x",
+    "@types/vscode": "^1.97.0",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.21.0",
+    "eslint-config-prettier": "^10.0.2",
+    "eslint-plugin-prettier": "^5.2.3",
+    "prettier": "^3.5.2",
+    "typescript": "^5.7.3"
   },
   "dependencies": {
-    "fs-extra": "^11.2.0"
+    "fast-glob": "^3.3.3",
+    "fs-extra": "^11.3.0"
   }
 }

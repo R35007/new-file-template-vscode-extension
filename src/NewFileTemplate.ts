@@ -1,67 +1,82 @@
-import * as fsx from "fs-extra";
-import * as path from "path";
-import * as vscode from "vscode";
-import { Settings } from "./Settings";
-import * as caseConverter from "./caseConverter";
-import { CONFIG_FILENAME, EXIT_CODE, InputConfig } from "./constants";
-import { PathDetails, WithParsedPathDetails, getStats } from "./getPathsList";
+import * as fsx from 'fs-extra';
+import * as path from 'path';
+import * as vscode from 'vscode';
+import { Settings } from './Settings';
+import * as caseConverter from './caseConverter';
+import { EXIT_CODE, InputConfig, TemplateConfig } from './constants';
 import {
-  copyFile,
   getInput,
+  getTemplateConfig,
   getTemplateName,
   getWorkSpaceFolder,
   interpolate,
-  isPlainObject,
+  mergeConfig,
   resolveWithWorkspaceFolder,
-  selectTemplateFile as selectTemplateFiles,
-  selectTemplateFolder,
-} from "./utils";
+  selectTemplateFiles
+} from './utils';
 
-const exampleTemplatePath = path.resolve(__dirname, "../Templates");
-const exampleReactComponentPath = path.join(exampleTemplatePath, `./ReactComponent/ReactComponent.txt`);
-const exampleReactComponentStoriesPath = path.join(exampleTemplatePath, `./ReactComponent/ReactComponent.stories.txt`);
-const exampleIndexPath = path.join(exampleTemplatePath, `./ReactComponent/index.txt`);
-const exampleConfigPath = path.join(exampleTemplatePath, `./${CONFIG_FILENAME}`);
+const exampleTemplatePath = path.resolve(__dirname, '../Templates');
 
 export class NewTemplates {
-  configs: Record<string, any> = {
+  config: TemplateConfig = {
     ...caseConverter,
     process,
     __dirname,
     __filename,
     package: {},
-    variables: Settings.variables || {},
-    input: Settings.input || {},
+    exclude: [],
+    workspaceFolder: getWorkSpaceFolder(),
+    cwd: getWorkSpaceFolder(),
+    workspaceFolderBasename: path.basename(getWorkSpaceFolder()),
+    fileWorkspaceFolder: getWorkSpaceFolder(),
+    variables: Settings.variables,
+    input: Settings.input,
+    inputValues: {}
   };
 
-  constructor() {
+  constructor(config?: TemplateConfig) {
     try {
-      const packageJsonPath = resolveWithWorkspaceFolder("./package.json");
-      if (!fsx.existsSync(packageJsonPath)) return;
-      const packageJson = JSON.parse(fsx.readFileSync(packageJsonPath, "utf-8"));
-      this.configs.package = packageJson;
+      this.config = mergeConfig(this.config, config);
+      const packageJsonPath = resolveWithWorkspaceFolder('./package.json');
+      if (Object.keys(this.config.package).length || !fsx.existsSync(packageJsonPath)) return;
+      const packageJson = JSON.parse(fsx.readFileSync(packageJsonPath, 'utf-8'));
+      this.config.package = packageJson;
     } catch {
       /* do nothing on error */
     }
+  }
+
+  #setPredefinedVariables(args?: any) {
+    const workspaceFolder = getWorkSpaceFolder(args?.fsPath);
+
+    this.config = mergeConfig(this.config, {
+      userHome: process.env?.HOME,
+      workspaceFolder,
+      cwd: workspaceFolder,
+      workspaceFolderBasename: path.basename(workspaceFolder),
+      fsPath: args?.fsPath,
+      file: args?.fsPath,
+      fileWorkspaceFolder: workspaceFolder,
+      relativeFile: args?.fsPath && path.relative(workspaceFolder, args?.fsPath),
+      relativeFileDirname: args?.fsPath && path.relative(workspaceFolder, path.dirname(args?.fsPath)),
+      fileBasename: args?.fsPath && path.basename(args?.fsPath),
+      fileDirname: args?.fsPath && path.dirname(args?.fsPath),
+      fileDirnameBasename: args?.fsPath && path.basename(path.dirname(args?.fsPath)),
+      fileBasenameNoExtension: args?.fsPath && path.basename(args?.fsPath, path.extname(args?.fsPath)),
+      fileExtname: args?.fsPath && path.extname(args?.fsPath)
+    } as TemplateConfig);
   }
 
   async createTemplate() {
     try {
       const templateName = await getTemplateName();
       if (!templateName) return;
+      const newTemplatePath = path.join(Settings.vscodeTemplatePath, templateName);
+      if (fsx.existsSync(newTemplatePath)) return vscode.window.showErrorMessage('Template already exists.');
+      fsx.ensureDirSync(newTemplatePath);
+      fsx.copySync(exampleTemplatePath, newTemplatePath);
 
-      const newTemplatePath = path.join(Settings.templatesPath, templateName);
-      if (fsx.existsSync(newTemplatePath)) return vscode.window.showErrorMessage("Template already exists.");
-
-      const newReactComponentPath = path.join(newTemplatePath, "./${input.componentName}/${componentName}.tsx");
-      const newReactComponentStoriesPath = path.join(newTemplatePath, "./${input.componentName}/${componentName}.stories${input.ext}");
-      const newIndexPath = path.join(newTemplatePath, "./${input.componentName}/${input.fileName}.ts");
-      const newConfigPath = path.join(newTemplatePath, `./${CONFIG_FILENAME}`);
-
-      copyFile(exampleReactComponentPath, newReactComponentPath);
-      copyFile(exampleReactComponentStoriesPath, newReactComponentStoriesPath);
-      copyFile(exampleIndexPath, newIndexPath);
-      copyFile(exampleConfigPath, newConfigPath);
+      const newIndexPath = path.join(newTemplatePath, `./index.ts`);
 
       const newFile = await vscode.workspace.openTextDocument(newIndexPath);
       await vscode.window.showTextDocument(newFile, undefined, true);
@@ -74,150 +89,166 @@ export class NewTemplates {
     }
   }
 
-  async newFilesFromTemplate(args: any) {
-    try {
-      const selectedTemplateFolder = await selectTemplateFolder();
-      if (!selectedTemplateFolder) return;
+  async #collectInputsFromDataString(data: string = '') {
+    const matches = Array.from(new Set(String(data).match(/\$\{input\.[^}]*\}/g))); // pattern to match ${input.<any string here>}
+    const unknownInputs = matches.map((match) => match.slice(8, -1)?.trim()); // Extract user-defined variables. eg: ${input.componentName} -> componentName
 
-      let outputFileDirname = args?.fsPath || getWorkSpaceFolder(args?.fsPath);
-      outputFileDirname = getStats(outputFileDirname)?.isFile() ? path.dirname(outputFileDirname) : outputFileDirname;
+    for (const inputName of unknownInputs) {
+      // Skip if value is already present
+      if (this.config.inputValues[inputName as keyof InputConfig] !== undefined) continue;
+      const inputConfig = this.config.input[inputName as keyof InputConfig];
 
-      await this.#setPredefinedVariables(outputFileDirname, args);
-
-      const selectedTemplateFiles = await selectTemplateFiles(selectedTemplateFolder.basePath);
-      if (!selectedTemplateFiles?.length) return;
-
-      await this.#setTemplateConfig(selectedTemplateFolder.basePath);
-      await this.#promptPreLoadInputs();
-
-      const parsedPaths = await this.#getParsedPathList(selectedTemplateFiles);
-      await this.#generateTemplateFiles(parsedPaths, outputFileDirname);
-    } catch (err: unknown) {
-      if (!(err instanceof Error) || err.message === EXIT_CODE) return;
-      vscode.window.showErrorMessage(err.message);
-      console.error(err);
+      const value = await getInput(inputName, inputConfig, this.config);
+      if (value === undefined) throw Error('Exit'); // Don't proceed if user exits
+      this.config.input[inputName as keyof InputConfig] = value;
+      this.config.inputValues[inputName] = value;
     }
   }
 
-  async #setPredefinedVariables(outputFileDirname: string = "", args?: any) {
-    const workspaceFolder = getWorkSpaceFolder(args?.fsPath);
-
-    this.configs = {
-      ...this.configs,
-      userHome: process.env?.HOME,
-      workspaceFolder,
-      cwd: workspaceFolder,
-      workspaceFolderBasename: path.basename(workspaceFolder),
-      file: args?.fsPath || "",
-      fileWorkspaceFolder: workspaceFolder,
-      relativeFile: args?.fsPath ? path.relative(workspaceFolder, args?.fsPath) : "",
-      relativeFileDirname: args?.fsPath ? path.relative(workspaceFolder, path.dirname(args?.fsPath)) : "",
-      fileBasename: args?.fsPath ? path.basename(args?.fsPath) : "",
-      fileBasenameNoExtension: args?.fsPath ? path.basename(args?.fsPath, path.extname(args?.fsPath)) : "",
-      fileExtname: args?.fsPath ? path.extname(args?.fsPath) : "",
-      fileDirname: args?.fsPath ? path.dirname(args?.fsPath) : "",
-      fileDirnameBasename: args?.fsPath ? path.basename(path.dirname(args?.fsPath)) : "",
-      outputFile: "",
-      outputFileWorkspaceFolder: "",
-      relativeOutputFile: "",
-      relativeOutputFileDirname: "",
-      outputFileBasename: "",
-      outputFileBasenameNoExtension: "",
-      outputFileExtname: "",
-      outputFileDirname,
-      outputFileDirnameBasename: "",
-    };
-  }
-
-  async #setTemplateConfig(templateFolderPath: string) {
-    const templateConfigPath = path.resolve(templateFolderPath, `./${CONFIG_FILENAME}`);
-
-    if (!fsx.existsSync(templateConfigPath)) return;
-
-    const { input = {}, variables = {} } = JSON.parse(fsx.readFileSync(templateConfigPath, "utf-8"));
-
-    this.configs = {
-      ...this.configs,
-      input: { ...this.configs.input, ...input },
-      variables: { ...this.configs.variables, ...variables },
-    };
-  }
-
   async #promptPreLoadInputs() {
-    const preloadInputs = Object.entries(this.configs.input as InputConfig)
-      .filter(([, inputConfig]) => typeof inputConfig === "object" && inputConfig.promptAlways)
-      .map(([inputName]) => inputName);
+    for (const [inputName, inputConfig] of Object.entries(this.config.input)) {
+      // Skip if value is already present
+      if (this.config.inputValues[inputName as keyof InputConfig] !== undefined) continue;
 
-    await this.#collectUserInputs(preloadInputs.map((input) => `\${input.${input}}`));
+      if (inputConfig.promptAlways || (typeof inputConfig.when === 'function' && inputConfig.when(this.config) === true)) {
+        const value = await getInput(inputName, inputConfig!, this.config);
+        if (value === undefined) throw Error('Exit'); // Don't proceed if user exits
+        this.config.input[inputName as keyof InputConfig] = value;
+        this.config.inputValues[inputName] = value;
+      }
+    }
   }
 
-  async #getParsedPathList(pathsList: PathDetails[] = []) {
-    const updatedPathsList: WithParsedPathDetails[] = [];
-    for (let pathDetails of pathsList) {
-      await this.#collectUserInputs(pathDetails.basePath);
-      const parsedBasePath = interpolate(pathDetails.basePath, this.configs);
-      const parsedRelativePath = interpolate(pathDetails.relativePath, this.configs);
-      updatedPathsList.push({ ...pathDetails, parsedBasePath, parsedRelativePath });
+  async #generateTemplateFiles(parsedPaths: Array<{ templateFile: string; parsedTemplateFile: string }>) {
+    const beforeAllConfig = this.config.beforeAll?.(this.config);
+    if (beforeAllConfig === false) return;
+    this.config = mergeConfig(this.config, beforeAllConfig as TemplateConfig);
+
+    const destinationPath =
+      typeof this.config.out === 'string'
+        ? path.resolve(this.config.workspaceFolder, interpolate(this.config.out.replace(/\\/g, '/'), this.config))
+        : this.config.workspaceFolder;
+
+    for (let obj of parsedPaths) {
+      try {
+        let outputFile = path.join(destinationPath, path.relative(this.config.templateDirname!, obj.parsedTemplateFile));
+        const shouldRequire = path.basename(outputFile).endsWith('.template.js');
+        outputFile = shouldRequire ? outputFile.replace(/\.template\.js$/, '') : outputFile;
+
+        // If file already exist and shouldOverwriteExistingFile setting is false then prompt the user to overwrite the existing file
+        if (fsx.existsSync(outputFile) && !Settings.shouldOverwriteExistingFile) {
+          const actions = ['Always Overwrite Existing Files ?', 'Overwrite this file', 'Skip this file'];
+          const canOverwriteFile = await vscode.window
+            .showErrorMessage(`${path.basename(outputFile)} file already exist.`, { modal: true }, ...actions)
+            .then((selectedAction) => {
+              if (!selectedAction || !actions.includes(selectedAction)) throw Error(EXIT_CODE); // Exit if user didn't pick any choice
+              if (selectedAction === actions[0]) Settings.shouldOverwriteExistingFile = true; // Always overwrite existing files
+              if (selectedAction === actions[2]) return false; // Skip this file
+              return true;
+            });
+
+          if (!canOverwriteFile) continue;
+        }
+
+        this.config = mergeConfig(this.config, {
+          templateFile: obj.templateFile,
+          templateFileBaseName: path.basename(obj.templateFile),
+          relativeTemplateFile: path.relative(getWorkSpaceFolder(outputFile), obj.templateFile),
+          outputFile,
+          outputFileWorkspaceFolder: getWorkSpaceFolder(outputFile),
+          relativeOutputFile: path.relative(getWorkSpaceFolder(outputFile), outputFile),
+          relativeOutputFileDirname: path.relative(getWorkSpaceFolder(outputFile), path.dirname(outputFile)),
+          outputFileBasename: path.basename(outputFile),
+          outputFileBasenameNoExtension: path.basename(outputFile, path.extname(outputFile)),
+          outputFileExtname: path.extname(outputFile),
+          outputFileDirname: path.dirname(outputFile),
+          outputFileDirnameBasename: path.basename(path.dirname(outputFile))
+        } as TemplateConfig);
+
+        const beforeEachConfig = this.config.beforeEach?.(this.config);
+        if (beforeEachConfig === false) continue;
+        this.config = mergeConfig(this.config, beforeEachConfig as TemplateConfig);
+
+        let data = '';
+
+        if (shouldRequire) {
+          try {
+            delete require.cache[require.resolve(obj.templateFile)];
+            const module = require(obj.templateFile);
+            if (typeof module === 'function') data = await module(this.config);
+            else data = JSON.stringify(module, null, 2);
+          } catch (err) {
+            console.log(err);
+          }
+        }
+
+        if (!data) {
+          try {
+            data = await fsx.readFile(obj.templateFile, 'utf8');
+          } catch (err) {
+            console.log(err);
+          }
+        }
+
+        await this.#collectInputsFromDataString(data);
+        const updatedData = await interpolate(data, this.config);
+
+        fsx.ensureFileSync(outputFile);
+        fsx.writeFileSync(outputFile, updatedData);
+
+        const newFile = await vscode.workspace.openTextDocument(outputFile);
+        await vscode.window.showTextDocument(newFile, undefined, true);
+
+        const afterEachConfig = this.config.afterEach?.(this.config);
+        if (afterEachConfig === false) return;
+        this.config = mergeConfig(this.config, beforeEachConfig as TemplateConfig);
+      } catch (err) {
+        if (!(err instanceof Error) || err.message === EXIT_CODE) throw Error(EXIT_CODE);
+        console.log(err);
+      }
+    }
+
+    const afterAllConfig = this.config.afterAll?.(this.config);
+    if (afterAllConfig === false) return;
+    this.config = mergeConfig(this.config, afterAllConfig as TemplateConfig);
+  }
+
+  async #getParsedPathList(templatePaths: string[] = []) {
+    const updatedPathsList: Array<{ templateFile: string; parsedTemplateFile: string }> = [];
+    for (let templateFile of templatePaths) {
+      await this.#collectInputsFromDataString(templateFile);
+      const parsedTemplateFile = interpolate(templateFile, this.config);
+      updatedPathsList.push({ templateFile, parsedTemplateFile });
     }
     return updatedPathsList;
   }
 
-  async #generateTemplateFiles(parsedPaths: WithParsedPathDetails[], outputFileDirname: string) {
-    for (let pathDetails of parsedPaths) {
-      const newFilePath = path.join(outputFileDirname, `./${pathDetails.parsedRelativePath}`);
+  async newFilesFromTemplate(args: any, templateDirname?: string) {
+    if (!templateDirname?.length) return;
+    const templateConfig = await getTemplateConfig(templateDirname);
 
-      // If file already exist and shouldOverwriteExistingFile setting is false then prompt the user to overwrite the existing file
-      if (fsx.existsSync(newFilePath) && !Settings.shouldOverwriteExistingFile) {
-        const action = "Overwrite Existing Files ?";
-        await vscode.window
-          .showErrorMessage(`${path.basename(newFilePath)} file already exist.`, { modal: true }, action)
-          .then((selectedAction) => {
-            if (selectedAction !== action) throw Error(EXIT_CODE);
-            Settings.shouldOverwriteExistingFile = true;
-          });
-      }
+    this.config = mergeConfig(this.config, {
+      templateDirname,
+      templateBasename: path.basename(templateDirname),
+      templateName: path.basename(templateDirname),
+      ...templateConfig
+    } as TemplateConfig);
 
-      this.configs = {
-        ...this.configs,
-        outputFile: newFilePath,
-        outputFileWorkspaceFolder: getWorkSpaceFolder(newFilePath),
-        relativeOutputFile: path.relative(getWorkSpaceFolder(newFilePath), newFilePath),
-        relativeOutputFileDirname: path.relative(getWorkSpaceFolder(newFilePath), path.dirname(newFilePath)),
-        outputFileBasename: path.basename(newFilePath),
-        outputFileBasenameNoExtension: path.basename(newFilePath, path.extname(newFilePath)),
-        outputFileExtname: path.extname(newFilePath),
-        outputFileDirname: path.dirname(newFilePath),
-        outputFileDirnameBasename: path.basename(path.dirname(newFilePath)),
-      };
+    const fsPathFolder = args?.fsPath
+      ? fsx.statSync(args?.fsPath).isFile()
+        ? path.dirname(args.fsPath)
+        : args.fsPath
+      : getWorkSpaceFolder();
 
-      const data = await fsx.readFile(pathDetails.basePath, "utf8");
-      await this.#collectUserInputs(data);
-      const updatedData = await interpolate(data, this.configs);
+    this.config.out = path.resolve(fsPathFolder, this.config.out || fsPathFolder);
 
-      fsx.ensureFileSync(newFilePath);
-      fsx.writeFileSync(newFilePath, updatedData);
+    await this.#setPredefinedVariables(args);
+    await this.#promptPreLoadInputs();
 
-      const newFile = await vscode.workspace.openTextDocument(newFilePath);
-      await vscode.window.showTextDocument(newFile, undefined, true);
-    }
-  }
+    const selectedTemplateFiles = await selectTemplateFiles(templateDirname, this.config.templateName!, this.config.exclude);
+    if (!selectedTemplateFiles?.length) return;
 
-  async #collectUserInputs(strings: string | string[] = []) {
-    const data = ([] as string[]).concat(strings);
-    const pattern = /\$\{input\.[^}]*\}/g; // pattern to match ${input.<any string here>}
-
-    for (const str of data) {
-      const matches = Array.from(new Set(str.match(pattern)));
-      const unknownInputs = matches
-        .map((match) => match.slice(8, -1)?.trim()) // Extract user-defined variables
-        .filter((key) => this.configs.input[key] === undefined || typeof this.configs.input[key] !== "string"); // Filter only unknown inputs
-
-      for (const inputName of unknownInputs) {
-        const inputConfig = this.configs.input[inputName];
-        const value = await getInput(inputName, isPlainObject(inputConfig) ? inputConfig : {}, this.configs);
-        if (!value?.trim().length) throw Error("Exit");
-        this.configs.input[inputName] = value;
-      }
-    }
+    const parsedPaths = await this.#getParsedPathList(selectedTemplateFiles.map((file) => file.value));
+    await this.#generateTemplateFiles(parsedPaths);
   }
 }

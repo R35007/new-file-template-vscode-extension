@@ -1,5 +1,0 @@
-export interface ${componentName_toPascalCase}Props {}
-
-export const ${componentName_toPascalCase} = (${componentName_toCamelCase}Props: ${componentName_toPascalCase}Props) => { 
-        // your component logic goes here 👇
-}

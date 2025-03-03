@@ -1,19 +1,26 @@
 /**
  ** All Available variables
- * 
- * @userHome - ${userHome} -> alisa \`process.env.HOME\`
+ *
+ * @templateDirname - ${templateDirname}
+ * @templateBasename - ${templateBasename}
+ * @templateName - ${templateName} -> alias \`${templateBasename}\`
+ * @templateFile - ${templateFile}
+ * @templateFileBaseName - ${templateFileBaseName}
+ * @relativeTemplateFile - ${relativeTemplateFile}
+ * @userHome - ${userHome} -> ${userHome} -> alias \`process.env.HOME\`
  * @workspaceFolder - ${workspaceFolder}
  * @cwd - ${cwd} -> alias \`${workspaceFolder}\`
  * @workspaceFolderBasename - ${workspaceFolderBasename}
+ * @fsPath - ${fsPath}
  * @file - ${file}
  * @fileWorkspaceFolder - ${fileWorkspaceFolder}
  * @relativeFile - ${relativeFile}
  * @relativeFileDirname - ${relativeFileDirname}
  * @fileBasename - ${fileBasename}
- * @fileBasenameNoExtension - ${fileBasenameNoExtension}
- * @fileExtname - ${fileExtname}
  * @fileDirname - ${fileDirname}
  * @fileDirnameBasename - ${fileDirnameBasename}
+ * @fileBasenameNoExtension - ${fileBasenameNoExtension}
+ * @fileExtname - ${fileExtname}
  * @outputFile - ${outputFile}
  * @outputFileWorkspaceFolder - ${outputFileWorkspaceFolder}
  * @relativeOutputFile - ${relativeOutputFile}
@@ -26,21 +33,21 @@
  *
  ** Dynamic input
  * Note: Input variable must not contain any spaces
- * 
+ *
  * @componentName - ${input.componentName} -> This prompts the user for 'componentName' if the value of the componentName is not present.
+ * @tags - ${input.tags} -> This prompts the multiple choice for the users.
  * @fileName - ${input.fileName} -> This will not prompt the user as the value was predefined in the _config.json -> input.fileName.
- * @inputVariables - ${componentName} ${fileName}${ext} -> any input variables can also be directly accessed.
+ * @inputVariables - ${componentName} ${fileName} ${tags} -> any input variables can also be directly accessed.
  * @inputCaseConversion - ${componentName_toPascalCase} ${componentName_toCamelCase} -> any input variables can be converted to the given case.
  *
  ** Package JSON
- *
- * @version - ${package.version || 'v1.0.0'} -> Access package.json at the root of the workspace folder.
+ * @version - ${package.version} -> Access package.json at the root of the workspace folder.
  *
  ** Variables
+ * @variables - ${JSON.stringify(variables)}
  *
- * @foobar - ${variables.foobar}
- * @lorem - ${variables.lorem}
- * @userName - ${variables.user.name}
+ ** User Input Values
+ * @inputValues - ${JSON.stringify(inputValues)}
  *
  ** Node global variables
  *
@@ -50,7 +57,7 @@
  * @mathRandomNumber - ${Math.random()}
  * @dirname - ${__dirname}
  * @filename - ${__filename}
- * 
+ *
  ** Helper methods
  * @example variables.foobar: $fooBar jazQux$
  *
@@ -79,7 +86,7 @@
  *
  * @_toAlphaCase - ${_toAlphaCase(`${variables.foobar}-123-${variables.foobar}`)}
  * @_toNumericCase - ${_toNumericCase(`${variables.foobar}-123-${variables.foobar}`)}
- * 
+ *
  * */
 
-export * from "./${componentName_toPascalCase}"
+export * from './${componentName_toPascalCase}';
