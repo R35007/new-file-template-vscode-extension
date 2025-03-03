@@ -76,7 +76,7 @@ export class NewTemplates {
       fsx.ensureDirSync(newTemplatePath);
       fsx.copySync(exampleTemplatePath, newTemplatePath);
 
-      const newIndexPath = path.join(newTemplatePath, `./index.ts`);
+      const newIndexPath = path.join(newTemplatePath, `./index.ts.template.js`);
 
       const newFile = await vscode.workspace.openTextDocument(newIndexPath);
       await vscode.window.showTextDocument(newFile, undefined, true);
