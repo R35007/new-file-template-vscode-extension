@@ -1,6 +1,6 @@
 import * as fsx from 'fs-extra';
 import * as vscode from 'vscode';
-import { TemplateConfig } from './constants';
+import { Context } from './constants';
 import { resolveWithWorkspaceFolder } from './utils';
 
 export class Settings {
@@ -26,10 +26,10 @@ export class Settings {
     return [resolveWithWorkspaceFolder('./.vscode/templates')];
   }
   static get input() {
-    return (Settings.getSettings('input') as TemplateConfig['input']) || ({} as TemplateConfig['input']);
+    return (Settings.getSettings('input') as Context['input']) || ({} as Context['input']);
   }
   static get variables() {
-    return (Settings.getSettings('variables') as TemplateConfig['variables']) || ({} as TemplateConfig['variables']);
+    return (Settings.getSettings('variables') as Context['variables']) || ({} as Context['variables']);
   }
 
   static get shouldOverwriteExistingFile() {

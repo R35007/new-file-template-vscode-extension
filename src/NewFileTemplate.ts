@@ -3,68 +3,59 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { Settings } from './Settings';
 import * as caseConverter from './caseConverter';
-import { EXIT_CODE, InputConfig, TemplateConfig } from './constants';
+import { Commands, Context, EXIT, InputConfig, UserConfig } from './constants';
+import { getInput, getTemplateName, pickTemplateFolders, selectTemplateFiles, shouldSkipFile } from './inputs';
 import {
-  getInput,
-  getTemplateConfig,
-  getTemplateName,
+  getActiveFileDetails,
+  getFSPathDetails,
+  getOutputFilePathDetails,
+  getTemplateFilePathDetails,
+  getTemplatePathDetails,
   getWorkSpaceFolder,
+  getWorkSpaceFolderDetails
+} from './pathDetails';
+import {
+  getOutputFilePath,
+  getTemplateConfig,
+  getTemplateData,
+  getTopLevelFolders,
   interpolate,
-  mergeConfig,
+  isPlainObject,
+  listNestedFiles,
+  mergeContext,
   resolveWithWorkspaceFolder,
-  selectTemplateFiles
+  shouldExit
 } from './utils';
 
 const exampleTemplatePath = path.resolve(__dirname, '../Templates');
 
 export class NewTemplates {
-  config: TemplateConfig = {
-    ...caseConverter,
-    process,
-    __dirname,
-    __filename,
-    package: {},
-    exclude: [],
-    workspaceFolder: getWorkSpaceFolder(),
-    cwd: getWorkSpaceFolder(),
-    workspaceFolderBasename: path.basename(getWorkSpaceFolder()),
-    fileWorkspaceFolder: getWorkSpaceFolder(),
-    variables: Settings.variables,
-    input: Settings.input,
-    inputValues: {}
-  };
+  context: Context;
 
-  constructor(config?: TemplateConfig) {
+  constructor() {
+    this.context = {
+      ...caseConverter,
+      __dirname,
+      __filename,
+      process,
+      env: process.env,
+      userHome: process.env?.HOME,
+      package: {},
+      exclude: [],
+      out: getWorkSpaceFolder(),
+      ...getWorkSpaceFolderDetails(),
+      variables: Settings.variables || {},
+      input: Settings.input || {},
+      inputValues: {}
+    };
     try {
-      this.config = mergeConfig(this.config, config);
       const packageJsonPath = resolveWithWorkspaceFolder('./package.json');
-      if (Object.keys(this.config.package).length || !fsx.existsSync(packageJsonPath)) return;
+      if (Object.keys(this.context.package).length || !fsx.existsSync(packageJsonPath)) return;
       const packageJson = JSON.parse(fsx.readFileSync(packageJsonPath, 'utf-8'));
-      this.config.package = packageJson;
+      this.context.package = packageJson;
     } catch {
       /* do nothing on error */
     }
-  }
-
-  #setPredefinedVariables(args?: any) {
-    const workspaceFolder = getWorkSpaceFolder(args?.fsPath);
-
-    this.config = mergeConfig(this.config, {
-      userHome: process.env?.HOME,
-      workspaceFolder,
-      cwd: workspaceFolder,
-      workspaceFolderBasename: path.basename(workspaceFolder),
-      fsPath: args?.fsPath,
-      file: args?.fsPath,
-      fileWorkspaceFolder: workspaceFolder,
-      relativeFile: args?.fsPath && path.relative(workspaceFolder, args?.fsPath),
-      relativeFileDirname: args?.fsPath && path.relative(workspaceFolder, path.dirname(args?.fsPath)),
-      fileBasename: args?.fsPath && path.basename(args?.fsPath),
-      fileDirname: args?.fsPath && path.dirname(args?.fsPath),
-      fileDirnameBasename: args?.fsPath && path.basename(path.dirname(args?.fsPath)),
-      fileBasenameNoExtension: args?.fsPath && path.basename(args?.fsPath, path.extname(args?.fsPath)),
-      fileExtname: args?.fsPath && path.extname(args?.fsPath)
-    } as TemplateConfig);
   }
 
   async createTemplate() {
@@ -72,183 +63,182 @@ export class NewTemplates {
       const templateName = await getTemplateName();
       if (!templateName) return;
       const newTemplatePath = path.join(Settings.vscodeTemplatePath, templateName);
+
       if (fsx.existsSync(newTemplatePath)) return vscode.window.showErrorMessage('Template already exists.');
+
       fsx.ensureDirSync(newTemplatePath);
       fsx.copySync(exampleTemplatePath, newTemplatePath);
 
-      const newIndexPath = path.join(newTemplatePath, `./index.ts.template.js`);
+      const newIndexPath = path.join(newTemplatePath, './extension-predefined-variables.md');
 
       const newFile = await vscode.workspace.openTextDocument(newIndexPath);
       await vscode.window.showTextDocument(newFile, undefined, true);
 
       vscode.window.showInformationMessage(`${templateName} template is created successfully.`);
     } catch (err: unknown) {
-      if (!(err instanceof Error) || err.message === EXIT_CODE) return;
-      vscode.window.showErrorMessage(err.message);
-      console.error(err);
+      if (shouldExit(err)) return;
     }
   }
 
-  async #collectInputsFromDataString(data: string = '') {
-    const matches = Array.from(new Set(String(data).match(/\$\{input\.[^}]*\}/g))); // pattern to match ${input.<any string here>}
-    const unknownInputs = matches.map((match) => match.slice(8, -1)?.trim()); // Extract user-defined variables. eg: ${input.componentName} -> componentName
+  async #promptInputs(inputNames: string[]) {
+    for (const inputName of inputNames) {
+      const inputConfig = (this.context.input[inputName] || {}) as InputConfig;
 
-    for (const inputName of unknownInputs) {
       // Skip if value is already present
-      if (this.config.inputValues[inputName as keyof InputConfig] !== undefined) continue;
-      const inputConfig = this.config.input[inputName as keyof InputConfig];
+      if (this.context.inputValues[inputName as keyof InputConfig] !== undefined || !isPlainObject(inputConfig)) continue;
 
-      const value = await getInput(inputName, inputConfig, this.config);
-      if (value === undefined) throw Error('Exit'); // Don't proceed if user exits
-      this.config.input[inputName as keyof InputConfig] = value;
-      this.config.inputValues[inputName] = value;
-    }
-  }
+      if (Object.keys(inputConfig).length || inputConfig.promptAlways || inputConfig.when?.(this.context) !== false) {
+        const value = await getInput(inputName, inputConfig, this.context);
 
-  async #promptPreLoadInputs() {
-    for (const [inputName, inputConfig] of Object.entries(this.config.input)) {
-      // Skip if value is already present
-      if (this.config.inputValues[inputName as keyof InputConfig] !== undefined) continue;
+        if (value === undefined) throw Error(EXIT); // Don't proceed if user exits
 
-      if (inputConfig.promptAlways || (typeof inputConfig.when === 'function' && inputConfig.when(this.config) === true)) {
-        const value = await getInput(inputName, inputConfig!, this.config);
-        if (value === undefined) throw Error('Exit'); // Don't proceed if user exits
-        this.config.input[inputName as keyof InputConfig] = value;
-        this.config.inputValues[inputName] = value;
+        this.context.inputValues[inputName] = value;
+        this.context.input[inputName] = value;
+        this.context[inputName] = value;
       }
     }
   }
 
-  async #generateTemplateFiles(parsedPaths: Array<{ templateFile: string; parsedTemplateFile: string }>) {
-    const beforeAllConfig = this.config.beforeAll?.(this.config);
-    if (beforeAllConfig === false) return;
-    this.config = mergeConfig(this.config, beforeAllConfig as TemplateConfig);
+  async #promptInputsFromPattern(data: string = '') {
+    // pattern to match ${input.<any string here>}
+    const pattern = /\$\{input\.[^}]*\}/g;
+    const matches = Array.from(new Set(String(data).match(pattern)));
 
-    const destinationPath =
-      typeof this.config.out === 'string'
-        ? path.resolve(this.config.workspaceFolder, interpolate(this.config.out.replace(/\\/g, '/'), this.config))
-        : this.config.workspaceFolder;
+    // Extract user-defined variables. eg: ${input.componentName} -> componentName
+    const unknownInputs = matches.map((match) => match.slice(8, -1)?.trim());
 
-    for (let obj of parsedPaths) {
+    return await this.#promptInputs(unknownInputs);
+  }
+  async #hooks(callback?: UserConfig['beforeEach']) {
+    if (!callback) return true;
+    const context = callback(this.context);
+    if (context === false) return false;
+    this.context = mergeContext(this.context, context as Context);
+    return true;
+  }
+
+  async #processHooks(data: string, callback?: UserConfig['processAfterEach']) {
+    if (!callback) return data;
+    const processedObject = callback({ data, context: this.context });
+    if (processedObject === false || (processedObject !== undefined && !isPlainObject(processedObject))) return data;
+    const processedData = processedObject?.data || data;
+    this.context = mergeContext(this.context, processedObject?.context as Context);
+    return processedData;
+  }
+
+  async #generateTemplateFile(templateFile: string, destinationPath: string) {
+    this.context = { ...this.context, ...getTemplateFilePathDetails(this.context.workspaceFolder, templateFile) };
+    this.context.currentTemplateFile = templateFile;
+
+    if (!(await this.#hooks(this.context.beforeEach))) return;
+
+    await this.#promptInputsFromPattern(templateFile);
+
+    const parsedTemplatePaths = interpolate(templateFile, this.context);
+    let outputFile = getOutputFilePath(this.context.template!, destinationPath, parsedTemplatePaths);
+
+    if (await shouldSkipFile(outputFile)) return;
+
+    this.context = { ...this.context, ...getOutputFilePathDetails(this.context.workspaceFolder, outputFile) };
+
+    let data = await getTemplateData(templateFile, this.context);
+
+    await this.#promptInputsFromPattern(data);
+
+    data = await this.#processHooks(data, this.context.processBeforeEach);
+    data = await interpolate(String(data), this.context);
+    data = await this.#processHooks(data, this.context.processAfterEach);
+
+    // write output file
+    fsx.ensureFileSync(this.context.outputFile!);
+    fsx.writeFileSync(this.context.outputFile!, data);
+
+    // open generated file
+    const newFile = await vscode.workspace.openTextDocument(this.context.outputFile!);
+    await vscode.window.showTextDocument(newFile, undefined, true);
+
+    await this.#hooks(this.context.afterEach);
+  }
+
+  async #generateTemplateFiles(templateFiles: string[]) {
+    this.context.templateFiles = templateFiles;
+
+    if (!this.#hooks(this.context.beforeAll)) return;
+
+    const destinationPath = path.resolve(this.context.workspaceFolder, interpolate(this.context.out.replace(/\\/g, '/'), this.context));
+
+    for (let templateFile of templateFiles) {
       try {
-        let outputFile = path.join(destinationPath, path.relative(this.config.templateDirname!, obj.parsedTemplateFile));
-        const shouldRequire = path.basename(outputFile).endsWith('.template.js');
-        outputFile = shouldRequire ? outputFile.replace(/\.template\.js$/, '') : outputFile;
-
-        // If file already exist and shouldOverwriteExistingFile setting is false then prompt the user to overwrite the existing file
-        if (fsx.existsSync(outputFile) && !Settings.shouldOverwriteExistingFile) {
-          const actions = ['Always Overwrite Existing Files ?', 'Overwrite this file', 'Skip this file'];
-          const canOverwriteFile = await vscode.window
-            .showErrorMessage(`${path.basename(outputFile)} file already exist.`, { modal: true }, ...actions)
-            .then((selectedAction) => {
-              if (!selectedAction || !actions.includes(selectedAction)) throw Error(EXIT_CODE); // Exit if user didn't pick any choice
-              if (selectedAction === actions[0]) Settings.shouldOverwriteExistingFile = true; // Always overwrite existing files
-              if (selectedAction === actions[2]) return false; // Skip this file
-              return true;
-            });
-
-          if (!canOverwriteFile) continue;
-        }
-
-        this.config = mergeConfig(this.config, {
-          templateFile: obj.templateFile,
-          templateFileBaseName: path.basename(obj.templateFile),
-          relativeTemplateFile: path.relative(getWorkSpaceFolder(outputFile), obj.templateFile),
-          outputFile,
-          outputFileWorkspaceFolder: getWorkSpaceFolder(outputFile),
-          relativeOutputFile: path.relative(getWorkSpaceFolder(outputFile), outputFile),
-          relativeOutputFileDirname: path.relative(getWorkSpaceFolder(outputFile), path.dirname(outputFile)),
-          outputFileBasename: path.basename(outputFile),
-          outputFileBasenameNoExtension: path.basename(outputFile, path.extname(outputFile)),
-          outputFileExtname: path.extname(outputFile),
-          outputFileDirname: path.dirname(outputFile),
-          outputFileDirnameBasename: path.basename(path.dirname(outputFile))
-        } as TemplateConfig);
-
-        const beforeEachConfig = this.config.beforeEach?.(this.config);
-        if (beforeEachConfig === false) continue;
-        this.config = mergeConfig(this.config, beforeEachConfig as TemplateConfig);
-
-        let data = '';
-
-        if (shouldRequire) {
-          try {
-            delete require.cache[require.resolve(obj.templateFile)];
-            const module = require(obj.templateFile);
-            if (typeof module === 'function') data = await module(this.config);
-            else data = JSON.stringify(module, null, 2);
-          } catch (err) {
-            console.log(err);
-          }
-        }
-
-        if (!data) {
-          try {
-            data = await fsx.readFile(obj.templateFile, 'utf8');
-          } catch (err) {
-            console.log(err);
-          }
-        }
-
-        await this.#collectInputsFromDataString(data);
-        const updatedData = await interpolate(data, this.config);
-
-        fsx.ensureFileSync(outputFile);
-        fsx.writeFileSync(outputFile, updatedData);
-
-        const newFile = await vscode.workspace.openTextDocument(outputFile);
-        await vscode.window.showTextDocument(newFile, undefined, true);
-
-        const afterEachConfig = this.config.afterEach?.(this.config);
-        if (afterEachConfig === false) return;
-        this.config = mergeConfig(this.config, beforeEachConfig as TemplateConfig);
+        await this.#generateTemplateFile(templateFile, destinationPath);
       } catch (err) {
-        if (!(err instanceof Error) || err.message === EXIT_CODE) throw Error(EXIT_CODE);
-        console.log(err);
+        if (shouldExit(err, this.context.currentTemplateFile)) throw Error(EXIT);
       }
     }
 
-    const afterAllConfig = this.config.afterAll?.(this.config);
-    if (afterAllConfig === false) return;
-    this.config = mergeConfig(this.config, afterAllConfig as TemplateConfig);
+    this.#hooks(this.context.afterAll);
+  }
+  async #generateTemplate(_args: any, template: string) {
+    const templateConfig = await getTemplateConfig(template, Settings.configName);
+    this.context = mergeContext(this.context, templateConfig);
+    this.context = {
+      ...this.context,
+      ...getTemplatePathDetails(this.context.workspaceFolder, template)
+    };
+
+    const fsPathFolder = this.context.folder || this.context.workspaceFolder;
+    this.context.out = path.resolve(fsPathFolder, this.context.out || fsPathFolder);
+
+    await this.#promptInputs(Object.keys(this.context.input));
+
+    const allTemplateFiles = await listNestedFiles(template, [
+      `${template}/${Settings.configName}`,
+      `${template}/${Settings.configName}.json`,
+      `${template}/${Settings.configName}.js`,
+      ...this.context.exclude
+    ]);
+    this.context.allTemplateFiles = allTemplateFiles;
+
+    const selectedTemplateFiles = await selectTemplateFiles(allTemplateFiles, template, this.context.templateName!);
+    if (!selectedTemplateFiles?.length) throw Error(EXIT);
+    const templateFiles = selectedTemplateFiles.map((templateFile) => templateFile.value);
+
+    await this.#generateTemplateFiles(templateFiles);
   }
 
-  async #getParsedPathList(templatePaths: string[] = []) {
-    const updatedPathsList: Array<{ templateFile: string; parsedTemplateFile: string }> = [];
-    for (let templateFile of templatePaths) {
-      await this.#collectInputsFromDataString(templateFile);
-      const parsedTemplateFile = interpolate(templateFile, this.config);
-      updatedPathsList.push({ templateFile, parsedTemplateFile });
+  async generateTemplates(args: any) {
+    try {
+      this.context = {
+        ...this.context,
+        ...getFSPathDetails(args?.fsPath),
+        ...getActiveFileDetails()
+      };
+
+      const allTemplates = await getTopLevelFolders(Settings.templatePaths);
+      if (!allTemplates?.length) {
+        const selectedAction = await vscode.window.showErrorMessage(
+          `No Templates Found !  Create a new sample template ?`,
+          { modal: true },
+          'Yes'
+        );
+
+        if (selectedAction === 'Yes') vscode.commands.executeCommand(Commands.CREATE_SAMPLE_TEMPLATE);
+        throw Error(EXIT);
+      }
+      this.context.allTemplates = allTemplates;
+
+      const selectedTemplates = await pickTemplateFolders(allTemplates);
+      if (!selectedTemplates?.length) throw Error(EXIT);
+      this.context.templates = selectedTemplates.map((template) => template.value);
+
+      for (const template of this.context.templates) {
+        try {
+          await this.#generateTemplate(args, template);
+        } catch (err) {
+          if (shouldExit(err, this.context.currentTemplateFile)) throw Error(EXIT);
+        }
+      }
+    } catch (err) {
+      if (shouldExit(err, this.context.currentTemplateFile)) return;
     }
-    return updatedPathsList;
-  }
-
-  async newFilesFromTemplate(args: any, templateDirname?: string) {
-    if (!templateDirname?.length) return;
-    const templateConfig = await getTemplateConfig(templateDirname);
-
-    this.config = mergeConfig(this.config, {
-      templateDirname,
-      templateBasename: path.basename(templateDirname),
-      templateName: path.basename(templateDirname),
-      ...templateConfig
-    } as TemplateConfig);
-
-    const fsPathFolder = args?.fsPath
-      ? fsx.statSync(args?.fsPath).isFile()
-        ? path.dirname(args.fsPath)
-        : args.fsPath
-      : getWorkSpaceFolder();
-
-    this.config.out = path.resolve(fsPathFolder, this.config.out || fsPathFolder);
-
-    await this.#setPredefinedVariables(args);
-    await this.#promptPreLoadInputs();
-
-    const selectedTemplateFiles = await selectTemplateFiles(templateDirname, this.config.templateName!, this.config.exclude);
-    if (!selectedTemplateFiles?.length) return;
-
-    const parsedPaths = await this.#getParsedPathList(selectedTemplateFiles.map((file) => file.value));
-    await this.#generateTemplateFiles(parsedPaths);
   }
 }

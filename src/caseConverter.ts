@@ -1,7 +1,7 @@
 // AlphaNumeric Case -> removes any special chars and keeps only Alphabets and numbers
 /** @example "Foo--123-Bar-@-Qux-Baz" = "123" */
 export const _toNumericCase = (input: string = '') =>
-  input
+  String(input)
     .trim()
     .replace(/[^0-9 ]/g, ' ')
     .replace(/\s+/g, ' ')
@@ -9,7 +9,7 @@ export const _toNumericCase = (input: string = '') =>
 
 /** @example "Foo--123-Bar-@-Qux-Baz" = "Foo Bar Qux Baz" */
 export const _toAlphaCase = (input: string = '') =>
-  input
+  String(input)
     .trim()
     .replace(/[^a-zA-Z ]/g, ' ')
     .replace(/\s+/g, ' ')
@@ -17,7 +17,7 @@ export const _toAlphaCase = (input: string = '') =>
 
 /** @example "Foo--123-Bar-@-Qux-Baz" = "Foo 123 Bar Qux Baz" */
 export const _toAlphaNumericCase = (input: string = '') =>
-  input
+  String(input)
     .trim()
     .replace(/^\d+/, '')
     .replace(/[^a-zA-Z0-9 ]/g, ' ')
