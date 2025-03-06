@@ -1,61 +1,70 @@
-const beforeEach = require('./_beforeEach');
+/**
+ * This configuration file demonstrates all available features.
+ * Every attribute in this configuration is optional. The configuration below is an advanced example for demonstration purposes.
+ */
+const hooks = require('./_hooks');
 
-module.exports = () => ({
-  beforeAll: () => {
-    /* Write your operation here 👇 that runs before generating all template files */
+module.exports = (_context) => ({
+  ...hooks,
+  out: '${workspaceFolder}/ReactComponent',
+  inputValues: {
+    // User input values will be added here. If a value is present here, it will not prompt the user.
+    // This will replace the values from variables and input configurations.
+    fileName: 'Index'
   },
-  beforeEach,
-  processBeforeEach: ({ data, context }) => ({ data, context }),
-  processAfterEach: ({ data, context }) => ({ data, context }),
-  afterEach: (context) => {
-    console.log('Sucessfully Generated: ', context.outputFile);
-  } /* Write your operation here 👇 that runs after generating each template file */,
-  afterAll: () => {
-    /* Write your operation here 👇 that runs after generating all template files */
-  },
-  exclude: ['./_beforeEach.js'],
-  out: 'ReactComponent',
   variables: {
-    componentName: 'AppComponent', // set default input name
+    fileName: 'test', // This value will be ignored since it is used in inputValues.
+    componentName: 'AppComponent', // Set default input value for componentName.
     foobar: '$fooBar jazQux$',
     lorem: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
     user: { name: 'r35007' }
   },
-  inputValues: {
-    // user input values will be added here. If value is present here then it will not prompt the user
-    fileName: 'Index'
-  },
+  // Input configurations. Inputs will always be prompted on demand if the file or folder contains ${input.<user variable>} and the value is not present.
   input: {
     tags: {
-      title: 'Tag',
-      placeHolder: 'Please pick a tag',
-      promptAlways: true,
-      canPickMany: true,
+      title: 'Filter',
+      placeHolder: 'Please pick a file type to filter',
+      promptAlways: true, // If true, it always prompts the user input even if the file or folder doesn't contain the text ${input.<user variable>}.
+      canPickMany: true, // If true, it prompts multiple choices.
       matchOnDescription: false,
       matchOnDetail: false,
-      ignoreFocusOut: false,
+      ignoreFocusOut: true, // Set to false to close the input dialog on focus out.
       options: [
-        { label: 'React', description: 'React', detail: 'This is a React Component', value: 'react', picked: true },
-        { label: 'Angular', description: 'Angular', detail: 'This is a Angular Component', value: 'angular' },
-        { label: 'Typescript', description: 'Typescript', detail: 'This is a plain javascript project', value: 'typescript' },
-        { label: 'Javascript', description: 'Javascript', detail: 'This is a typescript project', value: 'javascript' }
-      ],
-      afterInput: "${value?.length ? value.join(', ') : ''}", // use this if using _config.json
-      transform: (value) => value?.join(', ') // always transform takes the precedence
-      /* select input wont have validator, validateInput, password  */
+        { label: 'React', description: 'React', detail: 'This generates React component files', value: 'react', picked: true },
+        { label: 'Story', description: 'Story', detail: 'This generates Storybook files', value: 'story', picked: true },
+        { label: 'Test', description: 'Test', detail: 'This generates test case files', value: 'test', picked: true }
+      ]
+      /* Select input won't have validator, validateInput, password */
     },
     componentName: {
-      when: (context) => context.inputValues.tags?.includes('react'), // prompts only when tags includes 'react'
+      when: ({ tags }) => tags?.includes('react'), // Prompts only when tags include 'react'.
       value: 'AppComponent',
       promptAlways: false,
       password: false,
-      ignoreFocusOut: false,
-      placeHolder: 'Please provide a componentName in pascal case',
-      validator: "${value?.trim().length >= 5 ? '' : 'Please Enter a minimum 5 characters'}", // use this if using _config.json
-      validateInput: (value) => (value?.trim().length >= 5 ? '' : 'Please Enter a minimum 5 characters'), // always validateInput takes the precedence
-      afterInput: "${value?.trim().length ? _toPascalCase(value) : ''}", // use this if using _config.json
-      transform: (value, context) => context._toPascalCase(value) // always transform takes the precedence
-      /* text input wont have matchOnDescription, matchOnDetail, canPickMany */
+      ignoreFocusOut: true,
+      placeHolder: 'Please provide a componentName in PascalCase',
+      validator: "${value?.trim().length >= 5 ? '' : 'Please enter a minimum of 5 characters'}", // Use this if using _config.json.
+      validateInput: (value) => (value?.trim().length >= 5 ? '' : 'Please enter a minimum of 5 characters'), // validateInput always takes precedence.
+      afterInput: '${_toPascalCase(value)}', // Use this if using _config.json.
+      transform: (value, context) => context._toPascalCase(value) // transform always takes precedence.
+      /* Text input won't have matchOnDescription, matchOnDetail, canPickMany */
     }
+  },
+  promptTemplateFiles: true, // If false, it will never prompt the user to select individual template files.
+  // Files or folders to exclude from template generation.
+  // You can also directly provide an array of string values.
+  // exclude: ['./_hooks.js']
+  exclude: ({ tags }) => {
+    const files = ['./_hooks.js'];
+    if (!tags.includes('react')) {
+      files.push('./${componentName}.tsx.template.js', './${camelCaseFileName}.ts.template.js');
+    }
+    if (!tags.includes('test')) {
+      files.push('./${componentName}.test.tsx.template.js');
+    }
+    if (!tags.includes('story')) {
+      files.push('./${componentName}.stories.tsx.template.js');
+    }
+    return files;
   }
 });

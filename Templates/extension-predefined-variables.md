@@ -1,44 +1,35 @@
 # Predefined Variables
 
-## Templates
+## Dynamic Input
 
-- allTemplates - [ ${allTemplates?.join(', ')} ]
-- templates - [ ${templates?.join(', ')} ]
-- template - ${template}
-- relativeTemplate - ${relativeTemplate}
-- templateBasename - ${templateBasename}
-- templateName - ${templateName}
+> Note: Input variable must not contain any spaces. Inputs are prompted on demand only when the input values are not present.
 
-## Template Files
+- componentName - ${input.componentName} -> This wont prompt again if the value is already prompted
+- tags - ${input.tags} -> This prompts the multiple choice. Need to configure options in the config file.
+- inputVariables - ${componentName} ${tags} ${foobar} -> any inputs and variables can be directly accessed.
+- inputCaseConversion - ${componentName_toPascalCase} ${componentName_toCamelCase} -> any inputs and variables can be converted to the given case.
 
-- allTemplateFiles - [ ${allTemplateFiles?.join(', ')} ]
-- templateFiles - [ ${templateFiles?.join(', ')} ]
-- templateFile - ${templateFile}
-- relativeTemplateFile - ${relativeTemplateFile}
-- relativeTemplateFileDirname - ${relativeTemplateFileDirname}
-- templateFileBasename - ${templateFileBasename}
-- templateFileName - ${templateFileName}
-- templateFileBasenameNoExtension - ${templateFileBasenameNoExtension}
-- templateFileNameNoExtension - ${templateFileNameNoExtension}
-- templateFileExtname - ${templateFileExtname}
-- templateFileDirname - ${templateFileDirname}
-- templateFileDirBasename - ${templateFileDirBasename}
-- templateFileFolderName - ${templateFileFolderName}
+## User Input Values
 
-## Output Files
+- inputValues - ${JSON.stringify(inputValues)}
 
-- outputFile - ${outputFile}
-- relativeOutputFile - ${relativeOutputFile}
-- relativeOutputFileDirname - ${relativeOutputFileDirname}
-- outputFileBasename - ${outputFileBasename}
-- outputFileName - ${outputFileName}
-- outputFileBasenameNoExtension - ${outputFileBasenameNoExtension}
-- outputFileNameNoExtension - ${outputFileNameNoExtension}
-- outputFileExtname - ${outputFileExtname}
-- outputFileDirname - ${outputFileDirname}
-- outputFileFolder - ${outputFileFolder}
-- outputFileDirBasename - ${outputFileDirBasename}
-- outputFileFolderName - ${outputFileFolderName}
+## Variables
+
+- variables - ${JSON.stringify(variables)}
+
+## Package JSON
+
+- version - ${package.version} -> Access package.json at the root of the workspace folder.
+
+## Node Global Variables
+
+- process execPath - ${process.execPath}
+- env NODE_ENV - ${env.NODE_ENV || 'development'}
+- date now - ${Date.now()}
+- formatted date - ${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}
+- random number - ${Math.random()}
+- **dirname - ${__dirname}
+- **filename - ${__filename}
 
 ## User Directories
 
@@ -52,14 +43,14 @@
 
 - fsPath - ${fsPath} - fsPath is the selected explorer file or folder
 
-## Folders (if fsPath is a folder)
+### Folders (if fsPath is a folder)
 
 - folder - ${folder}
 - relativeFolder - ${relativeFolder}
 - folderBasename - ${folderBasename}
 - folderName - ${folderName}
 
-## Files (if fsPath is a file)
+### Files (if fsPath is a file)
 
 - file - ${file}
 - fileWorkspaceFolder - ${fileWorkspaceFolder}
@@ -75,7 +66,7 @@
 - fileDirBasename - ${fileDirBasename}
 - fileFolderName - ${fileFolderName}
 
-## Active Document (if any active document is opened)
+### Active Document (if any active document is opened)
 
 - activeFile - ${activeFile}
 - activeFileWorkspaceFolder - ${activeFileWorkspaceFolder}
@@ -91,42 +82,51 @@
 - activeFileDirBasename - ${activeFileDirBasename}
 - activeFileFolderName - ${activeFileFolderName}
 
-# Dynamic Input
+## Templates
 
-_Note: Input variable must not contain any spaces. Inputs are prompted on demand only when the input values are not present_
+- allTemplates - [ ${allTemplates?.join(', ')} ]
+- templates - [ ${templates?.join(', ')} ]
+- template - ${template}
+- relativeTemplate - ${relativeTemplate}
+- templateBasename - ${templateBasename}
+- templateName - ${templateName}
 
-- componentName - ${input.componentName} -> This prompts text input.
-- tags - ${input.tags} -> This prompts the multiple choice. Need to configure options in the config file.
-- inputVariables - ${componentName} ${tags} ${foobar} -> any inputs and variables can be directly accessed.
-- inputCaseConversion - ${componentName_toPascalCase} ${componentName_toCamelCase} -> any inputs and variables can be converted to the given case.
+### Template Files
 
-# Package JSON
+- allTemplateFiles - [ ${allTemplateFiles?.join(', ')} ]
+- templateFiles - [ ${templateFiles?.join(', ')} ]
+- templateFile - ${templateFile}
+- relativeTemplateFile - ${relativeTemplateFile}
+- relativeTemplateFileDirname - ${relativeTemplateFileDirname}
+- templateFileBasename - ${templateFileBasename}
+- templateFileName - ${templateFileName}
+- templateFileBasenameNoExtension - ${templateFileBasenameNoExtension}
+- templateFileNameNoExtension - ${templateFileNameNoExtension}
+- templateFileExtname - ${templateFileExtname}
+- templateFileDirname - ${templateFileDirname}
+- templateFileDirBasename - ${templateFileDirBasename}
+- templateFileFolderName - ${templateFileFolderName}
 
-- version - ${package.version} -> Access package.json at the root of the workspace folder.
+### Output Files
 
-# Variables
+- outputFile - ${outputFile}
+- relativeOutputFile - ${relativeOutputFile}
+- relativeOutputFileDirname - ${relativeOutputFileDirname}
+- outputFileBasename - ${outputFileBasename}
+- outputFileName - ${outputFileName}
+- outputFileBasenameNoExtension - ${outputFileBasenameNoExtension}
+- outputFileNameNoExtension - ${outputFileNameNoExtension}
+- outputFileExtname - ${outputFileExtname}
+- outputFileDirname - ${outputFileDirname}
+- outputFileFolder - ${outputFileFolder}
+- outputFileDirBasename - ${outputFileDirBasename}
+- outputFileFolderName - ${outputFileFolderName}
 
-- variables - ${JSON.stringify(variables)}
-
-# User Input Values
-
-- inputValues - ${JSON.stringify(inputValues)}
-
-# Node Global Variables
-
-- process execPath - ${process.execPath}
-- env NODE_ENV - ${env.NODE_ENV || 'development'}
-- date now - ${Date.now()}
-- formatted date - ${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}
-- random number - ${Math.random()}
-- **dirname - ${__dirname}
-- **filename - ${__filename}
-
-# Helper Methods
+## Helper Methods
 
 - example variables.foobar: $fooBar jazQux$
 
-## Case Converters
+### Case Converters
 
 - _toAlphaCase - ${_toAlphaCase(variables.foobar)}
 - _toNumericCase - ${_toNumericCase(variables.foobar)}
@@ -150,11 +150,9 @@ _Note: Input variable must not contain any spaces. Inputs are prompted on demand
 - _toUpperCase - ${_toUpperCase(variables.foobar)}
 - _toLowerCase - ${_toLowerCase(variables.foobar)}
 
-## Custom String to Case Converters
+### Custom String to Case Converters
 
-_Pass custom string to case converters_
-
-- example \$\{_toAlphaCase(\`${variables.foobar}-123-${variables.foobar}\`)\}
-
-- _toAlphaCase - ${_toAlphaCase(`${variables.foobar}-123-${variables.foobar}`)}
-- _toNumericCase - ${_toNumericCase(`${variables.foobar}-123-${variables.foobar}`)}
+ Pass custom string to case converters \$\{_toAlphaCase(\`${variables.foobar}-123-${variables.foobar}\`)\}
+- example:
+    - _toAlphaCase - ${_toAlphaCase(`${variables.foobar}-123-${variables.foobar}`)}
+    - _toNumericCase - ${_toNumericCase(`${variables.foobar}-123-${variables.foobar}`)}

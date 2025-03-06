@@ -1,17 +1,17 @@
-module.exports = ({ componentName, _toPascalCase }) => `import type { Meta, StoryObj } from '@storybook/react';
+module.exports = ({ componentName }) => `import type { Meta, StoryObj } from '@storybook/react';
 
-import { ${_toPascalCase(componentName)} } from './${_toPascalCase(componentName)}';
+import { ${componentName} } from './${componentName}';
 
 //👇 This default export determines where your story goes in the story list
-const meta: Meta<typeof ${_toPascalCase(componentName)}> = {
-  title: 'Components/${_toPascalCase(componentName)}',
-  component: ${_toPascalCase(componentName)},
+const meta: Meta<typeof ${componentName}> = {
+  title: 'Components/${componentName}',
+  component: ${componentName},
   tags: ['autodocs'],
   args: {},
 };
 
 export default meta;
-type Story = StoryObj<typeof ${_toPascalCase(componentName)}>;
+type Story = StoryObj<typeof ${componentName}>;
 
 export const FirstStory: Story = {
   args: {

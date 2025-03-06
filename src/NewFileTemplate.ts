@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { Settings } from './Settings';
 import * as caseConverter from './caseConverter';
-import { Commands, Context, EXIT, InputConfig, UserConfig } from './constants';
 import { getInput, getTemplateName, pickTemplateFolders, selectTemplateFiles, shouldSkipFile } from './inputs';
 import {
   getActiveFileDetails,
@@ -14,7 +13,9 @@ import {
   getWorkSpaceFolder,
   getWorkSpaceFolderDetails
 } from './pathDetails';
+import { Commands, Context, EXIT, InputConfig, UserConfig } from './types';
 import {
+  getExcludes,
   getOutputFilePath,
   getTemplateConfig,
   getTemplateData,
@@ -45,6 +46,7 @@ export class NewTemplates {
       out: getWorkSpaceFolder(),
       ...getWorkSpaceFolderDetails(),
       variables: Settings.variables || {},
+      promptTemplateFiles: Settings.promptTemplateFiles,
       input: Settings.input || {},
       inputValues: {}
     };
@@ -74,20 +76,20 @@ export class NewTemplates {
       const newFile = await vscode.workspace.openTextDocument(newIndexPath);
       await vscode.window.showTextDocument(newFile, undefined, true);
 
-      vscode.window.showInformationMessage(`${templateName} template is created successfully.`);
+      vscode.window.showInformationMessage(`✨ ${templateName} template has been created successfully! 🎉`);
     } catch (err: unknown) {
       if (shouldExit(err)) return;
     }
   }
 
-  async #promptInputs(inputNames: string[]) {
+  async #promptInputs(inputNames: string[], isPreLoadInput: boolean = false) {
     for (const inputName of inputNames) {
       const inputConfig = (this.context.input[inputName] || {}) as InputConfig;
 
       // Skip if value is already present
       if (this.context.inputValues[inputName as keyof InputConfig] !== undefined || !isPlainObject(inputConfig)) continue;
 
-      if (Object.keys(inputConfig).length || inputConfig.promptAlways || inputConfig.when?.(this.context) !== false) {
+      if (!isPreLoadInput || !Object.keys(inputConfig).length || inputConfig.promptAlways || inputConfig.when?.(this.context) !== false) {
         const value = await getInput(inputName, inputConfig, this.context);
 
         if (value === undefined) throw Error(EXIT); // Don't proceed if user exits
@@ -126,7 +128,7 @@ export class NewTemplates {
     return processedData;
   }
 
-  async #generateTemplateFile(templateFile: string, destinationPath: string) {
+  async #generateTemplateFile(templateFile: string) {
     this.context = { ...this.context, ...getTemplateFilePathDetails(this.context.workspaceFolder, templateFile) };
     this.context.currentTemplateFile = templateFile;
 
@@ -135,7 +137,7 @@ export class NewTemplates {
     await this.#promptInputsFromPattern(templateFile);
 
     const parsedTemplatePaths = interpolate(templateFile, this.context);
-    let outputFile = getOutputFilePath(this.context.template!, destinationPath, parsedTemplatePaths);
+    let outputFile = getOutputFilePath(this.context.template!, this.context.out, parsedTemplatePaths);
 
     if (await shouldSkipFile(outputFile)) return;
 
@@ -165,11 +167,9 @@ export class NewTemplates {
 
     if (!this.#hooks(this.context.beforeAll)) return;
 
-    const destinationPath = path.resolve(this.context.workspaceFolder, interpolate(this.context.out.replace(/\\/g, '/'), this.context));
-
     for (let templateFile of templateFiles) {
       try {
-        await this.#generateTemplateFile(templateFile, destinationPath);
+        await this.#generateTemplateFile(templateFile);
       } catch (err) {
         if (shouldExit(err, this.context.currentTemplateFile)) throw Error(EXIT);
       }
@@ -178,7 +178,7 @@ export class NewTemplates {
     this.#hooks(this.context.afterAll);
   }
   async #generateTemplate(_args: any, template: string) {
-    const templateConfig = await getTemplateConfig(template, Settings.configName);
+    const templateConfig = await getTemplateConfig(template, Settings.configName, this.context);
     this.context = mergeContext(this.context, templateConfig);
     this.context = {
       ...this.context,
@@ -186,23 +186,25 @@ export class NewTemplates {
     };
 
     const fsPathFolder = this.context.folder || this.context.workspaceFolder;
-    this.context.out = path.resolve(fsPathFolder, this.context.out || fsPathFolder);
+    this.context.out = path.resolve(fsPathFolder, interpolate(this.context.out, this.context) || fsPathFolder).replace(/\\/g, '/');
 
-    await this.#promptInputs(Object.keys(this.context.input));
+    await this.#promptInputs(Object.keys(this.context.input), true);
 
     const allTemplateFiles = await listNestedFiles(template, [
       `${template}/${Settings.configName}`,
       `${template}/${Settings.configName}.json`,
       `${template}/${Settings.configName}.js`,
-      ...this.context.exclude
+      ...getExcludes(this.context)
     ]);
     this.context.allTemplateFiles = allTemplateFiles;
 
-    const selectedTemplateFiles = await selectTemplateFiles(allTemplateFiles, template, this.context.templateName!);
+    const selectedTemplateFiles = await selectTemplateFiles(allTemplateFiles, template, this.context);
     if (!selectedTemplateFiles?.length) throw Error(EXIT);
     const templateFiles = selectedTemplateFiles.map((templateFile) => templateFile.value);
 
     await this.#generateTemplateFiles(templateFiles);
+
+    vscode.window.showInformationMessage(`✨ ${this.context.templateName} templates have been generated successfully! 🎉`);
   }
 
   async generateTemplates(args: any) {
@@ -216,7 +218,7 @@ export class NewTemplates {
       const allTemplates = await getTopLevelFolders(Settings.templatePaths);
       if (!allTemplates?.length) {
         const selectedAction = await vscode.window.showErrorMessage(
-          `No Templates Found !  Create a new sample template ?`,
+          `No templates found. Would you like to create a new sample template in ./.vscode/templates?`,
           { modal: true },
           'Yes'
         );

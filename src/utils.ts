@@ -3,8 +3,8 @@ import * as fsx from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as caseConverter from './caseConverter';
-import { Context, EXIT } from './constants';
 import { getWorkSpaceFolder } from './pathDetails';
+import { Context, EXIT } from './types';
 
 export function getTopLevelFolders(folderPaths: string[]): Promise<string[]> {
   const folderPromises = folderPaths.map((folderPath) =>
@@ -16,7 +16,7 @@ export function getTopLevelFolders(folderPaths: string[]): Promise<string[]> {
   return Promise.all(folderPromises).then((folders) => folders.flat());
 }
 
-export async function getTemplateConfig(templatePath: string, configName = '_config'): Promise<Context | undefined> {
+export async function getTemplateConfig(templatePath: string, configName = '_config', context?: Context): Promise<Context | undefined> {
   const jsonConfigPath = path.join(templatePath, `${configName}.json`);
   const jsConfigPath = path.join(templatePath, `${configName}.js`);
   const configFolderPath = path.join(templatePath, configName);
@@ -24,25 +24,36 @@ export async function getTemplateConfig(templatePath: string, configName = '_con
 
   // Check if JSON config file exists
   if (fsx.existsSync(jsonConfigPath)) {
-    const jsonContent = await fsx.readFile(jsonConfigPath, 'utf8');
-    return JSON.parse(jsonContent) as Context;
+    try {
+      const jsonContent = await fsx.readFile(jsonConfigPath, 'utf8');
+      return JSON.parse(jsonContent) as Context;
+    } catch (err) {
+      if (err instanceof Error) vscode.window.showErrorMessage(`${jsonConfigPath} - ${err.message}`);
+      else throw err;
+    }
   }
 
   // Check if JS config file exists
   if (fsx.existsSync(jsConfigPath)) {
-    delete require.cache[jsConfigPath];
-    const jsModule = require(jsConfigPath);
-    if (typeof jsModule === 'function') {
-      return jsModule() as Context;
+    try {
+      delete require.cache[jsConfigPath];
+      const jsModule = require(jsConfigPath);
+      if (typeof jsModule === 'function') return jsModule(context) as Context;
+    } catch (err) {
+      if (err instanceof Error) vscode.window.showErrorMessage(`${jsConfigPath} - ${err.message}`);
+      else throw err;
     }
   }
 
   // Check if index.js in config folder exists
   if (fsx.existsSync(indexJsPath)) {
-    delete require.cache[indexJsPath];
-    const indexModule = require(indexJsPath);
-    if (typeof indexModule === 'function') {
-      return indexModule() as Context;
+    try {
+      delete require.cache[indexJsPath];
+      const indexModule = require(indexJsPath);
+      if (typeof indexModule === 'function') return indexModule() as Context;
+    } catch (err) {
+      if (err instanceof Error) vscode.window.showErrorMessage(`${indexJsPath} - ${err.message}`);
+      else throw err;
     }
   }
 }
@@ -61,11 +72,12 @@ const handleUndefinedVariable = (error: Error, format: string = '', object: Reco
   const inputName = !!transform ? undefinedVariable.replace(convertToMethodName, '').trim() : undefinedVariable;
 
   const key = !!transform ? `${inputName}${convertToMethodName}` : inputName;
-  const value = isPlainObject(object.input[inputName])
-    ? object.input[inputName].value || object.inputValues[inputName].value || object.variables[inputName].value
-    : object.input[inputName] || object.inputValues[inputName].value || object.variables[inputName].value;
+  const value =
+    object.inputValues[inputName] ||
+    object.variables[inputName] ||
+    (isPlainObject(object.input[inputName]) ? object.input[inputName].value : object.input[inputName]);
 
-  if (value === undefined || typeof value !== 'string') throw Error(`Key: ${key} not found !`);
+  if (value === undefined || typeof value !== 'string') throw Error(`variable: ${error.message}`);
 
   return interpolate(format, {
     ...object,
@@ -157,4 +169,10 @@ export async function getTemplateData(templateFile: string, context: Context) {
   }
 
   return data;
+}
+
+export function getExcludes(context: Context) {
+  if (!context.exclude) return [];
+  const excludes = typeof context.exclude === 'function' ? context.exclude(context) : context.exclude;
+  return isArray(excludes) ? excludes : [];
 }

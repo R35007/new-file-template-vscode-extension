@@ -2,8 +2,8 @@ import * as fsx from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as caseConverter from './caseConverter';
-import { Context, EXIT, InputConfig } from './constants';
 import { Settings } from './Settings';
+import { Context, EXIT, InputConfig } from './types';
 import { interpolate, isArray, isPlainObject } from './utils';
 
 export const getTemplateName = () =>
@@ -26,7 +26,9 @@ export const pickTemplateFolders = async (templates: string[]) => {
   );
 };
 
-export async function selectTemplateFiles(files: string[], templatePath: string, templateName: string) {
+export async function selectTemplateFiles(files: string[], templatePath: string, context: Context) {
+  const templateName = context.templateName;
+
   const options = files.map((file) => ({
     label: path.basename(file),
     value: file,
@@ -34,7 +36,7 @@ export async function selectTemplateFiles(files: string[], templatePath: string,
     picked: true
   }));
 
-  if (!Settings.promptTemplateFiles) return options;
+  if (!context.promptTemplateFiles) return options;
 
   return vscode.window.showQuickPick(options, {
     title: `${caseConverter._toPascalCase(templateName)} - File Templates`,

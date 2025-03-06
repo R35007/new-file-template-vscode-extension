@@ -1,1 +1,1 @@
-module.exports = ({ componentName, _toPascalCase }) => `export * from './${_toPascalCase(componentName)}';`;
+module.exports = ({ componentName }) => `export * from './${componentName}';`;

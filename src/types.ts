@@ -129,8 +129,9 @@ export type UserConfig = {
   variables: Record<string, unknown>;
   inputValues: Record<string, unknown>;
   input: Record<string, InputConfig | unknown>;
-  exclude: string[];
+  exclude: string[] | ((context: Context) => string[]);
   out: string;
+  promptTemplateFiles: boolean;
 };
 
 export type Context = PredefinedVariables & UserConfig & Record<Exclude<string, keyof PredefinedVariables & UserConfig>, unknown>;

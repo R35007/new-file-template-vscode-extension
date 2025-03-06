@@ -1,6 +1,6 @@
 import * as fsx from 'fs-extra';
 import * as vscode from 'vscode';
-import { Context } from './constants';
+import { Context } from './types';
 import { resolveWithWorkspaceFolder } from './utils';
 
 export class Settings {
