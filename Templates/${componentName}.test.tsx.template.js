@@ -5,11 +5,9 @@ import '@testing-library/jest-dom/extend-expect';
 import { ${componentName} } from './${componentName}';
 
 describe('${componentName} Component', () => {
-        test('should render without crashing', () => {
-                render(<${componentName} />);
-                const element = screen.getByTestId('${componentName}-component');
-                expect(element).toBeInTheDocument();
-        });
-
-        // Add more test cases here
+  test('should render without crashing', () => {
+    render(<${componentName} />);
+    const element = screen.getByTestId('${componentName}-component');
+    expect(element).toBeInTheDocument();
+  });
 });`;

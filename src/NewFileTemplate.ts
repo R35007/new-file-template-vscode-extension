@@ -16,6 +16,7 @@ import {
 import { Commands, Context, EXIT, InputConfig, UserConfig } from './types';
 import {
   getExcludes,
+  getIncludes,
   getOutputFilePath,
   getTemplateConfig,
   getTemplateData,
@@ -43,6 +44,7 @@ export class NewTemplates {
       userHome: process.env?.HOME,
       package: {},
       exclude: [],
+      include: [],
       out: getWorkSpaceFolder(),
       ...getWorkSpaceFolderDetails(),
       variables: Settings.variables || {},
@@ -111,9 +113,10 @@ export class NewTemplates {
 
     return await this.#promptInputs(unknownInputs);
   }
+
   async #hooks(callback?: UserConfig['beforeEach']) {
     if (!callback) return true;
-    const context = callback(this.context);
+    const context = await callback(this.context);
     if (context === false) return false;
     this.context = mergeContext(this.context, context as Context);
     return true;
@@ -121,7 +124,7 @@ export class NewTemplates {
 
   async #processHooks(data: string, callback?: UserConfig['processAfterEach']) {
     if (!callback) return data;
-    const processedObject = callback({ data, context: this.context });
+    const processedObject = await callback({ data, context: this.context });
     if (processedObject === false || (processedObject !== undefined && !isPlainObject(processedObject))) return data;
     const processedData = processedObject?.data || data;
     this.context = mergeContext(this.context, processedObject?.context as Context);
@@ -165,7 +168,7 @@ export class NewTemplates {
   async #generateTemplateFiles(templateFiles: string[]) {
     this.context.templateFiles = templateFiles;
 
-    if (!this.#hooks(this.context.beforeAll)) return;
+    if (!(await this.#hooks(this.context.beforeAll))) return;
 
     for (let templateFile of templateFiles) {
       try {
@@ -175,7 +178,7 @@ export class NewTemplates {
       }
     }
 
-    this.#hooks(this.context.afterAll);
+    await this.#hooks(this.context.afterAll);
   }
   async #generateTemplate(_args: any, template: string) {
     const templateConfig = await getTemplateConfig(template, Settings.configName, this.context);
@@ -190,12 +193,16 @@ export class NewTemplates {
 
     await this.#promptInputs(Object.keys(this.context.input), true);
 
-    const allTemplateFiles = await listNestedFiles(template, [
-      `${template}/${Settings.configName}`,
-      `${template}/${Settings.configName}.json`,
-      `${template}/${Settings.configName}.js`,
-      ...getExcludes(this.context)
-    ]);
+    const allTemplateFiles = await listNestedFiles(
+      template,
+      [
+        `${template}/${Settings.configName}`,
+        `${template}/${Settings.configName}.json`,
+        `${template}/${Settings.configName}.js`,
+        ...getExcludes(this.context)
+      ],
+      getIncludes(this.context)
+    );
     this.context.allTemplateFiles = allTemplateFiles;
 
     const selectedTemplateFiles = await selectTemplateFiles(allTemplateFiles, template, this.context);

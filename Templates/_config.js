@@ -51,20 +51,22 @@ module.exports = (_context) => ({
     }
   },
   promptTemplateFiles: true, // If false, it will never prompt the user to select individual template files.
+  include: [], // include additional files
   // Files or folders to exclude from template generation.
   // You can also directly provide an array of string values.
   // exclude: ['./_hooks.js']
   exclude: ({ tags }) => {
     const files = ['./_hooks.js'];
-    if (!tags.includes('react')) {
-      files.push('./${componentName}.tsx.template.js', './${camelCaseFileName}.ts.template.js');
-    }
-    if (!tags.includes('test')) {
-      files.push('./${componentName}.test.tsx.template.js');
-    }
-    if (!tags.includes('story')) {
-      files.push('./${componentName}.stories.tsx.template.js');
-    }
+    const templates = {
+      react: ['./${componentName}.tsx.template.js', './${camelCaseFileName}.ts.template.js'],
+      test: ['./${componentName}.test.tsx.template.js'],
+      story: ['./${componentName}.stories.tsx.template.js']
+    };
+
+    Object.keys(templates).forEach((key) => {
+      if (!tags.includes(key)) files.push(...templates[key]);
+    });
+
     return files;
   }
 });

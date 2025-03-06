@@ -50,7 +50,7 @@ export async function getTemplateConfig(templatePath: string, configName = '_con
     try {
       delete require.cache[indexJsPath];
       const indexModule = require(indexJsPath);
-      if (typeof indexModule === 'function') return indexModule() as Context;
+      if (typeof indexModule === 'function') return indexModule(context) as Context;
     } catch (err) {
       if (err instanceof Error) vscode.window.showErrorMessage(`${indexJsPath} - ${err.message}`);
       else throw err;
@@ -98,12 +98,16 @@ export const interpolate = (format: string = '', object: Record<string, any> = {
   }
 };
 
-export async function listNestedFiles(folder: string, excludes: string[]): Promise<string[]> {
-  const formattedExclude = excludes.map((item) => {
+const getFormattedPatternPaths = (folder: string, paths: string[]) =>
+  paths.map((item) => {
     const resolvedPath = path.resolve(folder, item).replace(/\\/g, '/');
-    return fsx.existsSync(resolvedPath) && fsx.statSync(resolvedPath).isDirectory() ? `${resolvedPath}/**` : resolvedPath;
+    return fsx.existsSync(resolvedPath) && fsx.statSync(resolvedPath).isDirectory() ? `${resolvedPath}/**/*` : resolvedPath;
   });
-  const files = await fg([`${folder.replace(/\\/g, '/')}/**/*`], {
+
+export async function listNestedFiles(folder: string, excludes: string[] = [], includes: string[] = []): Promise<string[]> {
+  const formattedExclude = getFormattedPatternPaths(folder, excludes);
+  const formattedInclude = getFormattedPatternPaths(folder, includes);
+  const files = await fg(formattedInclude.length ? formattedInclude : [`${folder.replace(/\\/g, '/')}/**/*`], {
     ignore: formattedExclude,
     onlyFiles: true
   });
@@ -175,4 +179,9 @@ export function getExcludes(context: Context) {
   if (!context.exclude) return [];
   const excludes = typeof context.exclude === 'function' ? context.exclude(context) : context.exclude;
   return isArray(excludes) ? excludes : [];
+}
+export function getIncludes(context: Context) {
+  if (!context.include) return [];
+  const includes = typeof context.include === 'function' ? context.include(context) : context.include;
+  return isArray(includes) ? includes : [];
 }

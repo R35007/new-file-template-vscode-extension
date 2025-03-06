@@ -2,138 +2,132 @@
 
 Create new file or folders from a custom Template.
 
+<a href="https://buymeacoffee.com/r35007" target="_blank">
+  <img src="https://r35007.github.io/Siva_Profile/images//buymeacoffee.png" />
+</a>
+
 ### Preview
 
-![New_Templates_Demo-1709932609860](https://github.com/R35007/new-file-template-vscode-extension/assets/23217228/3a5beb54-bf48-404c-ad68-b3c88bec77eb)
+> This demonstration uses sample React component templates. However, this extension is not limited to React; it is a versatile tool that can create any template to meet various business needs.
+
+![Image](https://github.com/user-attachments/assets/7504f6e4-8960-4a67-9a06-ea9e15ba371d)
 
 ### Usage
 
-- Create a folder inside `./vscode/Templates`. Ex: `./vscode/Templates/MyTemplate`
-- Create a new file or folder inside the `./vscode/Templates/MyTemplate` folder. Ex: `./vscode/Templates/MyTemplate/${input.componentName}/${input.fileName}.ts`
-- Now right click any file folder where you want generate the file from template and click `New File From Template`
-- This will prompt you to pick a template name and needed variables like `${input.componentName}`, `${input.fileName}`
-- Once all the inputs are given, this will generate you a new file from the selected template.
+- Create a folder inside `./vscode/Templates`, for example: `./vscode/Templates/MyTemplate`.
+- Create a new file or folder inside the `./vscode/Templates/MyTemplate` folder, for example: `./vscode/Templates/MyTemplate/${input.componentName}/${input.fileName}.ts`.
+- Right-click any file or folder where you want to generate the file from the template and select `New File From Template`.
+- You will be prompted to pick a template name and provide the necessary variables such as `${input.componentName}` and `${input.fileName}`.
+- Once all inputs are provided, a new file will be generated from the selected template.
 
-### Helper String Methods
-
-Use helper case methods to convert any variable to the defined case. Ex: **`${_toPascalCase(componentName)}`**
-
-| Function                 | Example Input            | Output                  |
-| ------------------------ | ------------------------ | ----------------------- |
-| **\_toAlphaCase**        | Foo--123-Bar-@-Qux-Baz   | Foo Bar Qux Baz         |
-| **\_toNumericCase**      | Foo--123-Bar-@-Qux-Baz   | 123                     |
-| **\_toAlphaNumericCase** | Foo--123-Bar-@-Qux-Baz   | Foo 123 Bar Qux Baz     |
-| **\_toSpaceCase**        | fooBarQuxBaz             | Foo Bar Qux Baz         |
-| **\_toTitleCase**        | FooBar-Qux\_\_Baz-fooBar | Foo Bar Qux Baz Foo Bar |
-| **\_toCamelCase**        | FooBar-Qux\_\_Baz        | fooBarQuxBaz            |
-| **\_toPascalCase**       | FooBar-Qux\_\_Baz-fooBar | FooBarQuxBazFooBar      |
-| **\_toSnakeCase**        | FooBar-Qux\_\_Baz-fooBar | foo_bar_qux_baz_foo_bar |
-| **\_toSnakeUpperCase**   | FooBar-Qux\_\_Baz-fooBar | FOO_BAR_QUX_BAZ_FOO_BAR |
-| **\_toSnakeTitleCase**   | FooBar-Qux\_\_Baz-fooBar | Foo_Bar_Qux_Baz_Foo_Bar |
-| **\_toKebabCase**        | FooBar-Qux\_\_Baz-fooBar | foo-bar-qux-baz-foo-bar |
-| **\_toKebabUpperCase**   | FooBar-Qux\_\_Baz-fooBar | FOO-BAR-QUX-BAZ-FOO-BAR |
-| **\_toKebabTitleCase**   | FooBar-Qux\_\_Baz-fooBar | Foo_Bar_Qux_Baz_Foo_Bar |
-| **\_toDotCase**          | FooBar-Qux\_\_Baz-fooBar | foo.bar.qux.baz.foo.bar |
-| **\_toDotUpperCase**     | FooBar-Qux\_\_Baz-fooBar | FOO.BAR.QUX.BAZ.FOO.BAR |
-| **\_toDotTitleCase**     | FooBar-Qux\_\_Baz-fooBar | Foo.Bar.Qux.Baz.Foo.Bar |
-| **\_toSentenceCase**     | foo bar-qux Baz foobar   | Foo bar-qux Baz foobar  |
-| **\_toCapitalizedWords** | foo bar-qux baz foobar   | Foo Bar-qux Baz Foobar  |
-| **\_toStudlyCaps**       | foo bar-qux Baz foobar   | FoO BaR-QuX BaZ FoObAr  |
-| **\_toUpperCase**        | fooBar                   | FOOBAR                  |
-| **\_toLowerCase**        | FOOBAR                   | fooBar                  |
-
-### Predefined Variables
-
-- **`${userHome}`** - process.env.HOME - /home/your-username
-- **`${workspaceFolder}`** - Active vscode workspace folder - /home/your-username/your-project
-- **`${cwd}`** - alias **`${workspaceFolder}`** - /home/your-username/your-project
-- **`${workspaceFolderBasename}`** - your-project
-- **`${file}`** - /home/your-username/your-project/folder/file.ext
-- **`${relativeFile}`** - folder/file.ext
-- **`${relativeFileDirname}`** - folder
-- **`${fileBasename}`** - file.ext
-- **`${fileBasenameNoExtension}`** - file
-- **`${fileDirname}`** - /home/your-username/your-project/folder
-- **`${fileExtname}`** - .ext
-- **`${outputDir}`** - /home/your-username/your-project/output-folder
-- **`${outputDirBasename}`** - output-folder
-- **`${relativeOutputDir}`** - /your-project/output-folder
-- **`${outputFile}`** - /home/your-username/your-project/output-folder/output-file.ext
-- **`${relativeOutputFile}`** - /your-project/output-folder/output-file.ext
-- **`${outputFileBasename}`** - output-file.ext
-- **`${outputFileBasenameNoExtension}`** - output-file
-- **`${outputFileExtname}`** - .ext
-
-### Dynamic Input
-
-- **`${input.componentName}`** -> This prompts the user for `componentName` if the value of the componentName is not present.
-- **`${input.fileName}`** -> This will not prompt the user as the value was predefined in the `_config.json` -> input.fileName.
-- **`${componentName}`**, **`${fileName}${ext}`** -> any input variables can also be directly accessed.
-- **`${componentName_toPascalCase}`** **`${componentName_toCamelCase}`** -> any input variables can be converted to the given case.
-
-### Package JSON
-
-Access `package.json` located at the root of the workspace folder.
-
-- **`${package.version || 'v1.0.0'}`**
-
-### Variables
-
-- **`${variables.foobar}`**
-- **`${variables.lorem}`**
-- **`${variables.user.name}`**
-
-### Node global variables
-
-- **`${process.env.USERNAME}`**
-- **`${process.env.NODE_ENV || 'development'}`**
-- **`${Date.now()}`**
-- **`${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`**
-- **`${Math.random()}`**
-- **`${__dirname}`**
-- **`${__filename}`**
 
 ### Template Configuration
 
-- Each Template folder can have an optional file called `_config.json`.
-- Using this file we cam allocate a predefined variables, input description and options for a specific templates.
+The configuration file `_config.js` demonstrates all available features for template generation. Below is a detailed explanation of each configuration option:
 
-Example: Here is the example config file `_config.json`
+#### Hooks
+You can include custom hooks by requiring the `_hooks.js` file. These hooks allow you to execute custom logic at different stages of the template generation process.
 
-```jsonc
-{
-  // These variables can be accessed as ${variables.foobar}, ${variables.user.name} ...
-  "variables": {
-    "foobar": "$fooBar jazQux$",
-    "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
-    "user": { "name": "r35007" }
+```javascript
+const hooks = require('./_hooks');
+```
+
+- **beforeAll(context)**: Runs before generating all template files.
+- **beforeEach(context)**: Runs before generating each template file.
+- **processBeforeEach({ data, context })**: Runs before interpolating template data for each file.
+- **processAfterEach({ data, context })**: Runs after interpolating template data for each file.
+- **afterEach(context)**: Runs after generating each template file.
+- **afterAll(context)**: Runs after generating all template files.
+
+#### Output Directory
+Specify the output directory for the generated files:
+```javascript
+out: '${workspaceFolder}/ReactComponent',
+```
+
+#### Input Values
+Predefine user input values to avoid prompting:
+```javascript
+inputValues: {
+  fileName: 'Index'
+},
+```
+
+#### Variables
+Define variables to be used in your templates:
+```javascript
+variables: {
+  fileName: 'test', // This value will be ignored since it is used in inputValues.
+  componentName: 'AppComponent', // Set default input value for componentName.
+  foobar: '$fooBar jazQux$',
+  lorem: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
+  user: { name: 'r35007' }
+},
+```
+
+#### Input Configurations
+Configure inputs that will be prompted to the user:
+```javascript
+input: {
+  tags: {
+    title: 'Filter',
+    placeHolder: 'Please pick a file type to filter',
+    promptAlways: true,
+    canPickMany: true,
+    matchOnDescription: false,
+    matchOnDetail: false,
+    ignoreFocusOut: true,
+    options: [
+      { label: 'React', description: 'React', detail: 'This generates React component files', value: 'react', picked: true },
+      { label: 'Story', description: 'Story', detail: 'This generates Storybook files', value: 'story', picked: true },
+      { label: 'Test', description: 'Test', detail: 'This generates test case files', value: 'test', picked: true }
+    ]
   },
-  // These inputs can be accessed as ${input.componentName} or ${componentName}
-  "input": {
-    "foobar": "foo bar", // predefined value for ${input.foobar} or ${foobar}. This will not prompt the user input
-    "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
-    "fileName": "index",
-    "ext": {
-      "title": "Extension", // Title of the Quick Pick. If not provided it shows the variable name in Title case. Ex: Ext
-      "placeHolder": "Please select the file Extension", // description of the input
-      // If options are given then it will prompt a quick pick
-      "options": [
-        { "label": ".tsx", "description": "Typescript React", "value": ".tsx", "picked": true },
-        { "label": ".ts", "description": "Typescript", "value": ".ts" },
-        { "label": ".jsx", "description": "Javascript React", "value": ".jsx" },
-        { "label": ".js", "description": "Javascript", "value": ".js" }
-      ] // or "options": [".js", ".jsx", ".ts", ".tsx"]
-    },
-    "componentName": {
-      "value": "AppComponent", // Set a pre filled value for the componentName variable prompt
-      "promptAlways": false, // Set to true to always prompts the user input even if file or folder  doesn't contains the text ${input.<user variable>}
-      "placeHolder": "Please provide a componentName in pascal case",
-      // custom validator. return a error string if validation fails else return an empty string to proceed
-      "validator": "${value?.trim().length >= 5 ? '' : 'Please Enter a minimum 5 characters'}", // will be validated on change
-      // This will be invoked after the user enters the input. Here we can add prefix or suffix or return any default value
-      // In this example I have just converted the value into _toPascalCase
-      "afterInput": "${value?.trim().length ? _toPascalCase(value) : ''}" // or "afterInput": "prefix-${value}-suffix"
-    }
+  componentName: {
+    when: ({ tags }) => tags?.includes('react'),
+    value: 'AppComponent',
+    promptAlways: false,
+    password: false,
+    ignoreFocusOut: true,
+    placeHolder: 'Please provide a componentName in PascalCase',
+    validator: "${value?.trim().length >= 5 ? '' : 'Please enter a minimum of 5 characters'}",
+    validateInput: (value) => (value?.trim().length >= 5 ? '' : 'Please enter a minimum of 5 characters'),
+    afterInput: '${_toPascalCase(value)}',
+    transform: (value, context) => context._toPascalCase(value)
   }
+},
+```
+
+#### Prompt Template Files
+Control whether to prompt the user to select individual template files:
+```javascript
+promptTemplateFiles: true,
+```
+
+#### Include Additional Files
+Specify additional files to include in the template generation:
+```javascript
+include: [],
+```
+
+#### Exclude Files or Folders
+Exclude specific files or folders from template generation:
+```javascript
+exclude: ({ tags }) => {
+  const files = ['./_hooks.js'];
+  const templates = {
+    react: ['./${componentName}.tsx.template.js', './${camelCaseFileName}.ts.template.js'],
+    test: ['./${componentName}.test.tsx.template.js'],
+    story: ['./${componentName}.stories.tsx.template.js']
+  };
+
+  Object.keys(templates).forEach((key) => {
+    if (!tags.includes(key)) files.push(...templates[key]);
+  });
+
+  return files;
 }
 ```
+
+This configuration provides a comprehensive setup for generating files from templates, allowing for customization and flexibility based on user inputs and predefined settings.
+

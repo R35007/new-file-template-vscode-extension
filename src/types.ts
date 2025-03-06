@@ -130,6 +130,7 @@ export type UserConfig = {
   inputValues: Record<string, unknown>;
   input: Record<string, InputConfig | unknown>;
   exclude: string[] | ((context: Context) => string[]);
+  include: string[] | ((context: Context) => string[]);
   out: string;
   promptTemplateFiles: boolean;
 };
