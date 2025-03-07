@@ -10,7 +10,11 @@ Create new files or folders from a custom template.
 
 > This demonstration uses sample React component templates. However, this extension is not limited to React; it is a versatile tool that can create any template to meet various business needs.
 
-![Image](https://github.com/user-attachments/assets/7504f6e4-8960-4a67-9a06-ea9e15ba371d)
+#### Create New Template
+![Image](https://github.com/user-attachments/assets/c3210761-583e-407b-92df-414f16fd5dba)
+
+#### Create New File From Template
+![Image](https://github.com/user-attachments/assets/2b4c1411-1ae9-4e4d-8864-1300913fded5)
 
 ### Usage
 
