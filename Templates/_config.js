@@ -50,6 +50,7 @@ module.exports = (_context) => ({
     },
     description: ({ tags }) => ({
       title: 'Storybook Description',
+      value: 'This is a sample storybook description',
       prePrompt: tags?.includes('story') // Prompts only when tags include 'story'.
     })
   },
