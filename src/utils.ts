@@ -61,40 +61,62 @@ export async function getTemplateConfig(templatePath: string, configName = '_con
 export const isPlainObject = (val?: any): val is Record<string, any> => !!(val && typeof val === 'object' && !Array.isArray(val));
 export const isArray = (val?: any): val is any[] => !isPlainObject(val) && Array.isArray(val);
 
-const handleUndefinedVariable = (error: Error, format: string = '', object: Record<string, any> = {}) => {
+export const parseInputTransformVariable = (inputNameString: string) => {
+  const convertToMethodName = Object.keys(caseConverter).find((methodName) => inputNameString.endsWith(methodName)) as
+    | keyof typeof caseConverter
+    | undefined;
+
+  const transform = convertToMethodName ? (caseConverter[convertToMethodName] as (input?: string) => string | undefined) : undefined;
+  const inputName = convertToMethodName ? inputNameString.replace(convertToMethodName, '').trim() : inputNameString;
+
+  return { transform, inputName, convertToMethodName };
+};
+
+const handleUndefinedVariable = (
+  error: Error,
+  format: string = '',
+  context: Record<string, any> = {},
+  hideErrorMessage: boolean = false
+) => {
   const undefinedVariable = error.message.replace('is not defined', '').trim();
 
-  const convertToMethodName = Object.keys(caseConverter).find((methodName) =>
-    undefinedVariable.endsWith(methodName)
-  ) as keyof typeof caseConverter;
-
-  const transform = convertToMethodName && (caseConverter[convertToMethodName] as (input?: string) => string | undefined);
-  const inputName = !!transform ? undefinedVariable.replace(convertToMethodName, '').trim() : undefinedVariable;
+  const { transform, inputName, convertToMethodName } = parseInputTransformVariable(undefinedVariable);
 
   const key = !!transform ? `${inputName}${convertToMethodName}` : inputName;
   const value =
-    object.inputValues[inputName] ||
-    object.variables[inputName] ||
-    (isPlainObject(object.input[inputName]) ? object.input[inputName].value : object.input[inputName]);
+    context.inputValues[inputName] ||
+    context.variables[inputName] ||
+    (isPlainObject(context.input[inputName]) ? context.input[inputName].value : context.input[inputName]);
 
-  if (value === undefined || typeof value !== 'string') throw Error(`variable: ${error.message}`);
+  if (value === undefined || typeof value !== 'string') {
+    if (error instanceof Error && !hideErrorMessage) {
+      const message = context.currentTemplateFile ? `${context.currentTemplateFile} - ${error.message}` : error.message;
+      vscode.window.showErrorMessage(message);
+    }
+    return format;
+  }
 
   return interpolate(format, {
-    ...object,
+    ...context,
     [key]: !!transform ? transform(value) : value
   });
 };
 
 // Helps to convert template literal strings to applied values.
-export const interpolate = (format: string = '', object: Record<string, any> = {}): string => {
+export const interpolate = (format: string = '', context: Record<string, any> = {}, hideErrorMessage: boolean = false): string => {
   try {
-    const keys = Object.keys(object);
-    const values = Object.values(object);
+    const keys = Object.keys(context);
+    const values = Object.values(context);
     const interpolatedFunction = new Function(...keys, `return \`${format}\`;`);
     return interpolatedFunction(...values);
   } catch (error: unknown) {
-    if (error instanceof Error && error.message.endsWith('is not defined')) return handleUndefinedVariable(error, format, object);
-    throw error;
+    if (error instanceof Error && error.message.endsWith('is not defined'))
+      return handleUndefinedVariable(error, format, context, hideErrorMessage);
+    if (error instanceof Error && !hideErrorMessage) {
+      const message = context.currentTemplateFile ? `${context.currentTemplateFile} - ${error.message}` : error.message;
+      vscode.window.showErrorMessage(message);
+    }
+    return format;
   }
 };
 
@@ -160,6 +182,10 @@ export async function getTemplateData(templateFile: string, context: Context) {
       const module = require(templateFile);
       data = typeof module === 'function' ? await module(context) : JSON.stringify(module, null, 2);
     } catch (err) {
+      if (err instanceof Error) {
+        const message = context.currentTemplateFile ? `${context.currentTemplateFile} - ${err.message}` : err.message;
+        vscode.window.showErrorMessage(message);
+      }
       console.log(err);
     }
   }
@@ -168,6 +194,10 @@ export async function getTemplateData(templateFile: string, context: Context) {
     try {
       data = await fsx.readFile(templateFile, 'utf8');
     } catch (err) {
+      if (err instanceof Error) {
+        const message = context.currentTemplateFile ? `${context.currentTemplateFile} - ${err.message}` : err.message;
+        vscode.window.showErrorMessage(message);
+      }
       console.log(err);
     }
   }

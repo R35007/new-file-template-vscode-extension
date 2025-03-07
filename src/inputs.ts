@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import * as caseConverter from './caseConverter';
 import { Settings } from './Settings';
 import { Context, EXIT, InputConfig } from './types';
-import { interpolate, isArray, isPlainObject } from './utils';
+import { interpolate, isArray, isPlainObject, parseInputTransformVariable } from './utils';
 
 export const getTemplateName = () =>
   vscode.window.showInputBox({
@@ -48,18 +48,25 @@ export async function selectTemplateFiles(files: string[], templatePath: string,
   });
 }
 
-export const getInput = async (inputName: string, inputConfig: InputConfig = {} as InputConfig, context: Context) => {
+export const getInput = async (
+  inputName: string,
+  inputConfig: InputConfig = {} as InputConfig,
+  context: Context,
+  transform?: (input?: string) => string | undefined
+) => {
   const getTitle = () => {
-    const baseTitle = `${context.templateName} - ${caseConverter._toTitleCase(inputConfig.title || inputName)}`;
+    const baseTitle = `${context.templateName} - ${inputConfig.title || caseConverter._toTitleCase(inputName)}`;
     return context.relativeTemplateFile ? `${baseTitle} - ${context.relativeTemplateFile}` : baseTitle;
   };
 
   const transformValue = (value: any) => {
-    return inputConfig.transform
-      ? inputConfig.transform(value, context)
-      : inputConfig.afterInput?.trim().length
-        ? interpolate(inputConfig.afterInput, { ...context, value })
-        : value;
+    if (inputConfig.transform) {
+      if (typeof inputConfig.transform === 'string' && inputConfig.transform.length > 0)
+        return interpolate(inputConfig.transform, { ...context, value });
+      else if (typeof inputConfig.transform === 'function') return inputConfig.transform(value, context);
+    }
+    if (transform) return transform(value);
+    return value;
   };
 
   const getQuickPickValue = async () => {
@@ -78,9 +85,10 @@ export const getInput = async (inputName: string, inputConfig: InputConfig = {} 
   };
 
   const validateInput = (value: any) => {
-    if (inputConfig.validateInput) return inputConfig.validateInput(value, context);
-    if (inputConfig.validator?.trim().length) return interpolate(inputConfig.validator, { ...context, value });
-    return;
+    if (!inputConfig.validateInput) return;
+    if (typeof inputConfig.validateInput === 'string' && inputConfig.validateInput.length > 0)
+      return interpolate(inputConfig.validateInput, { ...context, value });
+    else if (typeof inputConfig.validateInput === 'function') return inputConfig.validateInput(value, context);
   };
 
   const getInputBoxValue = async () => {
@@ -89,8 +97,7 @@ export const getInput = async (inputName: string, inputConfig: InputConfig = {} 
       ignoreFocusOut: true,
       ...inputConfig,
       title: getTitle(),
-      validateInput,
-      value: inputConfig.value || inputConfig.title
+      validateInput
     });
 
     if (input === undefined) return;
@@ -102,8 +109,8 @@ export const getInput = async (inputName: string, inputConfig: InputConfig = {} 
   return inputConfig.options?.length ? getQuickPickValue() : getInputBoxValue();
 };
 
-export async function shouldSkipFile(outputFile: string) {
-  if (!fsx.existsSync(outputFile) || Settings.shouldOverwriteExistingFile) return false;
+export async function shouldSkipFile(outputFile: string, shouldOverwriteExistingFile = Settings.shouldOverwriteExistingFile) {
+  if (!fsx.existsSync(outputFile) || shouldOverwriteExistingFile) return false;
 
   const actions = ['Always Overwrite Existing Files', 'Overwrite this file', 'Skip this file'];
   const selectedAction = await vscode.window.showErrorMessage(

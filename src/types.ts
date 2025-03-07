@@ -99,19 +99,18 @@ type PredefinedVariables = typeof CaseConverts & {
   activeFileFolder?: string;
   activeFileDirBasename?: string;
   activeFileFolderName?: string;
+
+  promptInput?: (inputName: string) => unknown;
 };
 
 export interface InputConfig {
-  when?: (context: Context) => boolean | undefined; // if false, skip this input, if undefined then prompt on demand
-  promptAlways?: boolean; // always prompts even if value is present
+  prePrompt?: boolean | ((context: Context) => boolean);
   value?: any;
   title?: string;
   placeHolder?: string;
   options?: string[] | QuickPickItem[];
-  validator?: string;
-  afterInput?: string;
-  validateInput?: (value: unknown, context: Context) => string | undefined;
-  transform?: (value: unknown, context: Context) => unknown;
+  validateInput?: string | ((value: unknown, context: Context) => string | undefined);
+  transform?: string | ((value: unknown, context: Context) => unknown);
   canPickMany?: boolean;
   matchOnDescription?: boolean;
   matchOnDetail?: boolean;
@@ -128,11 +127,12 @@ export type UserConfig = {
   afterAll?: (context: Context) => Context | false | void;
   variables: Record<string, unknown>;
   inputValues: Record<string, unknown>;
-  input: Record<string, InputConfig | unknown>;
+  input: Record<string, InputConfig | ((context: Context) => InputConfig | unknown) | unknown>;
   exclude: string[] | ((context: Context) => string[]);
   include: string[] | ((context: Context) => string[]);
   out: string;
-  promptTemplateFiles: boolean;
+  promptTemplateFiles?: boolean;
+  overwriteExistingFile?: boolean;
 };
 
 export type Context = PredefinedVariables & UserConfig & Record<Exclude<string, keyof PredefinedVariables & UserConfig>, unknown>;

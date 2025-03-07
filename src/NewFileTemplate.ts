@@ -25,6 +25,7 @@ import {
   isPlainObject,
   listNestedFiles,
   mergeContext,
+  parseInputTransformVariable,
   resolveWithWorkspaceFolder,
   shouldExit
 } from './utils';
@@ -50,7 +51,8 @@ export class NewTemplates {
       variables: Settings.variables || {},
       promptTemplateFiles: Settings.promptTemplateFiles,
       input: Settings.input || {},
-      inputValues: {}
+      inputValues: {},
+      promptInput: this.#promptInput.bind(this)
     };
     try {
       const packageJsonPath = resolveWithWorkspaceFolder('./package.json');
@@ -85,22 +87,51 @@ export class NewTemplates {
   }
 
   async #promptInputs(inputNames: string[], isPreLoadInput: boolean = false) {
-    for (const inputName of inputNames) {
-      const inputConfig = (this.context.input[inputName] || {}) as InputConfig;
+    for (const inputNameStr of inputNames) {
+      const { inputName, transform } = parseInputTransformVariable(inputNameStr);
 
-      // Skip if value is already present
-      if (this.context.inputValues[inputName as keyof InputConfig] !== undefined || !isPlainObject(inputConfig)) continue;
+      const userInputConfig = this.context.input[inputName];
+      const inputConfig = ((typeof userInputConfig === 'function' ? userInputConfig(this.context) : userInputConfig) || {}) as InputConfig;
 
-      if (!isPreLoadInput || !Object.keys(inputConfig).length || inputConfig.promptAlways || inputConfig.when?.(this.context) !== false) {
-        const value = await getInput(inputName, inputConfig, this.context);
+      const inputValue = (this.context.inputValues[inputName] || (isPlainObject(inputConfig) ? undefined : inputConfig)) as unknown;
 
-        if (value === undefined) throw Error(EXIT); // Don't proceed if user exits
+      const shouldPrePrompt =
+        !!inputConfig.prePrompt &&
+        (typeof inputConfig.prePrompt === 'function' ? inputConfig.prePrompt(this.context) : !!inputConfig.prePrompt);
 
-        this.context.inputValues[inputName] = value;
-        this.context.input[inputName] = value;
-        this.context[inputName] = value;
+      const shouldPrompt = (inputValue === undefined && isPreLoadInput && shouldPrePrompt) || (inputValue === undefined && !isPreLoadInput);
+
+      if (inputValue !== undefined && transform) {
+        this.context.inputValues[inputNameStr] = transform(inputValue as string);
+        this.context.input[inputNameStr] = transform(inputValue as string);
+        this.context[inputNameStr] = transform(inputValue as string);
+      }
+
+      if (!shouldPrompt) continue;
+
+      const value = await getInput(inputName, inputConfig, this.context, transform);
+      if (value === undefined) throw Error(EXIT); // Don't proceed if user exits
+      this.context.inputValues[inputName] = value;
+      this.context.input[inputName] = value;
+      this.context[inputName] = value;
+
+      if (transform) {
+        this.context.inputValues[inputNameStr] = value;
+        this.context.input[inputNameStr] = value;
+        this.context[inputNameStr] = value;
       }
     }
+  }
+
+  async #promptInput(inputName?: string, inputConfig?: InputConfig) {
+    if (!inputName?.trim()) return;
+    if (isPlainObject(inputConfig)) {
+      this.context.input[inputName] = isPlainObject(this.context.input[inputName])
+        ? { ...this.context.input[inputName], ...inputConfig }
+        : inputConfig;
+    }
+    await this.#promptInputs([inputName]);
+    return this.context[inputName];
   }
 
   async #promptInputsFromPattern(data: string = '') {
@@ -139,28 +170,35 @@ export class NewTemplates {
 
     await this.#promptInputsFromPattern(templateFile);
 
+    const shouldRequire = path.basename(templateFile).endsWith('.template.js');
+
     const parsedTemplatePaths = interpolate(templateFile, this.context);
     let outputFile = getOutputFilePath(this.context.template!, this.context.out, parsedTemplatePaths);
 
-    if (await shouldSkipFile(outputFile)) return;
+    if (await shouldSkipFile(outputFile, this.context.overwriteExistingFile)) return;
 
     this.context = { ...this.context, ...getOutputFilePathDetails(this.context.workspaceFolder, outputFile) };
 
     let data = await getTemplateData(templateFile, this.context);
-
     await this.#promptInputsFromPattern(data);
-
     data = await this.#processHooks(data, this.context.processBeforeEach);
-    data = await interpolate(String(data), this.context);
+    data = shouldRequire && !Settings.shouldInterpolateRequire ? data : await interpolate(String(data), this.context, shouldRequire);
     data = await this.#processHooks(data, this.context.processAfterEach);
 
-    // write output file
+    // create output file
     fsx.ensureFileSync(this.context.outputFile!);
-    fsx.writeFileSync(this.context.outputFile!, data);
+    if (!Settings.allowCursorPlacement) fsx.writeFileSync(this.context.outputFile!, data);
 
     // open generated file
     const newFile = await vscode.workspace.openTextDocument(this.context.outputFile!);
-    await vscode.window.showTextDocument(newFile, undefined, true);
+    const editor = await vscode.window.showTextDocument(newFile, undefined, true);
+
+    // inset the data as snippet which helps in adding multi cursors and save the file
+    if (Settings.allowCursorPlacement) {
+      const snippet = new vscode.SnippetString(data);
+      editor.insertSnippet(snippet);
+      await newFile.save();
+    }
 
     await this.#hooks(this.context.afterEach);
   }
@@ -224,7 +262,7 @@ export class NewTemplates {
 
       const allTemplates = await getTopLevelFolders(Settings.templatePaths);
       if (!allTemplates?.length) {
-        const selectedAction = await vscode.window.showErrorMessage(
+        const selectedAction = await vscode.window.showInformationMessage(
           `No templates found. Would you like to create a new sample template in ./.vscode/templates?`,
           { modal: true },
           'Yes'

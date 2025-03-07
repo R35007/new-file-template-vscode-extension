@@ -35,11 +35,17 @@ export class Settings {
   static get shouldOverwriteExistingFile() {
     return Settings.getSettings('overwriteExistingFile') as boolean;
   }
+  static set shouldOverwriteExistingFile(value: boolean) {
+    Settings.setSettings('overwriteExistingFile', value);
+  }
   static get promptTemplateFiles() {
     return Settings.getSettings('promptTemplateFiles') as boolean;
   }
-  static set shouldOverwriteExistingFile(value: boolean) {
-    Settings.setSettings('overwriteExistingFile', value);
+  static get shouldInterpolateRequire() {
+    return Settings.getSettings('shouldInterpolateTemplateString') as boolean;
+  }
+  static get allowCursorPlacement() {
+    return Settings.getSettings('allowCursorPlacement') as boolean;
   }
   static get vscodeTemplatePath() {
     return resolveWithWorkspaceFolder('./.vscode/templates') as string;

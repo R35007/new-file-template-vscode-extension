@@ -15,7 +15,7 @@ module.exports = (_context) => ({
   variables: {
     fileName: 'test', // This value will be ignored since it is used in inputValues.
     componentName: 'AppComponent', // Set default input value for componentName.
-    foobar: '$fooBar jazQux$',
+    foobar: '@foo1Bar2 3jaz4Qux$',
     lorem: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
     user: { name: 'r35007' }
   },
@@ -24,7 +24,7 @@ module.exports = (_context) => ({
     tags: {
       title: 'Filter',
       placeHolder: 'Please pick a file type to filter',
-      promptAlways: true, // If true, it always prompts the user input even if the file or folder doesn't contain the text ${input.<user variable>}.
+      prePrompt: true, // If true, it prompts on load and if the value is not present.
       canPickMany: true, // If true, it prompts multiple choices.
       matchOnDescription: false,
       matchOnDetail: false,
@@ -34,27 +34,31 @@ module.exports = (_context) => ({
         { label: 'Story', description: 'Story', detail: 'This generates Storybook files', value: 'story', picked: true },
         { label: 'Test', description: 'Test', detail: 'This generates test case files', value: 'test', picked: true }
       ]
-      /* Select input won't have validator, validateInput, password */
+      /* Select input won't have validateInput, password */
     },
     componentName: {
-      when: ({ tags }) => tags?.includes('react'), // Prompts only when tags include 'react'.
+      prePrompt: ({ tags }) => tags?.includes('react'), // Prompts only when tags include 'react'.
       value: 'AppComponent',
-      promptAlways: false,
       password: false,
       ignoreFocusOut: true,
       placeHolder: 'Please provide a componentName in PascalCase',
-      validator: "${value?.trim().length >= 5 ? '' : 'Please enter a minimum of 5 characters'}", // Use this if using _config.json.
+      // validateInput: "${value?.trim().length >= 5 ? '' : 'Please enter a minimum of 5 characters'}", // Use this if using _config.json.
       validateInput: (value) => (value?.trim().length >= 5 ? '' : 'Please enter a minimum of 5 characters'), // validateInput always takes precedence.
-      afterInput: '${_toPascalCase(value)}', // Use this if using _config.json.
+      // transform: '${_toPascalCase(value)}', // Use this if using _config.json.
       transform: (value, context) => context._toPascalCase(value) // transform always takes precedence.
       /* Text input won't have matchOnDescription, matchOnDetail, canPickMany */
-    }
+    },
+    description: ({ tags }) => ({
+      title: 'Storybook Description',
+      prePrompt: tags?.includes('story') // Prompts only when tags include 'story'.
+    })
   },
   promptTemplateFiles: true, // If false, it will never prompt the user to select individual template files.
-  include: [], // include additional files
-  // Files or folders to exclude from template generation.
-  // You can also directly provide an array of string values.
-  // exclude: ['./_hooks.js']
+
+  // include: [] // can also provide list of path values
+  include: ({ allTemplateFiles }) => allTemplateFiles, // include additional files
+
+  // exclude: ['./_hooks.js'] // can also provide list of path values
   exclude: ({ tags }) => {
     const files = ['./_hooks.js'];
     const templates = {

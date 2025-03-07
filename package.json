@@ -63,7 +63,7 @@
           "type": "array",
           "items": "string",
           "default": "_config",
-          "description": "Set custom templates config file or folder name without extension."
+          "description": "Specify the name of the custom templates configuration file or folder, excluding the extension."
         },
         "new-file-template.settings.templatesPaths": {
           "type": "array",
@@ -71,17 +71,27 @@
           "default": [
             "./.vscode/templates"
           ],
-          "description": "Set custom templates folder paths."
+          "description": "Specify the paths to the custom templates folders."
         },
         "new-file-template.settings.overwriteExistingFile": {
           "type": "boolean",
           "default": false,
-          "description": "Set to true to overwrite the existing file."
+          "description": "Set to true to allow overwriting of existing files."
         },
         "new-file-template.settings.promptTemplateFiles": {
           "type": "boolean",
           "default": true,
-          "description": "If true it prompts the multiple choice picker to pick the template files to generate."
+          "description": "If true, prompts a multiple-choice picker to select the template files to generate."
+        },
+        "new-file-template.settings.shouldInterpolateTemplateString": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, searches for the pattern ${input.<variable>} (e.g., ${input.name}) inside the *.template.js file string and prompts the user for inputs."
+        },
+        "new-file-template.settings.allowCursorPlacement": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, searches for the pattern $<number> (e.g., $1) inside the file string and places the cursor accordingly. Set to false to disable this feature."
         },
         "new-file-template.settings.variables": {
           "type": "object",
@@ -96,7 +106,7 @@
             }
           ],
           "additionalProperties": true,
-          "description": "Set to true to overwrite the existing file."
+          "description": "Define custom variables for template generation."
         },
         "new-file-template.settings.input": {
           "type": "object",
@@ -107,32 +117,32 @@
               "fileName": "index",
               "ext": {
                 "title": "Extension",
-                "placeHolder": "Please select the file Extension",
+                "placeHolder": "Please select the file extension",
                 "options": [
                   {
                     "label": ".tsx",
-                    "description": "Typescript React",
+                    "description": "TypeScript React",
                     "value": ".tsx",
                     "picked": true
                   },
                   {
                     "label": ".ts",
-                    "description": "Typescript",
+                    "description": "TypeScript",
                     "value": ".ts"
                   },
                   {
                     "label": ".jsx",
-                    "description": "Javascript React",
+                    "description": "JavaScript React",
                     "value": ".jsx"
                   },
                   {
                     "label": ".js",
-                    "description": "Javascript",
+                    "description": "JavaScript",
                     "value": ".js"
                   },
                   {
                     "label": ".json",
-                    "description": "Json",
+                    "description": "JSON",
                     "value": ".json"
                   },
                   {
@@ -153,11 +163,11 @@
                 ]
               },
               "componentName": {
-                "promptAlways": true,
+                "prePrompt": true,
                 "value": "AppComponent",
-                "placeHolder": "Please provide a componentName in pascal case",
-                "validator": "${value?.trim().length >= 5 ? '' : 'Please Enter a minimum 5 characters'}",
-                "afterInput": "${value?.trim().length ? _toPascalCase(value) : ''}"
+                "placeHolder": "Please provide a component name in PascalCase",
+                "validateInput": "${value?.trim().length >= 5 ? '' : 'Please enter a minimum of 5 characters'}",
+                "transform": "${value?.trim().length ? _toPascalCase(value) : ''}"
               }
             }
           ],
@@ -166,13 +176,13 @@
               {
                 "type": "object",
                 "properties": {
-                  "promptAlways": {
+                  "prePrompt": {
                     "type": "boolean",
-                    "description": "By default all the inputs will be prompted on demand. Set this to true to prompt always."
+                    "description": "Set this to true to prompt input on load."
                   },
                   "value": {
                     "type": "string",
-                    "description": "Set prefill value of the input box."
+                    "description": "Set the prefill value of the input box."
                   },
                   "placeHolder": {
                     "type": "string"
@@ -215,20 +225,20 @@
                       }
                     ]
                   },
-                  "validator": {
+                  "validateInput": {
                     "type": "string",
                     "examples": [
-                      "${value?.trim().length >= 5 ? '' : 'Please Enter a minimum 5 characters'}"
+                      "${value?.trim().length >= 5 ? '' : 'Please enter a minimum of 5 characters'}"
                     ],
-                    "description": "set Custom validator. return a error string if validation fails else return an empty string to proceed"
+                    "description": "Set a custom validateInput. Return an error string if validation fails, otherwise return an empty string to proceed."
                   },
-                  "afterInput": {
+                  "transform": {
                     "type": "string",
                     "examples": [
                       "${value?.trim().length ? _toPascalCase(value) : ''}",
                       "prefix-${value}-suffix"
                     ],
-                    "description": "This will be invoked after the user enters the input. Here we can add prefix or suffix or return any default value."
+                    "description": "This will be invoked after the user enters the input. Here, you can add a prefix or suffix or return any default value."
                   }
                 },
                 "additionalProperties": false
@@ -238,7 +248,7 @@
               }
             ]
           },
-          "description": "Set custom input variables. These variables can be accessed using ${input.<Your variable name>} or ${<Your variable name>} "
+          "description": "Define custom input variables. These variables can be accessed using ${input.<Your variable name>} or ${<Your variable name>}."
         }
       }
     },

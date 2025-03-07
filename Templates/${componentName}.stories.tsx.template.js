@@ -1,4 +1,4 @@
-module.exports = ({ componentName }) => `import type { Meta, StoryObj } from '@storybook/react';
+module.exports = ({ componentName, description = '' }) => `import type { Meta, StoryObj } from '@storybook/react';
 
 import { ${componentName} } from './${componentName}';
 
@@ -8,6 +8,13 @@ const meta: Meta<typeof ${componentName}> = {
   component: ${componentName},
   tags: ['autodocs'],
   args: {},
+  parameters: {
+    docs: {
+      description: {
+        component: '${description}'
+      },
+    },
+  },
 };
 
 export default meta;
