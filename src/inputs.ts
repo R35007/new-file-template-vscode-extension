@@ -1,10 +1,20 @@
 import * as fsx from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as caseConverter from './caseConverter';
 import { Settings } from './Settings';
-import { Context, EXIT, InputConfig } from './types';
+import { Commands, Context, EXIT, InputConfig } from './types';
 import { interpolate, isArray, isPlainObject, parseInputTransformVariable } from './utils';
+
+export const promptToCreateNewSampleTemplate = async () => {
+  const selectedAction = await vscode.window.showInformationMessage(
+    `No templates found. Would you like to create a new sample template in ./.vscode/templates?`,
+    { modal: true },
+    'Yes'
+  );
+
+  if (selectedAction === 'Yes') vscode.commands.executeCommand(Commands.CREATE_SAMPLE_TEMPLATE);
+  return;
+};
 
 export const getTemplateName = () =>
   vscode.window.showInputBox({
@@ -14,16 +24,20 @@ export const getTemplateName = () =>
     placeHolder: 'Please enter the template name'
   });
 
-export const pickTemplateFolders = async (templates: string[]) => {
-  return vscode.window.showQuickPick(
+export const pickTemplateFolders = async (templates: string[]): Promise<string[]> => {
+  const picked = await vscode.window.showQuickPick(
     templates.map((template) => ({ label: path.basename(template), value: template, description: template, picked: true })),
     {
       title: 'Templates',
       placeHolder: 'Please select a template',
-      canPickMany: true,
+      canPickMany: Settings.promptMultipleTemplates,
       ignoreFocusOut: true
     }
   );
+
+  if (picked === undefined) return [];
+  const result = Array.isArray(picked) ? picked : [picked];
+  return result.map((item) => item.value);
 };
 
 export async function selectTemplateFiles(files: string[], templatePath: string, context: Context) {
@@ -39,7 +53,7 @@ export async function selectTemplateFiles(files: string[], templatePath: string,
   if (!context.promptTemplateFiles) return options;
 
   return vscode.window.showQuickPick(options, {
-    title: `${caseConverter._toPascalCase(templateName)} - File Templates`,
+    title: `${context.case?._toPascalCase?.(templateName)} - File Templates`,
     placeHolder: 'Please pick template files to generate',
     canPickMany: true,
     ignoreFocusOut: true,
@@ -55,7 +69,7 @@ export const getInput = async (
   transform?: (input?: string) => string | undefined
 ) => {
   const getTitle = () => {
-    const baseTitle = `${context.templateName} - ${inputConfig.title || caseConverter._toTitleCase(inputName)}`;
+    const baseTitle = `${context.templateName} - ${inputConfig.title || context.case?._toTitleCase(inputName)}`;
     return context.relativeTemplateFile ? `${baseTitle} - ${context.relativeTemplateFile}` : baseTitle;
   };
 
@@ -109,10 +123,22 @@ export const getInput = async (
   return inputConfig.options?.length ? getQuickPickValue() : getInputBoxValue();
 };
 
-export async function shouldSkipFile(outputFile: string, shouldOverwriteExistingFile = Settings.shouldOverwriteExistingFile) {
-  if (!fsx.existsSync(outputFile) || shouldOverwriteExistingFile) return false;
+export async function shouldSkipFile(outputFile: string, context: Context, templateFileIndex?: number) {
+  if (!fsx.existsSync(outputFile)) return false;
 
-  const actions = ['Always Overwrite Existing Files', 'Overwrite this file', 'Skip this file'];
+  const overwriteExistingFile = context.overwriteExistingFile;
+
+  if (overwriteExistingFile === 'never') return true; // if true skip the file
+
+  if (overwriteExistingFile === 'always') return false; // if false overwrite the file
+
+  const fileCategory = templateFileIndex === 0 ? 'All' : 'Remaining';
+  const actions = [
+    `Overwrite ${fileCategory} Existing Files`,
+    `Skip ${fileCategory} Existing Files`,
+    'Overwrite this file',
+    'Skip this file'
+  ];
   const selectedAction = await vscode.window.showErrorMessage(
     `${path.basename(outputFile)} file already exists.`,
     { modal: true },
@@ -120,7 +146,16 @@ export async function shouldSkipFile(outputFile: string, shouldOverwriteExisting
   );
 
   if (!selectedAction) throw Error(EXIT);
-  if (selectedAction === actions[2]) return true;
-  if (selectedAction === actions[0]) Settings.shouldOverwriteExistingFile = true;
+
+  if (selectedAction === actions[3]) return true;
+
+  if (selectedAction === actions[0]) {
+    context.overwriteExistingFile = 'always';
+    return false;
+  }
+  if (selectedAction === actions[1]) {
+    context.overwriteExistingFile = 'never';
+    return true;
+  }
   return false;
 }

@@ -1,8 +1,7 @@
-import fg from 'fast-glob';
+import fg, { glob } from 'fast-glob';
 import * as fsx from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as caseConverter from './caseConverter';
 import { getWorkSpaceFolder } from './pathDetails';
 import { Context, EXIT } from './types';
 
@@ -16,57 +15,15 @@ export function getTopLevelFolders(folderPaths: string[]): Promise<string[]> {
   return Promise.all(folderPromises).then((folders) => folders.flat());
 }
 
-export async function getTemplateConfig(templatePath: string, configName = '_config', context?: Context): Promise<Context | undefined> {
-  const jsonConfigPath = path.join(templatePath, `${configName}.json`);
-  const jsConfigPath = path.join(templatePath, `${configName}.js`);
-  const configFolderPath = path.join(templatePath, configName);
-  const indexJsPath = path.join(configFolderPath, 'index.js');
-
-  // Check if JSON config file exists
-  if (fsx.existsSync(jsonConfigPath)) {
-    try {
-      const jsonContent = await fsx.readFile(jsonConfigPath, 'utf8');
-      return JSON.parse(jsonContent) as Context;
-    } catch (err) {
-      if (err instanceof Error) vscode.window.showErrorMessage(`${jsonConfigPath} - ${err.message}`);
-      else throw err;
-    }
-  }
-
-  // Check if JS config file exists
-  if (fsx.existsSync(jsConfigPath)) {
-    try {
-      delete require.cache[jsConfigPath];
-      const jsModule = require(jsConfigPath);
-      if (typeof jsModule === 'function') return jsModule(context) as Context;
-    } catch (err) {
-      if (err instanceof Error) vscode.window.showErrorMessage(`${jsConfigPath} - ${err.message}`);
-      else throw err;
-    }
-  }
-
-  // Check if index.js in config folder exists
-  if (fsx.existsSync(indexJsPath)) {
-    try {
-      delete require.cache[indexJsPath];
-      const indexModule = require(indexJsPath);
-      if (typeof indexModule === 'function') return indexModule(context) as Context;
-    } catch (err) {
-      if (err instanceof Error) vscode.window.showErrorMessage(`${indexJsPath} - ${err.message}`);
-      else throw err;
-    }
-  }
-}
-
 export const isPlainObject = (val?: any): val is Record<string, any> => !!(val && typeof val === 'object' && !Array.isArray(val));
 export const isArray = (val?: any): val is any[] => !isPlainObject(val) && Array.isArray(val);
 
-export const parseInputTransformVariable = (inputNameString: string) => {
-  const convertToMethodName = Object.keys(caseConverter).find((methodName) => inputNameString.endsWith(methodName)) as
-    | keyof typeof caseConverter
+export const parseInputTransformVariable = (inputNameString: string, context: Context) => {
+  const convertToMethodName = Object.keys(context.case || {}).find((methodName) => inputNameString.endsWith(methodName)) as
+    | keyof typeof context.case
     | undefined;
 
-  const transform = convertToMethodName ? (caseConverter[convertToMethodName] as (input?: string) => string | undefined) : undefined;
+  const transform = convertToMethodName ? (context.case?.[convertToMethodName] as (input?: string) => string | undefined) : undefined;
   const inputName = convertToMethodName ? inputNameString.replace(convertToMethodName, '').trim() : inputNameString;
 
   return { transform, inputName, convertToMethodName };
@@ -75,12 +32,12 @@ export const parseInputTransformVariable = (inputNameString: string) => {
 const handleUndefinedVariable = (
   error: Error,
   format: string = '',
-  context: Record<string, any> = {},
+  context: Context = {} as Context,
   hideErrorMessage: boolean = false
 ) => {
   const undefinedVariable = error.message.replace('is not defined', '').trim();
 
-  const { transform, inputName, convertToMethodName } = parseInputTransformVariable(undefinedVariable);
+  const { transform, inputName, convertToMethodName } = parseInputTransformVariable(undefinedVariable, context);
 
   const key = !!transform ? `${inputName}${convertToMethodName}` : inputName;
   const value =
@@ -96,14 +53,11 @@ const handleUndefinedVariable = (
     return format;
   }
 
-  return interpolate(format, {
-    ...context,
-    [key]: !!transform ? transform(value) : value
-  });
+  return interpolate(format, { ...context, [key]: !!transform ? transform(value) : value });
 };
 
 // Helps to convert template literal strings to applied values.
-export const interpolate = (format: string = '', context: Record<string, any> = {}, hideErrorMessage: boolean = false): string => {
+export const interpolate = (format: string = '', context: Context = {} as Context, hideErrorMessage: boolean = false): string => {
   try {
     const keys = Object.keys(context);
     const values = Object.values(context);
@@ -121,7 +75,7 @@ export const interpolate = (format: string = '', context: Record<string, any> = 
 };
 
 const getFormattedPatternPaths = (folder: string, paths: string[]) =>
-  paths.map((item) => {
+  paths.filter(Boolean).map((item) => {
     const resolvedPath = path.resolve(folder, item).replace(/\\/g, '/');
     return fsx.existsSync(resolvedPath) && fsx.statSync(resolvedPath).isDirectory() ? `${resolvedPath}/**/*` : resolvedPath;
   });
@@ -205,13 +159,16 @@ export async function getTemplateData(templateFile: string, context: Context) {
   return data;
 }
 
-export function getExcludes(context: Context) {
-  if (!context.exclude) return [];
-  const excludes = typeof context.exclude === 'function' ? context.exclude(context) : context.exclude;
-  return isArray(excludes) ? excludes : [];
+export function getListFromCallback(callback: string[] | ((context: Context) => string[]) = [], context: Context) {
+  if (!callback) return [];
+  const list = typeof callback === 'function' ? callback(context) : callback;
+  return isArray(list) ? list : [];
 }
-export function getIncludes(context: Context) {
-  if (!context.include) return [];
-  const includes = typeof context.include === 'function' ? context.include(context) : context.include;
-  return isArray(includes) ? includes : [];
+
+export function shouldOpenGeneratedFile(context: Context): boolean {
+  if (typeof context.openAfterGeneration === 'boolean') return context.openAfterGeneration;
+  const openGeneratedFilesList = getListFromCallback(context.openAfterGeneration, context);
+  return openGeneratedFilesList.some(
+    (pattern) => pattern === context.templateFileName || new RegExp(pattern).test(context.templateFileName!)
+  );
 }

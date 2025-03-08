@@ -2,7 +2,7 @@
   "name": "new-file-template",
   "displayName": "new-file-template",
   "description": "Create a new file or folder from custom templates",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "icon": "images/new-file-template-logo.png",
   "engines": {
     "vscode": "^1.97.0"
@@ -59,46 +59,84 @@
     "configuration": {
       "title": "New File Template",
       "properties": {
-        "new-file-template.settings.configName": {
-          "type": "array",
-          "items": "string",
-          "default": "_config",
-          "description": "Specify the name of the custom templates configuration file or folder, excluding the extension."
+        "new-file-template.settings.configPath": {
+          "order": 1,
+          "type": "string",
+          "description": "Provide template config path. Set to empty to automatically pick `_config{.js|.json}` from the template folder"
         },
-        "new-file-template.settings.templatesPaths": {
+        "new-file-template.settings.templatePaths": {
+          "order": 2,
           "type": "array",
-          "items": "string",
+          "items": {
+            "type": "string"
+          },
+          "additionalItems": true,
           "default": [
             "./.vscode/templates"
           ],
           "description": "Specify the paths to the custom templates folders."
         },
         "new-file-template.settings.overwriteExistingFile": {
+          "order": 3,
+          "type": "string",
+          "default": "prompt",
+          "enum": [
+            "prompt",
+            "never",
+            "always"
+          ],
+          "enumDescriptions": [
+            "Prompt user to overwrite or skip file each time",
+            "Always skip the existing files",
+            "Always overwrite the existing files"
+          ],
+          "description": "Should overwrite Existing file ?"
+        },
+        "new-file-template.settings.promptMultipleTemplates": {
+          "order": 4,
           "type": "boolean",
           "default": false,
-          "description": "Set to true to allow overwriting of existing files."
+          "description": "If true, prompts a multiple-choice picker to select multiple template folders to generate."
+        },
+        "new-file-template.settings.useSeparateInstance": {
+          "order": 5,
+          "type": "boolean",
+          "default": false,
+          "scope": "window",
+          "markdownDescription": "If `#new-file-template.settings.promptMultipleTemplates#` is true, it uses the same instance to create multiple templates. Set to true to generate each template at a separate instance."
         },
         "new-file-template.settings.promptTemplateFiles": {
-          "type": "boolean",
-          "default": true,
-          "description": "If true, prompts a multiple-choice picker to select the template files to generate."
-        },
-        "new-file-template.settings.shouldInterpolateTemplateString": {
+          "order": 6,
           "type": "boolean",
           "default": false,
-          "description": "If true, searches for the pattern ${input.<variable>} (e.g., ${input.name}) inside the *.template.js file string and prompts the user for inputs."
+          "description": "If true, prompts a multiple-choice picker to select the template files to generate."
         },
-        "new-file-template.settings.allowCursorPlacement": {
+        "new-file-template.settings.interpolateTemplateContent": {
+          "order": 7,
+          "type": "boolean",
+          "default": false,
+          "description": "If true, searches for the pattern ${input.<variable>} (e.g., ${input.name}) within the *.template.js file string and prompts the user for input."
+        },
+        "new-file-template.settings.enableSnippetGeneration": {
+          "order": 8,
+          "type": "boolean",
+          "default": false,
+          "description": "If true, it enables snippet generation for template files. Snippets help with cursor placement using placeholders like $<number>."
+        },
+        "new-file-template.settings.openAfterGeneration": {
+          "order": 9,
           "type": "boolean",
           "default": true,
-          "description": "If true, searches for the pattern $<number> (e.g., $1) inside the file string and places the cursor accordingly. Set to false to disable this feature."
+          "scope": "window",
+          "markdownDescription": "If true, opens all generated files. This always be `true` if `#new-file-template.settings.enableSnippetGeneration#` is set to `true`."
         },
         "new-file-template.settings.variables": {
+          "order": 10,
           "type": "object",
           "default": {},
           "examples": [
             {
-              "foobar": "$fooBar jazQux$",
+              "foobar": "@foo1Bar2 3jaz4Qux$",
               "lorem": "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
               "user": {
                 "name": "r35007"
@@ -109,6 +147,7 @@
           "description": "Define custom variables for template generation."
         },
         "new-file-template.settings.input": {
+          "order": 11,
           "type": "object",
           "default": {},
           "examples": [

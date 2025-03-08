@@ -10,6 +10,7 @@ export const EXIT = 'Exit';
 export const CONTINUE = 'continue';
 
 type PredefinedVariables = typeof CaseConverts & {
+  case: typeof CaseConverts;
   __dirname: string;
   __filename: string;
   process: NodeJS.Process;
@@ -100,7 +101,7 @@ type PredefinedVariables = typeof CaseConverts & {
   activeFileDirBasename?: string;
   activeFileFolderName?: string;
 
-  promptInput?: (inputName: string) => unknown;
+  promptInput?: (inputName: string, inputConfig: InputConfig) => unknown;
 };
 
 export interface InputConfig {
@@ -125,14 +126,17 @@ export type UserConfig = {
   processAfterEach?: ({ data, context }: { data: string; context: Context }) => { data: string; context: Context } | false | void;
   afterEach?: (context: Context) => Context | false | void;
   afterAll?: (context: Context) => Context | false | void;
-  variables: Record<string, unknown>;
-  inputValues: Record<string, unknown>;
-  input: Record<string, InputConfig | ((context: Context) => InputConfig | unknown) | unknown>;
-  exclude: string[] | ((context: Context) => string[]);
-  include: string[] | ((context: Context) => string[]);
   out: string;
+  inputValues: Record<string, unknown>;
+  variables: Record<string, unknown>;
+  input: Record<string, InputConfig | ((context: Context) => InputConfig | unknown) | unknown>;
+  overwriteExistingFile?: 'prompt' | 'never' | 'always';
   promptTemplateFiles?: boolean;
-  overwriteExistingFile?: boolean;
+  interpolateTemplateContent?: boolean;
+  enableSnippetGeneration?: boolean;
+  openAfterGeneration?: boolean | string[] | ((context: Context) => string[]);
+  include: string[] | ((context: Context) => string[]);
+  exclude: string[] | ((context: Context) => string[]);
 };
 
 export type Context = PredefinedVariables & UserConfig & Record<Exclude<string, keyof PredefinedVariables & UserConfig>, unknown>;
