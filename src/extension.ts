@@ -1,8 +1,9 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { NewTemplates } from './NewFileTemplate';
-import { Commands, EXIT } from './types';
+import { Commands, Context, EXIT } from './types';
 import { getTopLevelFolders, shouldExit } from './utils';
 import { Settings } from './Settings';
 import { pickTemplateFolders, promptToCreateNewSampleTemplate } from './inputs';
@@ -24,12 +25,14 @@ export function activate(context: vscode.ExtensionContext) {
     selectedTemplates: string[],
     newTemplates = new NewTemplates()
   ) => {
-    let currentTemplateFile: string = '';
+    const context = {
+      templateName: path.basename(template),
+      relativeTemplateFileToTemplate: ''
+    };
     try {
-      currentTemplateFile = template;
       await newTemplates.generateTemplate(args, template, allTemplates, selectedTemplates);
     } catch (err) {
-      if (shouldExit(err, currentTemplateFile)) throw Error(EXIT);
+      if (shouldExit(err, context as Context)) throw Error(EXIT);
     }
   };
 

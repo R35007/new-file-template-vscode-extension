@@ -112,7 +112,9 @@ export function mergeContext(existingContext: Context = {} as Context, newContex
 }
 
 export function shouldExit(err: unknown, context?: Context) {
-  const currentTemplateFile = context && `${context.templateName}/${context.relativeTemplateFileToTemplate}`;
+  const currentTemplateFile =
+    context &&
+    (context.relativeTemplateFileToTemplate ? `${context.templateName}/${context.relativeTemplateFileToTemplate}` : context.templateName);
   if (err instanceof Error && err.message === EXIT) return true;
   if (err instanceof Error && err.message !== EXIT) {
     const message = currentTemplateFile ? `${currentTemplateFile} - ${err.message}` : err.message;
