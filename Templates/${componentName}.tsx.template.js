@@ -7,7 +7,7 @@ export interface ${componentName}Props {};
 // Escape all backTicks (\`) and dollar (\$) symbols inside the template 
 const Styled${componentName} = styled.div\`
   \${({ width }) => \`
-    width: \\$\{width}
+    width: \$\{width}
   \`}
 \`;
 

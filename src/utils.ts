@@ -19,11 +19,11 @@ export const isPlainObject = (val?: any): val is Record<string, any> => !!(val &
 export const isArray = (val?: any): val is any[] => !isPlainObject(val) && Array.isArray(val);
 
 export const parseInputTransformVariable = (inputNameString: string, context: Context) => {
-  const convertToMethodName = Object.keys(context.case || {}).find((methodName) => inputNameString.endsWith(methodName)) as
-    | keyof typeof context.case
+  const convertToMethodName = Object.keys(context.Case || {}).find((methodName) => inputNameString.endsWith(methodName)) as
+    | keyof typeof context.Case
     | undefined;
 
-  const transform = convertToMethodName ? (context.case?.[convertToMethodName] as (input?: string) => string | undefined) : undefined;
+  const transform = convertToMethodName ? (context.Case?.[convertToMethodName] as (input?: string) => string | undefined) : undefined;
   const inputName = convertToMethodName ? inputNameString.replace(convertToMethodName, '').trim() : inputNameString;
 
   return { transform, inputName, convertToMethodName };
@@ -111,7 +111,8 @@ export function mergeContext(existingContext: Context = {} as Context, newContex
   };
 }
 
-export function shouldExit(err: unknown, currentTemplateFile?: string) {
+export function shouldExit(err: unknown, context?: Context) {
+  const currentTemplateFile = context && `${context.templateName}/${context.relativeTemplateFileToTemplate}`;
   if (err instanceof Error && err.message === EXIT) return true;
   if (err instanceof Error && err.message !== EXIT) {
     const message = currentTemplateFile ? `${currentTemplateFile} - ${err.message}` : err.message;
@@ -136,11 +137,7 @@ export async function getTemplateData(templateFile: string, context: Context) {
       const module = require(templateFile);
       data = typeof module === 'function' ? await module(context) : JSON.stringify(module, null, 2);
     } catch (err) {
-      if (err instanceof Error) {
-        const message = context.currentTemplateFile ? `${context.currentTemplateFile} - ${err.message}` : err.message;
-        vscode.window.showErrorMessage(message);
-      }
-      console.log(err);
+      if ((shouldExit(err), context)) throw Error(EXIT);
     }
   }
 
@@ -148,11 +145,7 @@ export async function getTemplateData(templateFile: string, context: Context) {
     try {
       data = await fsx.readFile(templateFile, 'utf8');
     } catch (err) {
-      if (err instanceof Error) {
-        const message = context.currentTemplateFile ? `${context.currentTemplateFile} - ${err.message}` : err.message;
-        vscode.window.showErrorMessage(message);
-      }
-      console.log(err);
+      if ((shouldExit(err), context)) throw Error(EXIT);
     }
   }
 

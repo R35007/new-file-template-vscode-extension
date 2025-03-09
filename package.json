@@ -46,13 +46,13 @@
   "contributes": {
     "commands": [
       {
-        "command": "new-file-template.createSampleTemplate",
-        "title": "Create New Sample Template",
+        "command": "new-file-template.newFilesFromTemplate",
+        "title": "New File From Template",
         "category": "Templates"
       },
       {
-        "command": "new-file-template.newFilesFromTemplate",
-        "title": "New File From Template",
+        "command": "new-file-template.createSampleTemplate",
+        "title": "Create New Sample Template",
         "category": "Templates"
       }
     ],
@@ -62,7 +62,7 @@
         "new-file-template.settings.configPath": {
           "order": 1,
           "type": "string",
-          "description": "Provide template config path. Set to empty to automatically pick `_config{.js|.json}` from the template folder"
+          "description": "Specify the path to the common template configuration. This configuration will be merged with `_config.json`, `_config.js`, or `_config/index.js` from the template folder if provided."
         },
         "new-file-template.settings.templatePaths": {
           "order": 2,
@@ -296,7 +296,12 @@
         {
           "when": "sideBarFocus && activeViewlet == 'workbench.view.explorer'",
           "command": "new-file-template.newFilesFromTemplate",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "when": "sideBarFocus && activeViewlet == 'workbench.view.explorer'",
+          "command": "new-file-template.createSampleTemplate",
+          "group": "navigation@2"
         }
       ]
     }

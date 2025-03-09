@@ -10,7 +10,7 @@ export const EXIT = 'Exit';
 export const CONTINUE = 'continue';
 
 type PredefinedVariables = typeof CaseConverts & {
-  case: typeof CaseConverts;
+  Case: typeof CaseConverts;
   __dirname: string;
   __filename: string;
   process: NodeJS.Process;
@@ -45,6 +45,8 @@ type PredefinedVariables = typeof CaseConverts & {
   outputFile?: string;
   relativeOutputFile?: string;
   relativeOutputFileDirname?: string;
+  relativeTemplateFileToTemplate?: string;
+  relativeTemplateFileToTemplateDirname?: string;
   outputFileBasename?: string;
   outputFileName?: string;
   outputFileBasenameNoExtension?: string;

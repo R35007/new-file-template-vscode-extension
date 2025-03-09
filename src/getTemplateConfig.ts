@@ -1,7 +1,7 @@
 import * as fsx from 'fs-extra';
 import * as path from 'path';
 import { Context } from './types';
-import { isPlainObject } from './utils';
+import { isPlainObject, mergeContext, shouldExit } from './utils';
 import * as vscode from 'vscode';
 
 async function getConfigData(filePath: string, context?: Context) {
@@ -41,10 +41,10 @@ function getConfigFromTemplate(templatePath: string, context?: Context) {
 
 export async function getTemplateConfig(templatePath: string, configPath: string, context?: Context): Promise<Context | undefined> {
   try {
-    const config = getConfigFromPath(configPath, context) || getConfigFromTemplate(templatePath, context);
-    return config;
+    const commonConfig = await getConfigFromPath(configPath, context);
+    const templateConfig = await getConfigFromTemplate(templatePath, context);
+    return mergeContext(commonConfig as Context, templateConfig as Context);
   } catch (err) {
-    if (err instanceof Error) vscode.window.showErrorMessage(err.message);
-    console.log(err);
+    shouldExit(err);
   }
 }

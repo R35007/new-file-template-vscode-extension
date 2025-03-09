@@ -87,11 +87,13 @@ export const getTemplatePathDetails = (workspaceFolder: string, template: string
     templateName: path.basename(template)
   });
 
-export const getTemplateFilePathDetails = (workspaceFolder: string, templateFile: string = '') =>
+export const getTemplateFilePathDetails = (workspaceFolder: string, template: string, templateFile: string = '') =>
   normalizeSeparator({
     templateFile,
     relativeTemplateFile: path.relative(workspaceFolder, templateFile),
     relativeTemplateFileDirname: path.relative(workspaceFolder, path.dirname(templateFile)),
+    relativeTemplateFileToTemplate: path.relative(template, templateFile),
+    relativeTemplateFileToTemplateDirname: path.relative(template, path.dirname(templateFile)),
     templateFileBasename: path.basename(templateFile),
     templateFileName: path.basename(templateFile),
     templateFileBasenameNoExtension: path.basename(templateFile, path.extname(templateFile)),

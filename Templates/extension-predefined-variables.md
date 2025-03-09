@@ -98,7 +98,9 @@
 - templateFiles - [\`${templateFiles?.join(', ')}\` ]
 - templateFile -\`${templateFile}\`
 - relativeTemplateFile -\`${relativeTemplateFile}\`
+- relativeTemplateFileToTemplate -\`${relativeTemplateFileToTemplate}\`
 - relativeTemplateFileDirname -\`${relativeTemplateFileDirname}\`
+- relativeTemplateFileToTemplateDirname -\`${relativeTemplateFileToTemplateDirname}\`
 - templateFileBasename -\`${templateFileBasename}\`
 - templateFileName -\`${templateFileName}\`
 - templateFileBasenameNoExtension -\`${templateFileBasenameNoExtension}\`

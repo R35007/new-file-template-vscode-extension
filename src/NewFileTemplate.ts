@@ -57,7 +57,7 @@ export class NewTemplates {
       variables: Settings.variables || {},
       input: Settings.input || {},
       promptInput: this.#promptInput.bind(this),
-      case: caseConverter
+      Case: caseConverter
     };
     this.#loadPackageJson();
   }
@@ -204,7 +204,7 @@ export class NewTemplates {
   }
 
   async #generateTemplateFile(templateFile: string) {
-    this.context = { ...this.context, ...getTemplateFilePathDetails(this.context.workspaceFolder, templateFile) };
+    this.context = { ...this.context, ...getTemplateFilePathDetails(this.context.workspaceFolder, this.context.template!, templateFile) };
     this.context.currentTemplateFile = templateFile;
 
     if (!(await this.#hooks(this.context.beforeEach))) return;
@@ -239,7 +239,7 @@ export class NewTemplates {
         await this.#generateTemplateFile(templateFile);
       } catch (err) {
         this.skippedFiles[this.context.templateName!].push(path.basename(templateFile));
-        if (shouldExit(err, this.context.currentTemplateFile)) throw Error(EXIT);
+        if (shouldExit(err, this.context)) throw Error(EXIT);
       }
     }
 

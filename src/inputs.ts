@@ -53,7 +53,7 @@ export async function selectTemplateFiles(files: string[], templatePath: string,
   if (!context.promptTemplateFiles) return options;
 
   return vscode.window.showQuickPick(options, {
-    title: `${context.case?._toPascalCase?.(templateName)} - File Templates`,
+    title: `${context.Case?._toPascalCase?.(templateName)} - File Templates`,
     placeHolder: 'Please pick template files to generate',
     canPickMany: true,
     ignoreFocusOut: true,
@@ -69,8 +69,10 @@ export const getInput = async (
   transform?: (input?: string) => string | undefined
 ) => {
   const getTitle = () => {
-    const baseTitle = `${context.templateName} - ${inputConfig.title || context.case?._toTitleCase(inputName)}`;
-    return context.relativeTemplateFile ? `${baseTitle} - ${context.relativeTemplateFile}` : baseTitle;
+    const baseTitle = `${inputConfig.title || context.Case?._toTitleCase(inputName)}`;
+    return context.relativeTemplateFileToTemplate
+      ? `${baseTitle} - ${context.templateName}/${context.relativeTemplateFileToTemplate}`
+      : `${baseTitle} - ${context.templateName}`;
   };
 
   const transformValue = (value: any) => {
