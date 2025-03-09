@@ -31,10 +31,10 @@ import {
 
 const exampleTemplatePath = path.resolve(__dirname, '../Templates');
 
-export class NewFileTemplate {
+export class FileTemplate {
   context: Context;
 
-  constructor(fsPath?: string, allTemplates: string[] = [], selectedTemplates: string[] = []) {
+  constructor(fsPath?: string, allTemplates: string[] = [], selectedTemplates: string[] = [], context?: Context) {
     this.context = {
       ...caseConverter,
       __dirname,
@@ -61,18 +61,32 @@ export class NewFileTemplate {
       selectedTemplates,
       allTemplateNames: allTemplates.map((t) => path.basename(t)),
       selectedTemplateNames: selectedTemplates.map((t) => path.basename(t)),
-      promptInput: this.promptInput.bind(this),
       setContext: this.setContext.bind(this),
+      promptInput: this.promptInput.bind(this),
+      getTemplateFileData: this.getTemplateFileData.bind(this),
+      createOutputFile: this.createOutputFile.bind(this),
+      generateTemplateFile: this.generateTemplateFile.bind(this),
+      generateTemplateFiles: this.generateTemplateFiles.bind(this),
+      generateTemplate: this.generateTemplate.bind(this),
       Case: caseConverter,
-      NewFileTemplate
+      FileTemplate
     };
+    this.setContext(context);
     this.#loadPackageJson();
   }
 
+  /**
+   * Sets the context by merging the provided context with the existing context.
+   * @param {Context} [context] - The context to merge.
+   */
   setContext(context?: Context) {
     this.context = mergeContext(this.context, context);
   }
 
+  /**
+   * Loads the package.json file from the workspace folder and sets it in the context.
+   * If the package.json file does not exist or an error occurs, it does nothing.
+   */
   #loadPackageJson() {
     try {
       const packageJsonPath = resolveWithWorkspaceFolder('./package.json');
@@ -84,6 +98,11 @@ export class NewFileTemplate {
     }
   }
 
+  /**
+   * Creates a new template by copying the example template to a new location.
+   * Prompts the user for the template name and shows an error message if the template already exists.
+   * Opens the new template file in the editor and shows a success message.
+   */
   async createTemplate() {
     try {
       const templateName = await getTemplateName();
@@ -106,6 +125,12 @@ export class NewFileTemplate {
     }
   }
 
+  /**
+   * Prompts the user for input values based on the provided input names.
+   * Updates the context with the input values and applies any transformations.
+   * @param {string[]} inputNames - The names of the inputs to prompt for.
+   * @param {boolean} [isPreLoadInput=false] - Whether the inputs are pre-loaded.
+   */
   async #promptInputs(inputNames: string[], isPreLoadInput: boolean = false) {
     for (const inputNameStr of inputNames) {
       const { inputName, transform } = parseInputTransformVariable(inputNameStr, this.context);
@@ -143,6 +168,13 @@ export class NewFileTemplate {
     }
   }
 
+  /**
+   * Prompts the user for a single input value based on the provided input name and configuration.
+   * Updates the context with the input value.
+   * @param {string} [inputName] - The name of the input to prompt for.
+   * @param {InputConfig} [inputConfig] - The configuration for the input.
+   * @returns {Promise<any>} The input value.
+   */
   async promptInput(inputName?: string, inputConfig?: InputConfig) {
     if (!inputName?.trim()) return;
     if (isPlainObject(inputConfig)) {
@@ -154,6 +186,10 @@ export class NewFileTemplate {
     return this.context[inputName];
   }
 
+  /**
+   * Prompts the user for input values based on the patterns found in the provided data.
+   * @param {string} [data=''] - The data to search for input patterns.
+   */
   async #promptInputsFromPattern(data: string = '') {
     const pattern = /\$\{input\.[^}]*\}/g;
     const matches = Array.from(new Set(String(data).match(pattern)));
@@ -161,6 +197,12 @@ export class NewFileTemplate {
     return await this.#promptInputs(unknownInputs);
   }
 
+  /**
+   * Executes the provided hook callback before processing each template file.
+   * Updates the context with the result of the callback.
+   * @param {UserConfig['beforeEach']} [callback] - The hook callback to execute.
+   * @returns {Promise<boolean>} Whether the hook execution was successful.
+   */
   async #hooks(callback?: UserConfig['beforeEach']) {
     if (!callback) return true;
     const context = await callback(this.context);
@@ -169,6 +211,13 @@ export class NewFileTemplate {
     return true;
   }
 
+  /**
+   * Processes the provided data using the hook callback after processing each template file.
+   * Updates the context with the result of the callback.
+   * @param {string} data - The data to process.
+   * @param {UserConfig['processAfterEach']} [callback] - The hook callback to execute.
+   * @returns {Promise<string>} The processed data.
+   */
   async #processHooks(data: string, callback?: UserConfig['processAfterEach']) {
     if (!callback) return data;
     const processedObject = await callback({ data, context: this.context });
@@ -178,6 +227,12 @@ export class NewFileTemplate {
     return processedData;
   }
 
+  /**
+   * Retrieves the template file data and processes it using the context and hooks.
+   * Prompts the user for input values based on the patterns found in the template file.
+   * @param {string} templateFile - The path to the template file.
+   * @returns {Promise<string>} The processed template file data.
+   */
   async getTemplateFileData(templateFile: string) {
     const shouldRequire = path.basename(templateFile).endsWith('.template.js');
     let data = await getTemplateData(templateFile, this.context);
@@ -188,6 +243,12 @@ export class NewFileTemplate {
     return data;
   }
 
+  /**
+   * Creates an output file with the provided data and context.
+   * If snippet generation is enabled, inserts the data as a snippet in the editor.
+   * @param {string} data - The data to write to the output file.
+   * @param {Context} context - The context for the output file.
+   */
   async createOutputFile(data: string, context: Context) {
     await fsx.ensureFile(context.outputFile!);
 
@@ -217,6 +278,11 @@ export class NewFileTemplate {
     }
   }
 
+  /**
+   * Generates a template file by processing the template file data and creating the output file.
+   * Executes hooks before and after processing the template file.
+   * @param {string} templateFile - The path to the template file.
+   */
   async generateTemplateFile(templateFile: string) {
     this.setContext({ ...getTemplateFilePathDetails(this.context.workspaceFolder, this.context.template!, templateFile) } as Context);
     this.context.currentTemplateFile = templateFile;
@@ -240,6 +306,11 @@ export class NewFileTemplate {
     await this.#hooks(this.context.afterEach);
   }
 
+  /**
+   * Generates multiple template files by processing each template file and creating the output files.
+   * Executes hooks before and after processing all template files.
+   * @param {string[]} templateFiles - The paths to the template files.
+   */
   async generateTemplateFiles(templateFiles: string[]) {
     this.context.selectedTemplateFiles = templateFiles;
     this.context.selectedTemplateFileNames = templateFiles.map((t) => path.basename(t));
@@ -261,6 +332,11 @@ export class NewFileTemplate {
     vscode.window.showInformationMessage(`✨ ${templateName} templates have been generated successfully! 🎉`);
   }
 
+  /**
+   * Generates a template by processing the template configuration and files.
+   * Prompts the user for input values and generates the output files.
+   * @param {string} template - The path to the template.
+   */
   async generateTemplate(template: string) {
     this.setContext(getTemplatePathDetails(this.context.workspaceFolder, template) as Context);
     const templateConfig = await getTemplateConfig(template, Settings.configPath, this.context);

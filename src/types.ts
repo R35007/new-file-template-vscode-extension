@@ -1,6 +1,6 @@
 import { QuickPickItem } from 'vscode';
 import * as CaseConverts from './caseConverter';
-import { NewFileTemplate } from './NewFileTemplate';
+import { FileTemplate } from './NewFileTemplate';
 
 export enum Commands {
   CREATE_SAMPLE_TEMPLATE = 'new-file-template.createSampleTemplate',
@@ -10,7 +10,54 @@ export enum Commands {
 export const EXIT = 'Exit';
 export const CONTINUE = 'continue';
 
-type PredefinedVariables = typeof CaseConverts & {
+export type Utils = typeof CaseConverts & {
+  setContext: (context?: Context) => void;
+  promptInput: (inputName: string, inputConfig: InputConfig) => unknown;
+  getTemplateFileData: (templateFile: string) => Promise<unknown>;
+  createOutputFile: (data: string, context: Context) => Promise<void>;
+  generateTemplateFile: (templateFile: string) => Promise<void>;
+  generateTemplateFiles: (templateFiles: string[]) => Promise<void>;
+  generateTemplate: (template: string) => Promise<void>;
+  Case: {
+    _toNumericCase: (input?: string) => string;
+    _toAlphaCase: (input?: string) => string;
+    _toAlphaNumericCase: (input?: string) => string;
+    _toSpaceCase: (input?: string) => string;
+    _toTitleCase: (input?: string) => string;
+    _toCamelCase: (input?: string) => string;
+    _toPascalCase: (input?: string) => string;
+    _toSnakeCase: (input?: string) => string;
+    _toSnakeUpperCase: (input?: string) => string;
+    _toSnakeTitleCase: (input?: string) => string;
+    _toKebabCase: (input?: string) => string;
+    _toKebabUpperCase: (input?: string) => string;
+    _toKebabTitleCase: (input?: string) => string;
+    _toDotCase: (input?: string) => string;
+    _toDotUpperCase: (input?: string) => string;
+    _toDotTitleCase: (input?: string) => string;
+    _toSentenceCase: (input?: string) => string;
+    _toCapitalizedWords: (input?: string) => string;
+    _toStudlyCaps: (input?: string) => string;
+    _toUpperCase: (input?: string) => string;
+    _toLowerCase: (input?: string) => string;
+  };
+  /* 
+    @example
+    ```js
+      const newFileTemplate = new FileTemplate(fsPath, allTemplates, selectedTemplates, newContext);
+      newFileTemplate.setContext(...args)
+      newFileTemplate.promptInput(...args)
+      newFileTemplate.getTemplateFileData(...args)
+      newFileTemplate.createOutputFile(...args)
+      newFileTemplate.generateTemplateFile(...args)
+      newFileTemplate.generateTemplateFiles(...args)
+      newFileTemplate.generateTemplate(...args)
+    ```
+  */
+  FileTemplate: typeof FileTemplate;
+};
+
+export type PredefinedVariables = Utils & {
   Case: typeof CaseConverts;
   __dirname: string;
   __filename: string;
@@ -107,9 +154,6 @@ type PredefinedVariables = typeof CaseConverts & {
   activeFileFolder?: string;
   activeFileDirBasename?: string;
   activeFileFolderName?: string;
-
-  promptInput?: (inputName: string, inputConfig: InputConfig) => unknown;
-  NewFileTemplate: typeof NewFileTemplate;
 };
 
 export interface InputConfig {
@@ -127,13 +171,16 @@ export interface InputConfig {
   password?: boolean;
 }
 
-export type UserConfig = {
+export type Hooks = {
   beforeAll?: (context: Context) => Context | false | void;
   beforeEach?: (context: Context) => Context | false | void;
   processBeforeEach?: ({ data, context }: { data: string; context: Context }) => { data: string; context: Context } | false | void;
   processAfterEach?: ({ data, context }: { data: string; context: Context }) => { data: string; context: Context } | false | void;
   afterEach?: (context: Context) => Context | false | void;
   afterAll?: (context: Context) => Context | false | void;
+};
+
+export type UserConfig = Hooks & {
   out: string;
   inputValues: Record<string, unknown>;
   variables: Record<string, unknown>;

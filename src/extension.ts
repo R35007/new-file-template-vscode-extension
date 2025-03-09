@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { NewFileTemplate } from './NewFileTemplate';
+import { FileTemplate } from './NewFileTemplate';
 import { Settings } from './Settings';
 import { pickTemplateFolders, promptToCreateNewSampleTemplate } from './inputs';
 import { Commands, Context, EXIT } from './types';
@@ -13,7 +13,7 @@ import { getTopLevelFolders, shouldExit } from './utils';
 export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(Commands.CREATE_SAMPLE_TEMPLATE, async () => {
-      const newTemplates = new NewFileTemplate();
+      const newTemplates = new FileTemplate();
       await newTemplates.createTemplate();
     })
   );
@@ -23,10 +23,10 @@ export function activate(context: vscode.ExtensionContext) {
     template: string,
     allTemplates: string[],
     selectedTemplates: string[],
-    instance?: NewFileTemplate | false
+    instance?: FileTemplate | false
   ) => {
     const context = { templateName: path.basename(template) };
-    const newTemplates = instance || new NewFileTemplate(args?.fsPath, allTemplates, selectedTemplates);
+    const newTemplates = instance || new FileTemplate(args?.fsPath, allTemplates, selectedTemplates);
     try {
       await newTemplates.generateTemplate(template);
     } catch (err) {
@@ -43,9 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
       if (!selectedTemplates?.length) return;
 
       const instance =
-        Settings.promptMultipleTemplates &&
-        Settings.useSeparateInstance &&
-        new NewFileTemplate(args?.fsPath, allTemplates, selectedTemplates);
+        Settings.promptMultipleTemplates && Settings.useSeparateInstance && new FileTemplate(args?.fsPath, allTemplates, selectedTemplates);
       for (const template of selectedTemplates) {
         await processTemplates(args, template, allTemplates, selectedTemplates, instance);
       }

@@ -262,3 +262,55 @@ Add the following configuration to your `settings.json` file:
   }
 }
 ```
+### Extension Context Utils
+
+The `context` object contains many utility methods to create a template explicitly. These are the following methods:
+```ts
+export type Utils = typeof CaseConverts & {
+  setContext: (context?: Context) => void;
+  promptInput: (inputName: string, inputConfig: InputConfig) => unknown;
+  getTemplateFileData: (templateFile: string) => Promise<unknown>;
+  createOutputFile: (data: string, context: Context) => Promise<void>;
+  generateTemplateFile: (templateFile: string) => Promise<void>;
+  generateTemplateFiles: (templateFiles: string[]) => Promise<void>;
+  generateTemplate: (template: string) => Promise<void>;
+  Case: {
+    _toNumericCase: (input?: string) => string;
+    _toAlphaCase: (input?: string) => string;
+    _toAlphaNumericCase: (input?: string) => string;
+    _toSpaceCase: (input?: string) => string;
+    _toTitleCase: (input?: string) => string;
+    _toCamelCase: (input?: string) => string;
+    _toPascalCase: (input?: string) => string;
+    _toSnakeCase: (input?: string) => string;
+    _toSnakeUpperCase: (input?: string) => string;
+    _toSnakeTitleCase: (input?: string) => string;
+    _toKebabCase: (input?: string) => string;
+    _toKebabUpperCase: (input?: string) => string;
+    _toKebabTitleCase: (input?: string) => string;
+    _toDotCase: (input?: string) => string;
+    _toDotUpperCase: (input?: string) => string;
+    _toDotTitleCase: (input?: string) => string;
+    _toSentenceCase: (input?: string) => string;
+    _toCapitalizedWords: (input?: string) => string;
+    _toStudlyCaps: (input?: string) => string;
+    _toUpperCase: (input?: string) => string;
+    _toLowerCase: (input?: string) => string;
+  };
+  /* 
+    @example
+    ```js
+      const newFileTemplate = new FileTemplate(fsPath, allTemplates, selectedTemplates, newContext);
+      newFileTemplate.setContext(...args)
+      newFileTemplate.promptInput(...args)
+      newFileTemplate.getTemplateFileData(...args)
+      newFileTemplate.createOutputFile(...args)
+      newFileTemplate.generateTemplateFile(...args)
+      newFileTemplate.generateTemplateFiles(...args)
+      newFileTemplate.generateTemplate(...args)
+    ```
+  */
+  FileTemplate: typeof FileTemplate;
+};
+``
+
