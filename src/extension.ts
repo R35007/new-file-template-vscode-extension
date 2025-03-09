@@ -1,19 +1,19 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
 import * as path from 'path';
-import { NewTemplates } from './NewFileTemplate';
-import { Commands, Context, EXIT } from './types';
-import { getTopLevelFolders, shouldExit } from './utils';
+import * as vscode from 'vscode';
+import { NewFileTemplate } from './NewFileTemplate';
 import { Settings } from './Settings';
 import { pickTemplateFolders, promptToCreateNewSampleTemplate } from './inputs';
+import { Commands, Context, EXIT } from './types';
+import { getTopLevelFolders, shouldExit } from './utils';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(Commands.CREATE_SAMPLE_TEMPLATE, async () => {
-      const newTemplates = new NewTemplates();
+      const newTemplates = new NewFileTemplate();
       await newTemplates.createTemplate();
     })
   );
@@ -23,14 +23,12 @@ export function activate(context: vscode.ExtensionContext) {
     template: string,
     allTemplates: string[],
     selectedTemplates: string[],
-    newTemplates = new NewTemplates()
+    instance?: NewFileTemplate | false
   ) => {
-    const context = {
-      templateName: path.basename(template),
-      relativeTemplateFileToTemplate: ''
-    };
+    const context = { templateName: path.basename(template) };
+    const newTemplates = instance || new NewFileTemplate(args?.fsPath, allTemplates, selectedTemplates);
     try {
-      await newTemplates.generateTemplate(args, template, allTemplates, selectedTemplates);
+      await newTemplates.generateTemplate(template);
     } catch (err) {
       if (shouldExit(err, context as Context)) throw Error(EXIT);
     }
@@ -44,9 +42,12 @@ export function activate(context: vscode.ExtensionContext) {
       const selectedTemplates = await pickTemplateFolders(allTemplates);
       if (!selectedTemplates?.length) return;
 
-      const newTemplates = Settings.promptMultipleTemplates && Settings.useSeparateInstance ? undefined : new NewTemplates();
+      const instance =
+        Settings.promptMultipleTemplates &&
+        Settings.useSeparateInstance &&
+        new NewFileTemplate(args?.fsPath, allTemplates, selectedTemplates);
       for (const template of selectedTemplates) {
-        await processTemplates(args, template, allTemplates, selectedTemplates, newTemplates);
+        await processTemplates(args, template, allTemplates, selectedTemplates, instance);
       }
     } catch (err) {
       if (shouldExit(err)) return;

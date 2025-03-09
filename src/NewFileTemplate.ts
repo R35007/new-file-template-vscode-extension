@@ -3,7 +3,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { Settings } from './Settings';
 import * as caseConverter from './caseConverter';
-import { getInput, getTemplateName, pickTemplateFolders, selectTemplateFiles, shouldSkipFile } from './inputs';
+import { getTemplateConfig } from './getTemplateConfig';
+import { getInput, getTemplateName, selectTemplateFiles, shouldSkipFile } from './inputs';
 import {
   getActiveFileDetails,
   getFSPathDetails,
@@ -13,7 +14,7 @@ import {
   getWorkSpaceFolder,
   getWorkSpaceFolderDetails
 } from './pathDetails';
-import { Commands, Context, EXIT, InputConfig, UserConfig } from './types';
+import { Context, EXIT, InputConfig, UserConfig } from './types';
 import {
   getListFromCallback,
   getOutputFilePath,
@@ -27,15 +28,13 @@ import {
   shouldExit,
   shouldOpenGeneratedFile
 } from './utils';
-import { getTemplateConfig } from './getTemplateConfig';
 
 const exampleTemplatePath = path.resolve(__dirname, '../Templates');
 
-export class NewTemplates {
+export class NewFileTemplate {
   context: Context;
-  skippedFiles = {} as Record<string, string[]>;
 
-  constructor() {
+  constructor(fsPath?: string, allTemplates: string[] = [], selectedTemplates: string[] = []) {
     this.context = {
       ...caseConverter,
       __dirname,
@@ -56,10 +55,22 @@ export class NewTemplates {
       openAfterGeneration: Settings.openAfterGeneration,
       variables: Settings.variables || {},
       input: Settings.input || {},
-      promptInput: this.#promptInput.bind(this),
-      Case: caseConverter
+      ...getFSPathDetails(fsPath),
+      ...getActiveFileDetails(),
+      allTemplates,
+      selectedTemplates,
+      allTemplateNames: allTemplates.map((t) => path.basename(t)),
+      selectedTemplateNames: selectedTemplates.map((t) => path.basename(t)),
+      promptInput: this.promptInput.bind(this),
+      setContext: this.setContext.bind(this),
+      Case: caseConverter,
+      NewFileTemplate
     };
     this.#loadPackageJson();
+  }
+
+  setContext(context?: Context) {
+    this.context = mergeContext(this.context, context);
   }
 
   #loadPackageJson() {
@@ -132,7 +143,7 @@ export class NewTemplates {
     }
   }
 
-  async #promptInput(inputName?: string, inputConfig?: InputConfig) {
+  async promptInput(inputName?: string, inputConfig?: InputConfig) {
     if (!inputName?.trim()) return;
     if (isPlainObject(inputConfig)) {
       this.context.input[inputName] = isPlainObject(this.context.input[inputName])
@@ -154,7 +165,7 @@ export class NewTemplates {
     if (!callback) return true;
     const context = await callback(this.context);
     if (context === false) return false;
-    this.context = mergeContext(this.context, context as Context);
+    this.setContext(context as Context);
     return true;
   }
 
@@ -163,11 +174,11 @@ export class NewTemplates {
     const processedObject = await callback({ data, context: this.context });
     if (processedObject === false || (processedObject !== undefined && !isPlainObject(processedObject))) return data;
     const processedData = processedObject?.data || data;
-    this.context = mergeContext(this.context, processedObject?.context as Context);
+    this.setContext(processedObject?.context as Context);
     return processedData;
   }
 
-  async #getData(templateFile: string) {
+  async getTemplateFileData(templateFile: string) {
     const shouldRequire = path.basename(templateFile).endsWith('.template.js');
     let data = await getTemplateData(templateFile, this.context);
     await this.#promptInputsFromPattern(data);
@@ -177,17 +188,20 @@ export class NewTemplates {
     return data;
   }
 
-  async #createOutputFile(data: string) {
-    await fsx.ensureFile(this.context.outputFile!);
+  async createOutputFile(data: string, context: Context) {
+    await fsx.ensureFile(context.outputFile!);
 
-    if (!this.context.enableSnippetGeneration) {
-      await fsx.writeFile(this.context.outputFile!, data);
-      if (shouldOpenGeneratedFile(this.context)) {
-        const newFile = await vscode.workspace.openTextDocument(this.context.outputFile!);
+    const enableSnippetGeneration =
+      typeof context.enableSnippetGeneration === 'function' ? context.enableSnippetGeneration(context) : context.enableSnippetGeneration;
+
+    if (!enableSnippetGeneration) {
+      await fsx.writeFile(context.outputFile!, data);
+      if (shouldOpenGeneratedFile(context)) {
+        const newFile = await vscode.workspace.openTextDocument(context.outputFile!);
         await vscode.window.showTextDocument(newFile, undefined, false);
       }
     } else {
-      const newFile = await vscode.workspace.openTextDocument(this.context.outputFile!);
+      const newFile = await vscode.workspace.openTextDocument(context.outputFile!);
       const editor = await vscode.window.showTextDocument(newFile, undefined, false);
 
       const edit = new vscode.WorkspaceEdit();
@@ -203,8 +217,8 @@ export class NewTemplates {
     }
   }
 
-  async #generateTemplateFile(templateFile: string) {
-    this.context = { ...this.context, ...getTemplateFilePathDetails(this.context.workspaceFolder, this.context.template!, templateFile) };
+  async generateTemplateFile(templateFile: string) {
+    this.setContext({ ...getTemplateFilePathDetails(this.context.workspaceFolder, this.context.template!, templateFile) } as Context);
     this.context.currentTemplateFile = templateFile;
 
     if (!(await this.#hooks(this.context.beforeEach))) return;
@@ -214,58 +228,43 @@ export class NewTemplates {
     const parsedTemplatePaths = interpolate(templateFile, this.context);
     let outputFile = getOutputFilePath(this.context.template!, this.context.out, parsedTemplatePaths);
 
-    const templateFileIndex = this.context.templateFiles?.indexOf(templateFile);
-    if (await shouldSkipFile(outputFile, this.context, templateFileIndex))
-      return this.skippedFiles[this.context.templateName!].push(path.basename(templateFile));
+    const templateFileIndex = this.context.selectedTemplateFiles?.indexOf(templateFile);
+    if (await shouldSkipFile(outputFile, this.context, templateFileIndex)) return;
 
-    this.context = { ...this.context, ...getOutputFilePathDetails(this.context.workspaceFolder, outputFile) };
+    this.setContext(getOutputFilePathDetails(this.context.workspaceFolder, outputFile) as Context);
 
-    const data = await this.#getData(templateFile);
+    const data = await this.getTemplateFileData(templateFile);
 
-    await this.#createOutputFile(data);
+    await this.createOutputFile(data, this.context);
 
     await this.#hooks(this.context.afterEach);
   }
 
-  async #generateTemplateFiles(templateFiles: string[]) {
-    this.context.templateFiles = templateFiles;
+  async generateTemplateFiles(templateFiles: string[]) {
+    this.context.selectedTemplateFiles = templateFiles;
+    this.context.selectedTemplateFileNames = templateFiles.map((t) => path.basename(t));
+
     const templateName = this.context.templateName as string;
-    this.skippedFiles[templateName] = [];
 
     if (!(await this.#hooks(this.context.beforeAll))) return;
 
     for (let templateFile of templateFiles) {
       try {
-        await this.#generateTemplateFile(templateFile);
+        await this.generateTemplateFile(templateFile);
       } catch (err) {
-        this.skippedFiles[this.context.templateName!].push(path.basename(templateFile));
         if (shouldExit(err, this.context)) throw Error(EXIT);
       }
     }
 
     await this.#hooks(this.context.afterAll);
 
-    if (this.skippedFiles[templateName].length >= templateFiles.length)
-      return vscode.window.showErrorMessage(`No files have been generated from the ${templateName} template.`);
-
-    if (this.skippedFiles[templateName].length > 0)
-      vscode.window.showWarningMessage(`Some template files were skipped: ${this.skippedFiles[templateName].join(',\n')}`);
-
     vscode.window.showInformationMessage(`✨ ${templateName} templates have been generated successfully! 🎉`);
   }
 
-  async generateTemplate(args: any, template: string, allTemplates: string[], templates: string[]) {
-    this.context = {
-      ...this.context,
-      allTemplates,
-      templates,
-      ...getFSPathDetails(args?.fsPath),
-      ...getActiveFileDetails(),
-      ...getTemplatePathDetails(this.context.workspaceFolder, template)
-    };
-
+  async generateTemplate(template: string) {
+    this.setContext(getTemplatePathDetails(this.context.workspaceFolder, template) as Context);
     const templateConfig = await getTemplateConfig(template, Settings.configPath, this.context);
-    this.context = mergeContext(this.context, templateConfig);
+    this.setContext(templateConfig as Context);
 
     const fsPathFolder = this.context.folder || this.context.workspaceFolder;
     this.context.out = path.resolve(fsPathFolder, interpolate(this.context.out, this.context) || fsPathFolder).replace(/\\/g, '/');
@@ -284,11 +283,12 @@ export class NewTemplates {
       getListFromCallback(this.context.include, this.context)
     );
     this.context.allTemplateFiles = allTemplateFiles;
+    this.context.allTemplateFileNames = allTemplateFiles.map((t) => path.basename(t));
 
     const selectedTemplateFiles = await selectTemplateFiles(allTemplateFiles, template, this.context);
     if (!selectedTemplateFiles?.length) throw Error(EXIT);
     const templateFiles = selectedTemplateFiles.map((templateFile) => templateFile.value);
 
-    await this.#generateTemplateFiles(templateFiles);
+    await this.generateTemplateFiles(templateFiles);
   }
 }

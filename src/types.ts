@@ -1,5 +1,6 @@
 import { QuickPickItem } from 'vscode';
 import * as CaseConverts from './caseConverter';
+import { NewFileTemplate } from './NewFileTemplate';
 
 export enum Commands {
   CREATE_SAMPLE_TEMPLATE = 'new-file-template.createSampleTemplate',
@@ -19,7 +20,9 @@ type PredefinedVariables = typeof CaseConverts & {
 
   /* Templates */
   allTemplates?: string[];
-  templates?: string[];
+  allTemplateNames?: string[];
+  selectedTemplates?: string[];
+  selectedTemplateNames?: string[];
   template?: string;
   relativeTemplate?: string;
   templateBasename?: string;
@@ -27,7 +30,9 @@ type PredefinedVariables = typeof CaseConverts & {
 
   /* Template Files */
   allTemplateFiles?: string[];
-  templateFiles?: string[];
+  allTemplateFileNames?: string[];
+  selectedTemplateFiles?: string[];
+  selectedTemplateFileNames?: string[];
   templateFile?: string;
   currentTemplateFile?: string;
   relativeTemplateFile?: string;
@@ -104,6 +109,7 @@ type PredefinedVariables = typeof CaseConverts & {
   activeFileFolderName?: string;
 
   promptInput?: (inputName: string, inputConfig: InputConfig) => unknown;
+  NewFileTemplate: typeof NewFileTemplate;
 };
 
 export interface InputConfig {
@@ -135,7 +141,7 @@ export type UserConfig = {
   overwriteExistingFile?: 'prompt' | 'never' | 'always';
   promptTemplateFiles?: boolean;
   interpolateTemplateContent?: boolean;
-  enableSnippetGeneration?: boolean;
+  enableSnippetGeneration?: boolean | ((context: Context) => boolean);
   openAfterGeneration?: boolean | string[] | ((context: Context) => string[]);
   include: string[] | ((context: Context) => string[]);
   exclude: string[] | ((context: Context) => string[]);

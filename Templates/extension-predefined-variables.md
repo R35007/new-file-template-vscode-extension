@@ -86,7 +86,9 @@
 ## Templates
 
 - allTemplates - [\`${allTemplates?.join(', ')}\` ]
-- templates - [\`${templates?.join(', ')}\` ]
+- allTemplateNames - [\`${allTemplateNames?.join(', ')}\` ]
+- selectedTemplates - [\`${selectedTemplates?.join(', ')}\` ]
+- selectedTemplateNames - [\`${selectedTemplateNames?.join(', ')}\` ]
 - template -\`${template}\`
 - relativeTemplate -\`${relativeTemplate}\`
 - templateBasename -\`${templateBasename}\`
@@ -95,7 +97,10 @@
 ### Template Files
 
 - allTemplateFiles - [\`${allTemplateFiles?.join(', ')}\` ]
-- templateFiles - [\`${templateFiles?.join(', ')}\` ]
+- allTemplateFileNames - [\`${allTemplateFileNames?.join(', ')}\` ]
+- selectedTemplateFiles - [\`${selectedTemplateFiles?.join(', ')}\` ]
+- selectedTemplateFileNames - [\`${selectedTemplateFileNames?.join(', ')}\` ]
+- templateFileNames - [\`${templateFileNames?.join(', ')}\` ]
 - templateFile -\`${templateFile}\`
 - relativeTemplateFile -\`${relativeTemplateFile}\`
 - relativeTemplateFileToTemplate -\`${relativeTemplateFileToTemplate}\`

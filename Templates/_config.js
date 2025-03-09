@@ -57,7 +57,7 @@ module.exports = (_context) => ({
   overwriteExistingFile: 'prompt', // Set to 'prompt' | 'never' | 'always'.
   promptTemplateFiles: true, // If false, it will never prompt the user to select individual template files.
   interpolateTemplateContent: false, // If true, it searches for the pattern ${input.<variable>} in *.template.js files, returns the data string, and prompts the user for input.
-  enableSnippetGeneration: false, // It true, it enable snippet generation for template files. Snippets help with cursor placement using placeholders like $<number>.
+  enableSnippetGeneration: false, // or (context) => true // If true, it enable snippet generation for template files. Snippets help with cursor placement using placeholders like $<number>.
   // Can also be set to true or false, or (context) => []. If matches or true, opens all generated files. This will always be true if `enableSnippetGeneration` is not set to true.
   openAfterGeneration: ['extension-predefined-variables.md'],
 
