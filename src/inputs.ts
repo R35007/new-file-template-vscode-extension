@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { Settings } from './Settings';
 import { Commands, Context, EXIT, InputConfig } from './types';
-import { interpolate, isArray, isPlainObject, parseInputTransformVariable } from './utils';
+import { getValueFromCallback, interpolate, isArray, isPlainObject } from './utils';
 
 export const promptToCreateNewSampleTemplate = async () => {
   const selectedAction = await vscode.window.showInformationMessage(
@@ -19,7 +19,7 @@ export const promptToCreateNewSampleTemplate = async () => {
 export const getTemplateName = () =>
   vscode.window.showInputBox({
     title: 'Template Name',
-    value: 'React Component',
+    value: 'React_Component',
     ignoreFocusOut: true,
     placeHolder: 'Please enter the template name'
   });
@@ -50,7 +50,7 @@ export async function selectTemplateFiles(files: string[], templatePath: string,
     picked: true
   }));
 
-  if (!context.promptTemplateFiles) return options;
+  if (!getValueFromCallback(context.promptTemplateFiles, context)) return options;
 
   return vscode.window.showQuickPick(options, {
     title: `${context.Case?._toPascalCase?.(templateName)} - File Templates`,
@@ -125,14 +125,22 @@ export const getInput = async (
   return inputConfig.options?.length ? getQuickPickValue() : getInputBoxValue();
 };
 
-export async function shouldSkipFile(outputFile: string, context: Context, templateFileIndex?: number) {
+export async function shouldSkipFile(outputFile: string, context: Context, templateFileIndex?: number, log?: (message: string) => void) {
   if (!fsx.existsSync(outputFile)) return false;
 
-  const overwriteExistingFile = context.overwriteExistingFile;
+  const overwriteExistingFile = getValueFromCallback(context.overwriteExistingFile, context);
 
-  if (overwriteExistingFile === 'never') return true; // if true skip the file
+  if (overwriteExistingFile === 'never') {
+    log?.(`Skipping file (never overwrite): '${outputFile}'`);
+    return true; // if true skip the file
+  }
 
-  if (overwriteExistingFile === 'always') return false; // if false overwrite the file
+  if (overwriteExistingFile === 'always') {
+    log?.(`Overwriting file (always overwrite): '${outputFile}'`);
+    return false; // if false overwrite the file
+  }
+
+  log?.('Prompting user for action: file already exists, asking whether to overwrite or skip files...');
 
   const fileCategory = templateFileIndex === 0 ? 'All' : 'Remaining';
   const actions = [
@@ -147,17 +155,28 @@ export async function shouldSkipFile(outputFile: string, context: Context, templ
     ...actions
   );
 
-  if (!selectedAction) throw Error(EXIT);
+  if (!selectedAction) {
+    log?.('No action selected, exiting');
+    throw Error(EXIT);
+  }
 
-  if (selectedAction === actions[3]) return true;
+  log?.(`User chose to: ${selectedAction}`);
+
+  if (selectedAction === actions[3]) {
+    log?.(`Skipping file: ${outputFile}`);
+    return true;
+  }
 
   if (selectedAction === actions[0]) {
     context.overwriteExistingFile = 'always';
+    log?.(`Overwriting all files`);
     return false;
   }
   if (selectedAction === actions[1]) {
     context.overwriteExistingFile = 'never';
+    log?.(`Skipping all files`);
     return true;
   }
+  log?.(`Overwriting file: '${outputFile}'`);
   return false;
 }

@@ -1,6 +1,6 @@
 import { QuickPickItem } from 'vscode';
 import * as CaseConverts from './caseConverter';
-import { FileTemplate } from './NewFileTemplate';
+import { FileTemplate } from './FileTemplate';
 
 export enum Commands {
   CREATE_SAMPLE_TEMPLATE = 'new-file-template.createSampleTemplate',
@@ -11,6 +11,8 @@ export const EXIT = 'Exit';
 export const CONTINUE = 'continue';
 
 export type Utils = typeof CaseConverts & {
+  log: (message: string, newLine: string, noDate: boolean) => void;
+  clearLog: () => void;
   setContext: (context?: Context) => void;
   promptInput: (inputName: string, inputConfig: InputConfig) => unknown;
   getTemplateFileData: (templateFile: string) => Promise<unknown>;
@@ -118,6 +120,7 @@ export type PredefinedVariables = Utils & {
 
   /* File System Paths */
   fsPath?: string;
+  fsPathFolder?: string;
 
   /* Folders (if fsPath is a folder) */
   folder?: string;
@@ -184,11 +187,13 @@ export type UserConfig = Hooks & {
   out: string;
   inputValues: Record<string, unknown>;
   variables: Record<string, unknown>;
+  overwriteExistingFile?: 'prompt' | 'never' | 'always' | ((context: Context) => 'prompt' | 'never' | 'always');
+  promptTemplateFiles?: boolean | ((context: Context) => boolean);
   input: Record<string, InputConfig | ((context: Context) => InputConfig | unknown) | unknown>;
-  overwriteExistingFile?: 'prompt' | 'never' | 'always';
-  promptTemplateFiles?: boolean;
-  interpolateTemplateContent?: boolean;
+  interpolateTemplateContent?: boolean | ((context: Context) => boolean);
+  disableInterpolation?: boolean | ((context: Context) => boolean);
   enableSnippetGeneration?: boolean | ((context: Context) => boolean);
+  promptVariablePatterns?: string[] | ((context: Context) => string[]);
   openAfterGeneration?: boolean | string[] | ((context: Context) => string[]);
   include: string[] | ((context: Context) => string[]);
   exclude: string[] | ((context: Context) => string[]);

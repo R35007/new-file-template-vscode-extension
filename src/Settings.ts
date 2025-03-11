@@ -41,6 +41,12 @@ export class Settings {
   static get promptTemplateFiles() {
     return Settings.getSettings('promptTemplateFiles') as boolean;
   }
+  static get disableInterpolation() {
+    return Settings.getSettings('disableInterpolation') as boolean;
+  }
+  static get promptVariablePatterns() {
+    return (Settings.getSettings('promptVariablePatterns') as string[]) || ['\\$\\{input\\.([^\\}]+)\\}'];
+  }
   static get interpolateTemplateContent() {
     return Settings.getSettings('interpolateTemplateContent') as boolean;
   }

@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
@@ -23,32 +24,34 @@ export const getWorkSpaceFolderDetails = (filePath: string = '') =>
 
 export function getFSPathDetails(fsPath: string = ''): Record<string, string> {
   const wfd = getWorkSpaceFolderDetails(fsPath);
+  const isDirectory = fs.existsSync(fsPath) && fs.statSync(fsPath).isDirectory();
 
   const folderDetails = {
-    folder: fsPath,
-    relativeFolder: path.relative(wfd.workspaceFolder, fsPath),
-    folderBasename: path.basename(fsPath),
-    folderName: path.basename(fsPath)
+    folder: isDirectory ? fsPath : '',
+    relativeFolder: isDirectory ? path.relative(wfd.workspaceFolder, fsPath) : '',
+    folderBasename: isDirectory ? path.basename(fsPath) : '',
+    folderName: isDirectory ? path.basename(fsPath) : ''
   };
 
   const fileDetails = {
-    file: fsPath,
-    fileWorkspaceFolder: wfd.workspaceFolder,
-    relativeFile: path.relative(wfd.workspaceFolder, fsPath),
-    relativeFileDirname: path.relative(wfd.workspaceFolder, path.dirname(fsPath)),
-    fileBasename: path.basename(fsPath),
-    fileName: path.basename(fsPath),
-    fileBasenameNoExtension: path.basename(fsPath, path.extname(fsPath)),
-    fileNameNoExtension: path.basename(fsPath, path.extname(fsPath)),
-    fileExtname: path.extname(fsPath),
-    fileDirname: path.dirname(fsPath),
-    fileFolder: path.dirname(fsPath),
-    fileDirBasename: path.basename(path.dirname(fsPath)),
-    fileFolderName: path.basename(path.dirname(fsPath))
+    file: isDirectory ? '' : fsPath,
+    fileWorkspaceFolder: isDirectory ? '' : wfd.workspaceFolder,
+    relativeFile: isDirectory ? '' : path.relative(wfd.workspaceFolder, fsPath),
+    relativeFileDirname: isDirectory ? '' : path.relative(wfd.workspaceFolder, path.dirname(fsPath)),
+    fileBasename: isDirectory ? '' : path.basename(fsPath),
+    fileName: isDirectory ? '' : path.basename(fsPath),
+    fileBasenameNoExtension: isDirectory ? '' : path.basename(fsPath, path.extname(fsPath)),
+    fileNameNoExtension: isDirectory ? '' : path.basename(fsPath, path.extname(fsPath)),
+    fileExtname: isDirectory ? '' : path.extname(fsPath),
+    fileDirname: isDirectory ? '' : path.dirname(fsPath),
+    fileFolder: isDirectory ? '' : path.dirname(fsPath),
+    fileDirBasename: isDirectory ? '' : path.basename(path.dirname(fsPath)),
+    fileFolderName: isDirectory ? '' : path.basename(path.dirname(fsPath))
   };
 
   return normalizeSeparator({
     fsPath,
+    fsPathFolder: isDirectory ? fsPath : path.dirname(fsPath),
     ...folderDetails,
     ...fileDetails
   });

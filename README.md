@@ -31,18 +31,15 @@ Create new files or folders from a custom template.
   - Example 2: `${_toPascalCase(componentName)}` converts an existing variable value to PascalCase.
 - Generate multiple templates simultaneously.
 - Configure settings to open specific template files after generation.
+- Configure custom patterns to identify variables and prompt users.
+- Add logs for debugging.
+- Create multiple output file from a single template file.
 
 ### Preview
 
 > This demonstration uses sample React component templates. However, this extension is not limited to React; it is a versatile tool that can create any template to meet various business needs.
 
-#### Create New Template
-
-![Image](https://github.com/user-attachments/assets/c3210761-583e-407b-92df-414f16fd5dba)
-
-#### Create New File From Template
-
-![Image](https://github.com/user-attachments/assets/2b4c1411-1ae9-4e4d-8864-1300913fded5)
+![Demo](https://github.com/R35007/Assets/blob/main/New_File_Tempalte/demo.gif?raw=true)
 
 ### Usage
 
@@ -80,118 +77,190 @@ Create new files or folders from a custom template.
 
 Any file under the templates folder that ends with `.template.js` is considered a template module file. It is expected to return a module function from this template file, which will be called with a `context` object. While generating this file as an output file, the `.template.js` suffix will be removed from the file name. This helps in writing dynamic script logic to generate a template file. Please make sure to return a template string to generate the template data.
 
-- Example 1: `./vscode/Templates/MyTemplate/${input.componentName}.tsx.template.js`
-
+<details>
+  <summary>Example 1: Basic Usage</summary>
+  
+  - File: `./vscode/Templates/MyTemplate/${input.componentName}.tsx.template.js`
   - File names ending with `*.template.js` should always expose a method and will be called with a `context` object as an argument.
 
-  ```js
-  module.exports = async ({ componentName, _toCamelCase }) => `import styled from 'styled-components';
-  export interface ${componentName}Props {};
+```js
+module.exports = async ({ componentName, _toCamelCase }) => `import styled from 'styled-components';
+export interface ${componentName}Props {};
+
+export const ${componentName} = (${_toCamelCase(componentName)}Props: ${componentName}Props) => { 
+  // your component logic goes here 👇
+  return <Styled${componentName} {...${_toCamelCase(componentName)}Props} />
+};
+`;
+```
+
+</details>
+
+<details>
+  <summary>Example 2: Escaping backticks (`) in the template.</summary>
+
+- File: `./vscode/Templates/MyTemplate/${input.componentName}.tsx.template.js`
+- Enabling `interpolateTemplateContent` to `true` may cause errors in this case. Be cautious and use it only when you are certain of its implications.
+
+```js
+module.exports = async ({ componentName, _toCamelCase }) => `import styled from 'styled-components';
+export interface ${componentName}Props {};
+
+// Escape all backticks (\`) and dollar (\$) symbols inside the template 
+const Styled${componentName} = styled.div\`
+  \${({ width }) => \`
+    width: \${width}
+  \`}
+\`;
+
+export const ${componentName} = (${_toCamelCase(componentName)}Props: ${componentName}Props) => { 
+  // your component logic goes here 👇
+  return <Styled${componentName} {...${_toCamelCase(componentName)}Props} />
+};
+`;
+```
+
+</details>
+
+<details>
+  <summary>Example 3: Prompt inputs on demand</summary>
+
+- File: `./vscode/Templates/MyTemplate/${input.componentName}.tsx.template.js`
+- This example demonstrates prompting inputs on demand for each template.
+
+```js
+module.exports = async ({ componentName, _toCamelCase, promptInput }) => {
+  const name = await promptInput('name', { title: 'What is your name?' }); // make sure to await the response
+
+  return `import styled from 'styled-components';
+    export interface ${componentName}Props {};
+
+    // Escape all backticks (\`) and dollar (\$) symbols inside the template
+    const Styled${componentName} = styled.div\`
+      \${({ width }) => \`
+        width: \$\{width}
+      \`}
+    \`;
+
+    export const ${componentName} = (${_toCamelCase(componentName)}Props: ${componentName}Props) => {
+      // your component logic goes here 👇
+      return (
+        <Styled${componentName} {...${_toCamelCase(componentName)}Props}>
+          Hi ${name}!
+        </Styled${componentName}>
+      )
+    };
+    `;
+};
+```
+
+</details>
+
+<details>
+  <summary>Example 4: Generate multiple output file from a single Template file</summary>
   
-  export const ${componentName} = (${_toCamelCase(componentName)}Props: ${componentName}Props) => { 
-    // your component logic goes here 👇
-    return <Styled${componentName} {...${_toCamelCase(componentName)}Props} />
-  };
-  `;
-  ```
-
-- Example 2: `./vscode/Templates/MyTemplate/${input.componentName}.tsx.template.js`
-
-  - This example demonstrates escaping backticks (`) in the template.
-  - Enabling `interpolateTemplateContent` to `true` may cause errors in this case. Be cautious and use it only when you are certain of its implications.
-
-  ```js
-  module.exports = async ({ componentName, _toCamelCase }) => `import styled from 'styled-components';
-  export interface ${componentName}Props {};
-  
-  // Escape all backticks (\`) and dollar (\$) symbols inside the template 
-  const Styled${componentName} = styled.div\`
-    \${({ width }) => \`
-      width: \${width}
-    \`}
-  \`;
-  
-  export const ${componentName} = (${_toCamelCase(componentName)}Props: ${componentName}Props) => { 
-    // your component logic goes here 👇
-    return <Styled${componentName} {...${_toCamelCase(componentName)}Props} />
-  };
-  `;
-  ```
-
-- Example 3: `./vscode/Templates/MyTemplate/${input.componentName}.tsx.template.js`
-
+  - File: `./vscode/Templates/MyTemplate/_hooks.js`
   - This example demonstrates prompting inputs on demand for each template.
 
-  ```js
-  module.exports = async ({ componentName, _toCamelCase, promptInput }) => {
-    const name = await promptInput('name', { title: 'What is your name?' }); // make sure to await the response
-
-    return `import styled from 'styled-components';
-      export interface ${componentName}Props {};
-    
-      // Escape all backticks (\`) and dollar (\$) symbols inside the template 
-      const Styled${componentName} = styled.div\`
-        \${({ width }) => \`
-          width: \\$\{width}
-        \`}
-      \`;
-    
-      export const ${componentName} = (${_toCamelCase(componentName)}Props: ${componentName}Props) => { 
-        // your component logic goes here 👇
-        return (
-          <Styled${componentName} {...${_toCamelCase(componentName)}Props}>
-            Hi ${name}!
-          </Styled${componentName}>
-        )
-      };
-      `;
+```js
+module.exports = async ({ componentName, templateFile, FileTemplate, log }) => {
+  beforeEach: async (context) => {
+    // Generate custom template output file
+    if (context.templateFile === '${input.componentName}.tsx.template.js') {
+      const newFileTemplate = FileTemplate.Create(); // Create a new instance
+      const componentNames = ['AppComponent', 'TextComponent', 'MainComponent'];
+      for (let componentName of componentNames) {
+        // Make sure to set the current hook as undefined, else it will go into an infinite loop. In this case, it is `beforeEach`
+        const newContext = { ...context, componentName, beforeEach: undefined };
+        await newFileTemplate.generateTemplateFile(templateFile, newContext);
+        log(`${newFileTemplate.outputFile} generated successfully!`); // Use log method for debugging
+      }
+      return false; // Return false to skip the current file
+    }
   };
-  ```
+};
+```
 
-- Example 4: `./vscode/Templates/MyTemplate/${Date.now()}.log.md`
+</details>
 
-  - This example demonstrates adding multi-cursor positions with `$<number>`.
-  - Make sure to enable the snippet generation settings `(new-file-template.settings.enableSnippetGeneration)` to do this.
+<details>
+  <summary>Example 4: Generating Template as a Snippet for cursor placement</summary>
 
-  ```md
-  # Daily Log
+- File: `./vscode/Templates/MyTemplate/${Date.now()}.log.md`
+- This example demonstrates adding multi-cursor positions with `$<number>`.
+- Make sure to enable the snippet generation settings `(new-file-template.settings.enableSnippetGeneration)` to do this.
 
-  - Author: $1
-  - Email: $2
-  - Version: $3
-  - Date: ${new Date().toString()}
+```md
+# Daily Log
 
-  ---
+- Author: $1
+- Email: $2
+- Version: $3
+- Date: ${new Date().toString()}
 
-  Activities:
+---
 
-  - $4
-  ```
+Activities:
+
+- $4
+```
+
+</details>
 
 ### Case Conversions
 
-View more available case conversions [here](https://github.com/R35007/new-file-template-vscode-extension/blob/pre-release/v1/Templates/extension-predefined-variables.md#case-converters).
+```jsonc
+{
+  "exampleVariablesFoobar": "@foo1Bar2 3jaz4Qux$",
+  "caseConverters": {
+    "_toAlphaCase": "foo Bar jaz Qux",
+    "_toNumericCase": "1 2 3 4",
+    "_toAlphaNumericCase": "foo1Bar2 3jaz4Qux",
+    "_toSpaceCase": "foo1 Bar2 3jaz4 Qux",
+    "_toTitleCase": "Foo1 Bar2 3jaz4 Qux",
+    "_toCamelCase": "foo1Bar23jaz4Qux",
+    "_toPascalCase": "Foo1Bar23jaz4Qux",
+    "_toSnakeCase": "foo1_bar2_3jaz4_qux",
+    "_toSnakeUpperCase": "FOO1_BAR2_3JAZ4_QUX",
+    "_toSnakeTitleCase": "Foo1_Bar2_3jaz4_Qux",
+    "_toKebabCase": "foo1-bar2-3jaz4-qux",
+    "_toKebabUpperCase": "FOO1-BAR2-3JAZ4-QUX",
+    "_toKebabTitleCase": "Foo1-Bar2-3jaz4-Qux",
+    "_toDotCase": "foo1.bar2.3jaz4.qux",
+    "_toDotUpperCase": "FOO1.BAR2.3JAZ4.QUX",
+    "_toDotTitleCase": "Foo1.Bar2.3jaz4.Qux",
+    "_toSentenceCase": "Foo1Bar2 3jaz4Qux",
+    "_toCapitalizedWords": "Foo1Bar2 3jaz4Qux",
+    "_toStudlyCaps": "FoO1BaR2 3JaZ4QuX",
+    "_toUpperCase": "FOO1BAR2 3JAZ4QUX",
+    "_toLowerCase": "foo1bar2 3jaz4qux"
+  }
+}
+```
 
 ### Template Configuration
 
 By default, the extension searches for `_config.json`, `_config.js`, or `_config/index.js` within the template folder. You can also specify a custom configuration file path using the `new-file-template.settings.configPath` extension setting.
 
 ```ts
-export type UserConfig = {
+export type Hooks = {
   beforeAll?: (context: Context) => Context | false | void; // Executes before generating all template files.
   beforeEach?: (context: Context) => Context | false | void; // Executes before generating each template file.
   processBeforeEach?: ({ data, context }: { data: string; context: Context }) => { data: string; context: Context } | false | void; // Executes before interpolating template data for each file.
   processAfterEach?: ({ data, context }: { data: string; context: Context }) => { data: string; context: Context } | false | void; // Executes after interpolating template data for each file.
   afterEach?: (context: Context) => Context | false | void; // Executes after generating each template file.
   afterAll?: (context: Context) => Context | false | void; // Executes after generating all template files.
+};
+
+export type UserConfig = Hooks & {
   out: string; // Output directory for generated files.
   inputValues: Record<string, unknown>; // Predefined input values for template generation.
   variables: Record<string, unknown>; // Additional variables for template generation.
   input: Record<string, InputConfig | ((context: Context) => InputConfig | unknown) | unknown>; // Configuration for user input prompts.
-  overwriteExistingFile?: 'prompt' | 'never' | 'always'; // Behavior for overwriting existing files.
-  promptTemplateFiles?: boolean; // Whether to prompt for template files.
-  interpolateTemplateContent?: boolean; // Enable to interpolate template content. Use with caution as it may cause errors.
-  enableSnippetGeneration?: boolean; // Whether to enable snippet generation.
+  overwriteExistingFile?: 'prompt' | 'never' | 'always' | ((context: Context) => 'prompt' | 'never' | 'always'); // Behavior for overwriting existing files.
+  promptTemplateFiles?: boolean | ((context: Context) => boolean); // Whether to prompt for template files.
+  interpolateTemplateContent?: boolean | ((context: Context) => boolean); // Enable to interpolate template content. Use with caution as it may cause errors.
+  enableSnippetGeneration?: boolean | ((context: Context) => boolean); // Whether to enable snippet generation.
   openAfterGeneration?: boolean | string[] | ((context: Context) => string[]); // Files to open after generation.
   include: string[] | ((context: Context) => string[]); // Files to include in the template.
   exclude: string[] | ((context: Context) => string[]); // Files to exclude from the template.
@@ -223,6 +292,8 @@ The extension can be configured using the following settings in your `settings.j
 - `new-file-template.settings.promptMultipleTemplates`: If true, prompts a multiple-choice picker to select multiple template folders to generate.
 - `new-file-template.settings.useSeparateInstance`: If `new-file-template.settings.promptMultipleTemplates` is true, it uses the same instance to create multiple templates. Set to true to generate each template at a separate instance.
 - `new-file-template.settings.promptTemplateFiles`: If true, prompts a multiple-choice picker to select the template files to generate.
+- `new-file-template.settings.disableInterpolation`: If true, disables interpolating template data.
+- `new-file-template.settings.promptVariablePatterns`: Provide list of patterns to recognize and prmpt the user input variables. Defaults to `[\\$\\{input\\.([^\\}]+)\\}]`
 - `new-file-template.settings.interpolateTemplateContent`: If true, searches for the pattern `${input.<variable>}` (e.g., `${input.name}`) within the \*.template.js file string and prompts the user for input.
 - `new-file-template.settings.enableSnippetGeneration`: If true, it enables snippet generation for template files. Snippets help with cursor placement using placeholders like `$<number>`.
 - `new-file-template.settings.openAfterGeneration`: If true, opens all generated files. This will always be `true` if `new-file-template.settings.enableSnippetGeneration` is set to `true`.
@@ -262,18 +333,20 @@ Add the following configuration to your `settings.json` file:
   }
 }
 ```
+
 ### Extension Context Utils
 
 The `context` object contains many utility methods to create a template explicitly. These are the following methods:
-```ts
+
+````ts
 export type Utils = typeof CaseConverts & {
   setContext: (context?: Context) => void;
-  promptInput: (inputName: string, inputConfig: InputConfig) => unknown;
-  getTemplateFileData: (templateFile: string) => Promise<unknown>;
+  promptInput: (inputName: string, inputConfig: InputConfig, context?: Context) => void;
+  getTemplateFileData: (templateFile: string, context?: Context) => Promise<unknown>;
   createOutputFile: (data: string, context: Context) => Promise<void>;
-  generateTemplateFile: (templateFile: string) => Promise<void>;
-  generateTemplateFiles: (templateFiles: string[]) => Promise<void>;
-  generateTemplate: (template: string) => Promise<void>;
+  generateTemplateFile: (templateFile: string, context?: Context) => Promise<void>;
+  generateTemplateFiles: (templateFiles: string[], context?: Context) => Promise<void>;
+  generateTemplate: (template: string, context?: Context) => Promise<void>;
   Case: {
     _toNumericCase: (input?: string) => string;
     _toAlphaCase: (input?: string) => string;
@@ -301,16 +374,16 @@ export type Utils = typeof CaseConverts & {
     @example
     ```js
       const newFileTemplate = new FileTemplate(fsPath, allTemplates, selectedTemplates, newContext);
-      newFileTemplate.setContext(...args)
-      newFileTemplate.promptInput(...args)
-      newFileTemplate.getTemplateFileData(...args)
-      newFileTemplate.createOutputFile(...args)
-      newFileTemplate.generateTemplateFile(...args)
-      newFileTemplate.generateTemplateFiles(...args)
-      newFileTemplate.generateTemplate(...args)
+      newFileTemplate.setContext(context);
+      newFileTemplate.promptInput(inputName, inputConfig, context);
+      newFileTemplate.getTemplateFileData(templateFile, context);
+      newFileTemplate.createOutputFile(data, context);
+      newFileTemplate.generateTemplateFile(templateFile, context);
+      newFileTemplate.generateTemplateFiles(templateFiles, context);
+      newFileTemplate.generateTemplate(template, context);
     ```
   */
   FileTemplate: typeof FileTemplate;
 };
-``
-
+``;
+````

@@ -16,7 +16,7 @@ module.exports = {
    * - {false}: Returns false to skip the current iteration.
    * - {undefined|void}: Returns undefined or void to proceed without changing the context.
    */
-  beforeEach: (context) => ({ ...context, camelCaseFileName: context._toPascalCase(context.fileName) }),
+  beforeEach: (context) => ({ ...context, camelCaseComponentName: context._toCamelCase(context.componentName) }),
   /**
    * Runs before interpolating template data for each file.
    * @param {Object} params - The parameters object.

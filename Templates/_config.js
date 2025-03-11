@@ -29,6 +29,7 @@ module.exports = (_context) => ({
       matchOnDescription: false,
       matchOnDetail: false,
       ignoreFocusOut: true, // Set to false to close the input dialog on focus out.
+      // options: ["react", "story", "test"] // can also provide list of string values
       options: [
         { label: 'React', description: 'React', detail: 'Generates React component files', value: 'react', picked: true },
         { label: 'Story', description: 'Story', detail: 'Generates Storybook files', value: 'story', picked: true },
@@ -36,8 +37,12 @@ module.exports = (_context) => ({
       ]
       /* Select input won't have validateInput, password */
     },
+    description: ({ tags }) => ({
+      title: 'Storybook Description',
+      value: 'This is a sample storybook description',
+      prePrompt: tags?.includes('story') // Prompts on load only when tags include 'story'.
+    }),
     componentName: {
-      prePrompt: ({ tags }) => tags?.includes('react'), // Prompts only when tags include 'react'.
       value: 'AppComponent',
       password: false,
       ignoreFocusOut: true,
@@ -47,24 +52,19 @@ module.exports = (_context) => ({
       // transform: '${_toPascalCase(value)}', // Use this if using _config.json.
       transform: (value, context) => context._toPascalCase(value) // transform always takes precedence.
       /* Text input won't have matchOnDescription, matchOnDetail, canPickMany */
-    },
-    description: ({ tags }) => ({
-      title: 'Storybook Description',
-      value: 'This is a sample storybook description',
-      prePrompt: tags?.includes('story') // Prompts only when tags include 'story'.
-    })
+    }
   },
-  overwriteExistingFile: 'prompt', // Set to 'prompt' | 'never' | 'always'.
-  promptTemplateFiles: true, // If false, it will never prompt the user to select individual template files.
-  interpolateTemplateContent: false, // If true, it searches for the pattern ${input.<variable>} in *.template.js files, returns the data string, and prompts the user for input.
-  enableSnippetGeneration: false, // or (context) => true // If true, it enable snippet generation for template files. Snippets help with cursor placement using placeholders like $<number>.
-  // Can also be set to true or false, or (context) => []. If matches or true, opens all generated files. This will always be true if `enableSnippetGeneration` is not set to true.
-  openAfterGeneration: ['extension-predefined-variables.md'],
+  // overwriteExistingFile: 'prompt', // Provide a string value or context callback. Set to 'prompt' | 'never' | 'always'.
+  // promptTemplateFiles: true, // Provide a boolean value or context callback. If false, it will never prompt the user to select individual template files.
+  // interpolateTemplateContent: false, // Provide a boolean value or context callback. If true, it searches for the pattern ${input.<variable>} in *.template.js files, returns the data string, and prompts the user for input.
+  // enableSnippetGeneration: false, // Provide a boolean value or context callback. If true, it enable snippet generation for template files. Snippets help with cursor placement using placeholders like $<number>.
+  // disableInterpolation: false, // Provide a boolean value or context callback. If true, it disables the data string interpolation;
+  // openAfterGeneration: true,  // Provide a list of string or boolean value or context callback. If matches or true, opens all generated files. This will always be true if `enableSnippetGeneration` is not set to true.
+  // promptVariablePatterns: ['\\$\\{input\\.([^\\}]+)\\}'] // Provide a list of string or context callback. Prompts the user input for matched pattern variables
+  // include: [] // Provide a list of string or context callback.
+  // exclude: ['./_hooks.js'] // Provide a list of string or context callback.
 
-  // include: [] // Can also provide a list of path values.
-  include: ({ allTemplateFiles }) => allTemplateFiles, // Includes additional files.
-
-  // exclude: ['./_hooks.js'] // Can also provide a list of path values.
+  // This example demonstrates filtering the template files based on user input selection
   exclude: ({ tags }) => {
     const files = ['./_hooks.js'];
     const templates = {

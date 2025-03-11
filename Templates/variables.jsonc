@@ -1,0 +1,135 @@
+/* 
+> Note: Input variable must not contain any spaces. Inputs are prompted on demand only when the input values are not present.
+*/
+{
+  "componentName": "${input.componentName}", // This prompts text input
+  "tags": "${input.tags}", // This prompts the multiple choice as configured in the config file. Please check the _config.js file.
+  "inputVariables": "${componentName}, ${tags}, ${foobar}", // any inputs and variables can be directly accessed.
+  "inputCaseConversion": "${componentName_toPascalCase}, ${componentName_toCamelCase}", // any inputs and variables can be converted to the given case.
+  "inputValues": ${JSON.stringify(inputValues)},
+  "variables": ${JSON.stringify(variables)},
+  "version": "${package.version}", // Access package.json at the root of the workspace folder.
+  "nodeGlobals": {
+    "processExecPath": "${process.execPath.replace(/\\/g, '/')}",
+    "envNODE_ENV": "${env.NODE_ENV || 'development'}",
+    "dateNow": "${Date.now()}",
+    "formattedDate": "${new Date().toLocaleDateString('en-GB').replace(/\\/g, '-')}",
+    "randomNumber": "${Math.random()}",
+    "__dirname": "${__dirname.replace(/\\/g, '/')}",
+    "__filename": "${__filename.replace(/\\/g, '/')}"
+  },
+  "userDirectories": {
+    "userHome": "${userHome.replace(/\\/g, '/')}",
+    "workspaceFolder": "${workspaceFolder}",
+    "cwd": "${cwd}",
+    "workspaceFolderBasename": "${workspaceFolderBasename}",
+    "workspaceFolderName": "${workspaceFolderName}"
+  },
+  "fsPath": "${fsPath}", // fsPath is the selected explorer file or folder
+  "fsPathFolder": "${fsPathFolder}", // always give you the folder path
+  "folders": {
+    "folder": "${folder}",
+    "relativeFolder": "${relativeFolder}",
+    "folderBasename": "${folderBasename}",
+    "folderName": "${folderName}"
+  },
+  "files": {
+    "file": "${file}",
+    "fileWorkspaceFolder": "${fileWorkspaceFolder}",
+    "relativeFile": "${relativeFile}",
+    "relativeFileDirname": "${relativeFileDirname}",
+    "fileBasename": "${fileBasename}",
+    "fileName": "${fileName}",
+    "fileBasenameNoExtension": "${fileBasenameNoExtension}",
+    "fileNameNoExtension": "${fileNameNoExtension}",
+    "fileExtname": "${fileExtname}",
+    "fileDirname": "${fileDirname}",
+    "fileFolder": "${fileFolder}",
+    "fileDirBasename": "${fileDirBasename}",
+    "fileFolderName": "${fileFolderName}"
+  },
+  "activeDocument": {
+    "activeFile": "${activeFile}",
+    "activeFileWorkspaceFolder": "${activeFileWorkspaceFolder}",
+    "relativeActiveFile": "${relativeActiveFile}",
+    "relativeActiveFileDirname": "${relativeActiveFileDirname}",
+    "activeFileBasename": "${activeFileBasename}",
+    "activeFileName": "${activeFileName}",
+    "activeFileBasenameNoExtension": "${activeFileBasenameNoExtension}",
+    "activeFileNameNoExtension": "${activeFileNameNoExtension}",
+    "activeFileExtname": "${activeFileExtname}",
+    "activeFileDirname": "${activeFileDirname}",
+    "activeFileFolder": "${activeFileFolder}",
+    "activeFileDirBasename": "${activeFileDirBasename}",
+    "activeFileFolderName": "${activeFileFolderName}"
+  },
+  "templates": {
+    "allTemplates": ${JSON.stringify(allTemplates)},
+    "allTemplateNames": ${JSON.stringify(allTemplateNames)},
+    "selectedTemplates": ${JSON.stringify(selectedTemplates)},
+    "selectedTemplateNames": ${JSON.stringify(selectedTemplateNames)},
+    "template": "${template}",
+    "relativeTemplate": "${relativeTemplate}",
+    "templateBasename": "${templateBasename}",
+    "templateName": "${templateName}"
+  },
+  "templateFiles": {
+    "allTemplateFiles": ${JSON.stringify(allTemplateFiles)},
+    "allTemplateFileNames": ${JSON.stringify(allTemplateFileNames)},
+    "selectedTemplateFiles":${JSON.stringify(selectedTemplateFiles)},
+    "selectedTemplateFileNames": ${JSON.stringify(selectedTemplateFileNames)},
+    "templateFile": "${templateFile}",
+    "relativeTemplateFile": "${relativeTemplateFile}",
+    "relativeTemplateFileToTemplate": "${relativeTemplateFileToTemplate}",
+    "relativeTemplateFileDirname": "${relativeTemplateFileDirname}",
+    "relativeTemplateFileToTemplateDirname": "${relativeTemplateFileToTemplateDirname}",
+    "templateFileBasename": "${templateFileBasename}",
+    "templateFileName": "${templateFileName}",
+    "templateFileBasenameNoExtension": "${templateFileBasenameNoExtension}",
+    "templateFileNameNoExtension": "${templateFileNameNoExtension}",
+    "templateFileExtname": "${templateFileExtname}",
+    "templateFileDirname": "${templateFileDirname}",
+    "templateFileDirBasename": "${templateFileDirBasename}",
+    "templateFileFolderName": "${templateFileFolderName}"
+  },
+  "outputFiles": {
+    "outputFile": "${outputFile}",
+    "relativeOutputFile": "${relativeOutputFile}",
+    "relativeOutputFileDirname": "${relativeOutputFileDirname}",
+    "outputFileBasename": "${outputFileBasename}",
+    "outputFileName": "${outputFileName}",
+    "outputFileBasenameNoExtension": "${outputFileBasenameNoExtension}",
+    "outputFileNameNoExtension": "${outputFileNameNoExtension}",
+    "outputFileExtname": "${outputFileExtname}",
+    "outputFileDirname": "${outputFileDirname}",
+    "outputFileFolder": "${outputFileFolder}",
+    "outputFileDirBasename": "${outputFileDirBasename}",
+    "outputFileFolderName": "${outputFileFolderName}"
+  },
+  "helperMethods": {
+    "exampleVariablesFoobar": "@foo1Bar2 3jaz4Qux$",
+    "caseConverters": {
+      "_toAlphaCase": "${_toAlphaCase(variables.foobar)}",
+      "_toNumericCase": "${_toNumericCase(variables.foobar)}",
+      "_toAlphaNumericCase": "${_toAlphaNumericCase(variables.foobar)}",
+      "_toSpaceCase": "${_toSpaceCase(variables.foobar)}",
+      "_toTitleCase": "${_toTitleCase(variables.foobar)}",
+      "_toCamelCase": "${_toCamelCase(variables.foobar)}",
+      "_toPascalCase": "${_toPascalCase(variables.foobar)}",
+      "_toSnakeCase": "${_toSnakeCase(variables.foobar)}",
+      "_toSnakeUpperCase": "${_toSnakeUpperCase(variables.foobar)}",
+      "_toSnakeTitleCase": "${_toSnakeTitleCase(variables.foobar)}",
+      "_toKebabCase": "${_toKebabCase(variables.foobar)}",
+      "_toKebabUpperCase": "${_toKebabUpperCase(variables.foobar)}",
+      "_toKebabTitleCase": "${_toKebabTitleCase(variables.foobar)}",
+      "_toDotCase": "${_toDotCase(variables.foobar)}",
+      "_toDotUpperCase": "${_toDotUpperCase(variables.foobar)}",
+      "_toDotTitleCase": "${_toDotTitleCase(variables.foobar)}",
+      "_toSentenceCase": "${_toSentenceCase(variables.foobar)}",
+      "_toCapitalizedWords": "${_toCapitalizedWords(variables.foobar)}",
+      "_toStudlyCaps": "${_toStudlyCaps(variables.foobar)}",
+      "_toUpperCase": "${_toUpperCase(variables.foobar)}",
+      "_toLowerCase": "${_toLowerCase(variables.foobar)}"
+    }
+  }
+}

@@ -2,7 +2,7 @@
   "name": "new-file-template",
   "displayName": "new-file-template",
   "description": "Create a new file or folder from custom templates",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "icon": "images/new-file-template-logo.png",
   "engines": {
     "vscode": "^1.97.0"
@@ -111,27 +111,50 @@
           "default": false,
           "description": "If true, prompts a multiple-choice picker to select the template files to generate."
         },
-        "new-file-template.settings.interpolateTemplateContent": {
+        "new-file-template.settings.disableInterpolation": {
           "order": 7,
+          "type": "boolean",
+          "default": false,
+          "description": "If true, It disables the data interpolation even for regular template files. Use it with caution."
+        },
+        "new-file-template.settings.promptVariablePatterns": {
+          "order": 8,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "additionalItems": true,
+          "examples": [
+            [
+              "__([A-Za-z0-9]+)__"
+            ]
+          ],
+          "default": [
+            "\\$\\{input\\.([^\\}]+)\\}"
+          ],
+          "description": "Specify a custom pattern to prompt user input. By default, it prompts for variable names between `${input` and `}`. For example, `${input.componentName}` prompts the user for the componentName."
+        },
+        "new-file-template.settings.interpolateTemplateContent": {
+          "order": 9,
           "type": "boolean",
           "default": false,
           "description": "If true, searches for the pattern ${input.<variable>} (e.g., ${input.name}) within the *.template.js file string and prompts the user for input."
         },
         "new-file-template.settings.enableSnippetGeneration": {
-          "order": 8,
+          "order": 10,
           "type": "boolean",
           "default": false,
           "description": "If true, it enables snippet generation for template files. Snippets help with cursor placement using placeholders like $<number>."
         },
         "new-file-template.settings.openAfterGeneration": {
-          "order": 9,
+          "order": 11,
           "type": "boolean",
           "default": true,
           "scope": "window",
           "markdownDescription": "If true, opens all generated files. This always be `true` if `#new-file-template.settings.enableSnippetGeneration#` is set to `true`."
         },
         "new-file-template.settings.variables": {
-          "order": 10,
+          "order": 12,
           "type": "object",
           "default": {},
           "examples": [

@@ -1,4 +1,4 @@
-import fg, { glob } from 'fast-glob';
+import fg from 'fast-glob';
 import * as fsx from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -29,6 +29,13 @@ export const parseInputTransformVariable = (inputNameString: string, context: Co
   return { transform, inputName, convertToMethodName };
 };
 
+export const getCurrentTemplateFile = (context?: Partial<Context>) => {
+  if (!context) return;
+  return context.relativeTemplateFileToTemplate
+    ? `${context.templateName}/${context.relativeTemplateFileToTemplate}`
+    : context.templateName;
+};
+
 const handleUndefinedVariable = (
   error: Error,
   format: string = '',
@@ -47,7 +54,8 @@ const handleUndefinedVariable = (
 
   if (value === undefined || typeof value !== 'string') {
     if (error instanceof Error && !hideErrorMessage) {
-      const message = context.currentTemplateFile ? `${context.currentTemplateFile} - ${error.message}` : error.message;
+      const currentTemplateFile = getCurrentTemplateFile(context);
+      const message = currentTemplateFile ? `${currentTemplateFile} - ${error.message}` : error.message;
       vscode.window.showErrorMessage(message);
     }
     return format;
@@ -67,7 +75,8 @@ export const interpolate = (format: string = '', context: Context = {} as Contex
     if (error instanceof Error && error.message.endsWith('is not defined'))
       return handleUndefinedVariable(error, format, context, hideErrorMessage);
     if (error instanceof Error && !hideErrorMessage) {
-      const message = context.currentTemplateFile ? `${context.currentTemplateFile} - ${error.message}` : error.message;
+      const currentTemplateFile = getCurrentTemplateFile(context);
+      const message = currentTemplateFile ? `${currentTemplateFile} - ${error.message}` : error.message;
       vscode.window.showErrorMessage(message);
     }
     return format;
@@ -95,30 +104,33 @@ export const resolveWithWorkspaceFolder = (relativePath: string) => {
   return path.resolve(workspaceFolder, relativePath);
 };
 
-export function mergeContext(existingContext: Context = {} as Context, newContext: Context = {} as Context) {
+export function mergeContext(existingContext: Partial<Context> = {}, newContext: Partial<Context> = {}) {
   const variables = { ...existingContext.variables, ...newContext.variables };
   const inputValues = { ...existingContext.inputValues, ...newContext.inputValues };
   const input = { ...existingContext.input, ...newContext.input, ...inputValues };
 
-  return {
-    ...existingContext,
+  Object.assign(existingContext, {
     ...newContext,
+    ...variables,
+    ...inputValues,
     input,
     variables,
-    inputValues,
-    ...variables,
-    ...inputValues
-  };
+    inputValues
+  });
+
+  return existingContext;
 }
 
-export function shouldExit(err: unknown, context?: Context) {
-  const currentTemplateFile =
-    context &&
-    (context.relativeTemplateFileToTemplate ? `${context.templateName}/${context.relativeTemplateFileToTemplate}` : context.templateName);
-  if (err instanceof Error && err.message === EXIT) return true;
+export function shouldExit(err: unknown, context?: Partial<Context>, log?: (message: string) => void) {
+  if (err instanceof Error && err.message === EXIT) {
+    log?.('[EXIT] Exiting with a smile! 😊');
+    return true;
+  }
   if (err instanceof Error && err.message !== EXIT) {
+    const currentTemplateFile = getCurrentTemplateFile(context);
     const message = currentTemplateFile ? `${currentTemplateFile} - ${err.message}` : err.message;
     vscode.window.showErrorMessage(message);
+    log?.(`[ERROR] ${message}`);
   }
   console.error(err);
 }
@@ -154,16 +166,38 @@ export async function getTemplateData(templateFile: string, context: Context) {
   return data;
 }
 
-export function getListFromCallback(callback: string[] | ((context: Context) => string[]) = [], context: Context) {
-  if (!callback) return [];
-  const list = typeof callback === 'function' ? callback(context) : callback;
-  return isArray(list) ? list : [];
+export function getValueFromCallback(callback: unknown | ((context: Context) => string[]) = [], context: Context, isList?: boolean) {
+  if (!callback) return isList ? [] : callback;
+  const value = typeof callback === 'function' ? callback(context) : callback;
+  return isList ? (isArray(value) ? [...new Set(value)] : []) : value;
 }
 
 export function shouldOpenGeneratedFile(context: Context): boolean {
   if (typeof context.openAfterGeneration === 'boolean') return context.openAfterGeneration;
-  const openGeneratedFilesList = getListFromCallback(context.openAfterGeneration, context);
+  const openGeneratedFilesList = getValueFromCallback(context.openAfterGeneration, context, true);
   return openGeneratedFilesList.some(
-    (pattern) => pattern === context.templateFileName || new RegExp(pattern).test(context.templateFileName!)
+    (pattern: string) => pattern === context.templateFileName || new RegExp(pattern).test(context.templateFileName!)
   );
 }
+
+export const formatTime = (date: Date) => {
+  const hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
+  const milliseconds = date.getMilliseconds().toString().padStart(3, '0');
+  const formattedHours = (hours % 12 || 12).toString().padStart(2, '0');
+  return `[${formattedHours}:${minutes}:${seconds}.${milliseconds}]`;
+};
+
+export const getRegexValues = (data: string, patternString: string) => {
+  const regex = new RegExp(patternString, 'g'); // Add the 'g' flag
+  let match;
+  const results = [];
+
+  // Use a loop to extract all matches with the capturing group
+  while ((match = regex.exec(data)) !== null) {
+    results.push(match[1]); // Capture group 1 contains the text between __
+  }
+
+  return results;
+};
