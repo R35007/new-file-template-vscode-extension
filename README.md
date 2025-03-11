@@ -293,7 +293,7 @@ The extension can be configured using the following settings in your `settings.j
 - `new-file-template.settings.useSeparateInstance`: If `new-file-template.settings.promptMultipleTemplates` is true, it uses the same instance to create multiple templates. Set to true to generate each template at a separate instance.
 - `new-file-template.settings.promptTemplateFiles`: If true, prompts a multiple-choice picker to select the template files to generate.
 - `new-file-template.settings.disableInterpolation`: If true, disables interpolating template data.
-- `new-file-template.settings.promptVariablePatterns`: Provide list of patterns to recognize and prmpt the user input variables. Defaults to `[\\$\\{input\\.([^\\}]+)\\}]`
+- `new-file-template.settings.promptVariablePatterns`: Provide list of patterns to recognize and prmpt the user input variables. Defaults to `["\\$\\{input\\.([^\\}]+)\\}"]`
 - `new-file-template.settings.interpolateTemplateContent`: If true, searches for the pattern `${input.<variable>}` (e.g., `${input.name}`) within the \*.template.js file string and prompts the user for input.
 - `new-file-template.settings.enableSnippetGeneration`: If true, it enables snippet generation for template files. Snippets help with cursor placement using placeholders like `$<number>`.
 - `new-file-template.settings.openAfterGeneration`: If true, opens all generated files. This will always be `true` if `new-file-template.settings.enableSnippetGeneration` is set to `true`.
@@ -312,7 +312,8 @@ Add the following configuration to your `settings.json` file:
   "new-file-template.settings.promptMultipleTemplates": false,
   "new-file-template.settings.useSeparateInstance": false,
   "new-file-template.settings.promptTemplateFiles": false,
-  "new-file-template.settings.promptVariablePatterns": [\\$\\{input\\.([^\\}]+)\\}],
+  "new-file-template.settings.disableInterpolation": false,
+  "new-file-template.settings.promptVariablePatterns": ["\\$\\{input\\.([^\\}]+)\\}"],
   "new-file-template.settings.interpolateTemplateContent": false,
   "new-file-template.settings.enableSnippetGeneration": false,
   "new-file-template.settings.openAfterGeneration": true,
