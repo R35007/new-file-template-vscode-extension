@@ -93,6 +93,7 @@ export const getTemplatePathDetails = (workspaceFolder: string, template: string
 export const getTemplateFilePathDetails = (workspaceFolder: string, template: string, templateFile: string = '') =>
   normalizeSeparator({
     templateFile,
+    currentTemplateFile: path.join(path.basename(template), path.relative(template, templateFile)),
     relativeTemplateFile: path.relative(workspaceFolder, templateFile),
     relativeTemplateFileDirname: path.relative(workspaceFolder, path.dirname(templateFile)),
     relativeTemplateFileToTemplate: path.relative(template, templateFile),

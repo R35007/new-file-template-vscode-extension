@@ -6,7 +6,7 @@ const hooks = require('./_hooks');
 
 module.exports = (_context) => ({
   ...hooks,
-  out: '${workspaceFolder}/ReactComponent',
+  out: '${workspaceFolder}/${templateName}',
   inputValues: {
     // User input values will be added here. If a value is present here, the user will not be prompted.
     // This will override the values from variables and input configurations.

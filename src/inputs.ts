@@ -21,7 +21,9 @@ export const getTemplateName = () =>
     title: 'Template Name',
     value: 'React_Component',
     ignoreFocusOut: true,
-    placeHolder: 'Please enter the template name'
+    placeHolder: 'Please enter the template name',
+    validateInput: (value) =>
+      fsx.existsSync(path.join(Settings.vscodeTemplatePath, value)) ? 'Template already exist. Please provide a different name.' : undefined
   });
 
 export const pickTemplateFolders = async (templates: string[]): Promise<string[]> => {
@@ -149,7 +151,7 @@ export async function shouldSkipFile(outputFile: string, context: Context, templ
     'Overwrite this file',
     'Skip this file'
   ];
-  const selectedAction = await vscode.window.showErrorMessage(
+  const selectedAction = await vscode.window.showWarningMessage(
     `${path.basename(outputFile)} file already exists.`,
     { modal: true },
     ...actions

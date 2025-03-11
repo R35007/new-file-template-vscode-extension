@@ -11,7 +11,7 @@ export const EXIT = 'Exit';
 export const CONTINUE = 'continue';
 
 export type Utils = typeof CaseConverts & {
-  log: (message: string, newLine: string, noDate: boolean) => void;
+  log: (message: string, newLine?: string, noDate?: boolean) => void;
   clearLog: () => void;
   setContext: (context?: Context) => void;
   promptInput: (inputName: string, inputConfig: InputConfig) => unknown;

@@ -312,6 +312,7 @@ Add the following configuration to your `settings.json` file:
   "new-file-template.settings.promptMultipleTemplates": false,
   "new-file-template.settings.useSeparateInstance": false,
   "new-file-template.settings.promptTemplateFiles": false,
+  "new-file-template.settings.promptVariablePatterns": [\\$\\{input\\.([^\\}]+)\\}],
   "new-file-template.settings.interpolateTemplateContent": false,
   "new-file-template.settings.enableSnippetGeneration": false,
   "new-file-template.settings.openAfterGeneration": true,

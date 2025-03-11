@@ -1,5 +1,4 @@
 import * as fsx from 'fs-extra';
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { Settings } from './Settings';
 import * as caseConverter from './caseConverter';
@@ -11,6 +10,7 @@ import {
   getRegexValues,
   getTemplateData,
   getValueFromCallback,
+  handleError,
   interpolate,
   isPlainObject,
   mergeContext,
@@ -32,6 +32,7 @@ export class TemplateUtils {
   context: Context = {} as Context;
   log = log;
   clearLog = clearLog;
+  errorMessage: string | undefined;
 
   constructor(fsPath?: string, allTemplates: string[] = [], selectedTemplates: string[] = []) {
     this.setContext({
@@ -71,7 +72,7 @@ export class TemplateUtils {
    * @param {Context} [newContext] - The context to merge.
    */
   setContext(newContext?: Partial<Context>) {
-    if (!newContext || !Object.keys(newContext).length || this.context === newContext) return;
+    if (!newContext || !isPlainObject(newContext) || !Object.keys(newContext).length || this.context === newContext) return;
     mergeContext(this.context, newContext);
   }
 
@@ -98,7 +99,9 @@ export class TemplateUtils {
    */
   async _promptInputs(inputNames: string[], isPreLoadInput: boolean = false) {
     if (!inputNames.length) return;
-    this.log('Prompting for input values...');
+    this.log('Prompting for input values... Time to get some details! ✍️');
+
+    let isPrompted = false;
 
     for (const inputNameStr of inputNames) {
       const { inputName, transform } = parseInputTransformVariable(inputNameStr, this.context);
@@ -122,6 +125,8 @@ export class TemplateUtils {
 
       if (!shouldPrompt) continue;
 
+      isPrompted = true;
+
       this.log(`\t Prompting input for: ${inputName}`);
 
       const value = await getInput(inputName, inputConfig, this.context, transform);
@@ -136,6 +141,8 @@ export class TemplateUtils {
         this.context[inputNameStr] = value;
       }
     }
+
+    if (!isPrompted) this.log('Nothing was prompted. Looks like we have all the info we need!');
   }
 
   /**
@@ -219,30 +226,33 @@ export class TemplateUtils {
    * @returns {Promise<string>} The processed template file data.
    */
   async getTemplateFileData(templateFile: string, context?: Context) {
-    this.log(`Retrieving template file data for: ${this.context.templateFileName}`);
-    this.setContext(context);
+    try {
+      this.log(`Retrieving template file data for: ${this.context.templateFileName}`);
+      this.setContext(context);
 
-    const shouldRequire = path.basename(templateFile).endsWith('.template.js');
-    let data = await getTemplateData(templateFile, this.context);
+      let data = await getTemplateData(templateFile, this.context);
 
-    await this._promptInputsFromPattern(data);
+      await this._promptInputsFromPattern(data);
 
-    const processedDataBefore = await this._processHooks(data, this.context.processBeforeEach, 'processBeforeEach');
-    if (processedDataBefore === false) return false;
-    data = processedDataBefore;
+      const processedDataBefore = await this._processHooks(data, this.context.processBeforeEach, 'processBeforeEach');
+      if (processedDataBefore === false) return false;
+      data = processedDataBefore;
 
-    const shouldInterpolate =
-      !Boolean(getValueFromCallback(this.context.disableInterpolation, this.context)) &&
-      (!shouldRequire || !getValueFromCallback(this.context.interpolateTemplateContent, this.context));
+      const shouldRequire = templateFile.endsWith('.template.js');
+      const shouldInterpolate = !this.context.disableInterpolation && (!shouldRequire || this.context.interpolateTemplateContent);
 
-    if (shouldInterpolate) {
-      this.log(`Interpolating template content...`);
-      data = await interpolate(String(data), this.context, shouldRequire);
+      if (shouldInterpolate) {
+        this.log(`Interpolating template content...`);
+        data = await interpolate(String(data), this.context, shouldRequire);
+      }
+      const processedDataAfter = await this._processHooks(data, this.context.processAfterEach, 'processAfterEach');
+      if (processedDataAfter === false) return false;
+      data = processedDataAfter;
+      return data;
+    } catch (error) {
+      this.errorMessage = handleError(error, this.context, this.errorMessage);
+      throw error;
     }
-    const processedDataAfter = await this._processHooks(data, this.context.processAfterEach, 'processAfterEach');
-    if (processedDataAfter === false) return false;
-    data = processedDataAfter;
-    return data;
   }
 
   /**
@@ -252,32 +262,37 @@ export class TemplateUtils {
    * @param {Context} [newContext] - The context to merge.
    */
   async createOutputFile(data: string, context?: Context) {
-    this.log('Creating output file...');
-    this.setContext(context as Context);
+    try {
+      this.log('Creating output file...');
+      this.setContext(context as Context);
 
-    await fsx.ensureFile(this.context.outputFile!);
+      await fsx.ensureFile(this.context.outputFile!);
 
-    if (!Boolean(getValueFromCallback(this.context.enableSnippetGeneration, this.context))) {
-      await fsx.writeFile(this.context.outputFile!, data);
-      if (shouldOpenGeneratedFile(this.context)) {
+      if (!Boolean(getValueFromCallback(this.context.enableSnippetGeneration, this.context))) {
+        await fsx.writeFile(this.context.outputFile!, data);
+        if (shouldOpenGeneratedFile(this.context)) {
+          const newFile = await vscode.workspace.openTextDocument(this.context.outputFile!);
+          await vscode.window.showTextDocument(newFile, undefined, false);
+        }
+      } else {
         const newFile = await vscode.workspace.openTextDocument(this.context.outputFile!);
-        await vscode.window.showTextDocument(newFile, undefined, false);
+        const editor = await vscode.window.showTextDocument(newFile, undefined, false);
+
+        const edit = new vscode.WorkspaceEdit();
+        const fullRange = new vscode.Range(new vscode.Position(0, 0), new vscode.Position(newFile.lineCount, 0));
+
+        edit.delete(newFile.uri, fullRange);
+        edit.insert(newFile.uri, new vscode.Position(0, 0), '');
+        await vscode.workspace.applyEdit(edit);
+
+        const snippet = new vscode.SnippetString(data);
+        await editor.insertSnippet(snippet);
+        await newFile.save();
       }
-    } else {
-      const newFile = await vscode.workspace.openTextDocument(this.context.outputFile!);
-      const editor = await vscode.window.showTextDocument(newFile, undefined, false);
-
-      const edit = new vscode.WorkspaceEdit();
-      const fullRange = new vscode.Range(new vscode.Position(0, 0), new vscode.Position(newFile.lineCount, 0));
-
-      edit.delete(newFile.uri, fullRange);
-      edit.insert(newFile.uri, new vscode.Position(0, 0), '');
-      await vscode.workspace.applyEdit(edit);
-
-      const snippet = new vscode.SnippetString(data);
-      await editor.insertSnippet(snippet);
-      await newFile.save();
+      this.log('[SUCCESS] Output file created successfully! Time to celebrate! 🎉');
+    } catch (error) {
+      this.errorMessage = handleError(error, this.context, this.errorMessage);
+      throw error;
     }
-    this.log('[SUCCESS] Output file created successfully! Time to celebrate! 🎉');
   }
 }

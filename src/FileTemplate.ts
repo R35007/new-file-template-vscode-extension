@@ -8,7 +8,7 @@ import { getTemplateConfig } from './getTemplateConfig';
 import { getTemplateName, selectTemplateFiles, shouldSkipFile } from './inputs';
 import { getOutputFilePathDetails, getTemplateFilePathDetails, getTemplatePathDetails } from './pathDetails';
 import { Context, EXIT } from './types';
-import { getOutputFilePath, getValueFromCallback, interpolate, listNestedFiles, shouldExit } from './utils';
+import { getOutputFilePath, getValueFromCallback, handleError, interpolate, listNestedFiles } from './utils';
 
 const exampleTemplatePath = path.resolve(__dirname, '../Templates');
 
@@ -93,8 +93,9 @@ export class FileTemplate extends TemplateUtils {
 
       vscode.window.showInformationMessage(`✨ ${templateName} template has been created successfully! 🎉`);
       this.log(`[SUCCESS] Template ${templateName} has been created successfully! Time to celebrate! 🎉🎈`);
-    } catch (err: unknown) {
-      if (shouldExit(err, undefined, this.log)) return;
+    } catch (error) {
+      this.errorMessage = handleError(error, this.context, this.errorMessage);
+      throw error;
     }
   }
 
@@ -105,36 +106,41 @@ export class FileTemplate extends TemplateUtils {
    * @param {Context} [newContext] - The context to merge.
    */
   async generateTemplateFile(templateFile: string, context?: Context) {
-    this.setContext({
-      ...context,
-      ...getTemplateFilePathDetails(this.context.workspaceFolder, this.context.template!, templateFile)
-    } as Context);
+    try {
+      this.setContext({
+        ...context,
+        ...getTemplateFilePathDetails(this.context.workspaceFolder, this.context.template!, templateFile)
+      } as Context);
 
-    this.log(`Generating template file: '${this.context.relativeTemplateFile}'...`, '\n');
+      this.log(`Generating template file: '${this.context.relativeTemplateFileToTemplate}'...`, '\n');
 
-    if (!(await this._hooks(this.context.beforeEach, 'beforeEach'))) return;
+      if (!(await this._hooks(this.context.beforeEach, 'beforeEach'))) return;
 
-    await this._promptInputsFromPattern(templateFile);
+      await this._promptInputsFromPattern(templateFile);
 
-    const parsedTemplatePaths = interpolate(templateFile, this.context);
-    let outputFile = getOutputFilePath(this.context.template!, this.context.out, parsedTemplatePaths);
+      const parsedTemplatePaths = interpolate(templateFile, this.context);
+      let outputFile = getOutputFilePath(this.context.template!, this.context.out, parsedTemplatePaths);
 
-    const templateFileIndex = this.context.selectedTemplateFiles?.indexOf(templateFile);
-    if (await shouldSkipFile(outputFile, this.context, templateFileIndex, this.log)) return;
+      const templateFileIndex = this.context.selectedTemplateFiles?.indexOf(templateFile);
+      if (await shouldSkipFile(outputFile, this.context, templateFileIndex, this.log)) return;
 
-    this.setContext(getOutputFilePathDetails(this.context.workspaceFolder, outputFile) as Context);
+      this.setContext(getOutputFilePathDetails(this.context.workspaceFolder, outputFile) as Context);
 
-    const data = await this.getTemplateFileData(templateFile);
+      const data = await this.getTemplateFileData(templateFile);
 
-    if (data === false) {
-      this.log('[WARNING] Template file data retrieval returned false. Exiting...');
-      return;
+      if (data === false) {
+        this.log('[WARNING] Template file data retrieval returned false. Exiting...');
+        return;
+      }
+
+      await this.createOutputFile(data);
+
+      await this._hooks(this.context.afterEach, 'afterEach');
+      this.log(`[SUCCESS] Template file generated: '${this.context.relativeTemplateFileToTemplate}'... Woohoo! 🎉`);
+    } catch (error) {
+      this.errorMessage = handleError(error, this.context, this.errorMessage);
+      throw error;
     }
-
-    await this.createOutputFile(data);
-
-    await this._hooks(this.context.afterEach, 'afterEach');
-    this.log(`[SUCCESS] Template file generated: '${this.context.relativeTemplateFile}'... Woohoo! 🎉`);
   }
 
   /**
@@ -144,28 +150,29 @@ export class FileTemplate extends TemplateUtils {
    * @param {Context} [newContext] - The context to merge.
    */
   async generateTemplateFiles(templateFiles: string[], context?: Context) {
-    this.log("Starting generation of multiple template files... Let's do this! 💪");
-    this.setContext({
-      ...context,
-      selectedTemplateFiles: templateFiles,
-      selectedTemplateFileNames: templateFiles.map((t) => path.basename(t))
-    } as Context);
+    try {
+      this.log("Starting generation of multiple template files... Let's do this! 💪");
+      this.setContext({
+        ...context,
+        selectedTemplateFiles: templateFiles,
+        selectedTemplateFileNames: templateFiles.map((t) => path.basename(t))
+      } as Context);
 
-    if (!(await this._hooks(this.context.beforeAll, 'beforeAll'))) return;
+      if (!(await this._hooks(this.context.beforeAll, 'beforeAll'))) return;
 
-    for (let templateFile of templateFiles) {
-      try {
+      for (let templateFile of templateFiles) {
         await this.generateTemplateFile(templateFile);
-      } catch (err) {
-        if (shouldExit(err, this.context, this.log)) throw Error(EXIT);
       }
-    }
 
-    await this._hooks(this.context.afterAll, 'afterAll');
-    if (templateFiles.length > 1) {
-      this.log('[SUCCESS] Multiple template files generated! You rock! 🎸');
-    } else {
-      this.log('[SUCCESS] A template file generated! You rock! 🎸');
+      await this._hooks(this.context.afterAll, 'afterAll');
+      if (templateFiles.length > 1) {
+        this.log('[SUCCESS] Multiple template files generated! You rock! 🎸');
+      } else {
+        this.log('[SUCCESS] A template file generated! You rock! 🎸');
+      }
+    } catch (error) {
+      this.errorMessage = handleError(error, this.context, this.errorMessage);
+      throw error;
     }
   }
 
@@ -178,7 +185,7 @@ export class FileTemplate extends TemplateUtils {
   async generateTemplate(template: string, context?: Context) {
     try {
       this.setContext({ ...context, ...getTemplatePathDetails(this.context.workspaceFolder, template) } as Context);
-      this.log(`Starting template generation for: '${this.context.relativeTemplate}'... Here we go! 🎉`, '\n');
+      this.log(`Starting template generation for: '${this.context.templateName}'... Here we go! 🎉`, '\n');
 
       this.log('Fetching template configuration... Getting things ready! 🛠️');
       const templateConfig = await getTemplateConfig(template, Settings.configPath, this.context);
@@ -187,7 +194,6 @@ export class FileTemplate extends TemplateUtils {
       const fsPathFolder = this.context.fsPathFolder || this.context.workspaceFolder;
       this.context.out = path.resolve(fsPathFolder, interpolate(this.context.out, this.context) || fsPathFolder).replace(/\\/g, '/');
 
-      this.log('Prompting for input values... Time to get some details! ✍️');
       await this._promptInputs(Object.keys(this.context.input), true);
 
       this.log("Listing all template files... Let's see what we have here! 📂");
@@ -216,10 +222,11 @@ export class FileTemplate extends TemplateUtils {
       this.log('Generating template files... Almost there! 🛠️');
       await this.generateTemplateFiles(templateFiles);
 
-      this.log(`[SUCCESS] Template generation completed for: '${this.context.relativeTemplate}'... High five! ✋`, '\n');
+      this.log(`[SUCCESS] Template generation completed for: '${this.context.templateName}'... High five! ✋`, '\n');
       vscode.window.showInformationMessage(`✨ ${this.context.templateName} templates have been generated successfully! 🎉`);
-    } catch (err) {
-      if (shouldExit(err, undefined, this.log)) return;
+    } catch (error) {
+      this.errorMessage = handleError(error, this.context, this.errorMessage);
+      throw error;
     }
   }
 }

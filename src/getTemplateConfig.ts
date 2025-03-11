@@ -1,7 +1,7 @@
 import * as fsx from 'fs-extra';
 import * as path from 'path';
 import { Context } from './types';
-import { isPlainObject, mergeContext, shouldExit } from './utils';
+import { handleError, isPlainObject, mergeContext } from './utils';
 
 async function getConfigData(filePath: string, context?: Context) {
   if (filePath.endsWith('.json')) return fsx.readJson(filePath);
@@ -43,7 +43,7 @@ export async function getTemplateConfig(templatePath: string, configPath: string
     const commonConfig = await getConfigFromPath(configPath, context);
     const templateConfig = await getConfigFromTemplate(templatePath, context);
     return mergeContext(commonConfig as Context, templateConfig as Context) as Context;
-  } catch (err) {
-    shouldExit(err);
+  } catch (error) {
+    handleError(error, context);
   }
 }

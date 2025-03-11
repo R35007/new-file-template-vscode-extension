@@ -29,18 +29,11 @@ export const parseInputTransformVariable = (inputNameString: string, context: Co
   return { transform, inputName, convertToMethodName };
 };
 
-export const getCurrentTemplateFile = (context?: Partial<Context>) => {
-  if (!context) return;
-  return context.relativeTemplateFileToTemplate
-    ? `${context.templateName}/${context.relativeTemplateFileToTemplate}`
-    : context.templateName;
-};
-
 const handleUndefinedVariable = (
   error: Error,
   format: string = '',
   context: Context = {} as Context,
-  hideErrorMessage: boolean = false
+  _hideErrorMessage: boolean = false
 ) => {
   const undefinedVariable = error.message.replace('is not defined', '').trim();
 
@@ -53,11 +46,7 @@ const handleUndefinedVariable = (
     (isPlainObject(context.input[inputName]) ? context.input[inputName].value : context.input[inputName]);
 
   if (value === undefined || typeof value !== 'string') {
-    if (error instanceof Error && !hideErrorMessage) {
-      const currentTemplateFile = getCurrentTemplateFile(context);
-      const message = currentTemplateFile ? `${currentTemplateFile} - ${error.message}` : error.message;
-      vscode.window.showErrorMessage(message);
-    }
+    handleError(error, context);
     return format;
   }
 
@@ -74,11 +63,7 @@ export const interpolate = (format: string = '', context: Context = {} as Contex
   } catch (error: unknown) {
     if (error instanceof Error && error.message.endsWith('is not defined'))
       return handleUndefinedVariable(error, format, context, hideErrorMessage);
-    if (error instanceof Error && !hideErrorMessage) {
-      const currentTemplateFile = getCurrentTemplateFile(context);
-      const message = currentTemplateFile ? `${currentTemplateFile} - ${error.message}` : error.message;
-      vscode.window.showErrorMessage(message);
-    }
+    handleError(error, context);
     return format;
   }
 };
@@ -121,20 +106,6 @@ export function mergeContext(existingContext: Partial<Context> = {}, newContext:
   return existingContext;
 }
 
-export function shouldExit(err: unknown, context?: Partial<Context>, log?: (message: string) => void) {
-  if (err instanceof Error && err.message === EXIT) {
-    log?.('[EXIT] Exiting with a smile! 😊');
-    return true;
-  }
-  if (err instanceof Error && err.message !== EXIT) {
-    const currentTemplateFile = getCurrentTemplateFile(context);
-    const message = currentTemplateFile ? `${currentTemplateFile} - ${err.message}` : err.message;
-    vscode.window.showErrorMessage(message);
-    log?.(`[ERROR] ${message}`);
-  }
-  console.error(err);
-}
-
 export function getOutputFilePath(templatePath: string, destinationPath: string, parsedTemplatePaths: string) {
   let outputFile = path.join(destinationPath, path.relative(templatePath, parsedTemplatePaths));
   const shouldRequire = path.basename(outputFile).endsWith('.template.js');
@@ -146,21 +117,13 @@ export async function getTemplateData(templateFile: string, context: Context) {
   const shouldRequire = path.basename(templateFile).endsWith('.template.js');
 
   if (shouldRequire) {
-    try {
-      delete require.cache[require.resolve(templateFile)];
-      const module = require(templateFile);
-      data = typeof module === 'function' ? await module(context) : JSON.stringify(module, null, 2);
-    } catch (err) {
-      if ((shouldExit(err), context)) throw Error(EXIT);
-    }
+    delete require.cache[require.resolve(templateFile)];
+    const module = require(templateFile);
+    data = typeof module === 'function' ? await module(context) : JSON.stringify(module, null, 2);
   }
 
   if (!data) {
-    try {
-      data = await fsx.readFile(templateFile, 'utf8');
-    } catch (err) {
-      if ((shouldExit(err), context)) throw Error(EXIT);
-    }
+    data = await fsx.readFile(templateFile, 'utf8');
   }
 
   return data;
@@ -201,3 +164,22 @@ export const getRegexValues = (data: string, patternString: string) => {
 
   return results;
 };
+
+export function handleError(error: any, context?: Partial<Context>, errorMessage?: string) {
+  if (error instanceof Error && error.message === EXIT) {
+    const message = '[EXIT] Goodbye! May your code be bug-free and your coffee strong! ☕';
+    if (message === errorMessage) return errorMessage;
+
+    context?.log?.(message, '\n');
+    return message;
+  }
+  console.error(error);
+  if (error instanceof Error) {
+    const message = context?.currentTemplateFile ? `${error.message} - ${context?.currentTemplateFile}` : error.message;
+    if (message === errorMessage) return errorMessage;
+    context?.log?.(`[ERROR] ${message}`);
+    context?.log?.(`[ERROR] ${error.stack}`);
+    vscode.window.showErrorMessage(message);
+    return message;
+  }
+}
