@@ -1,6 +1,6 @@
 import { QuickPickItem } from 'vscode';
-import * as CaseConverts from './caseConverter';
-import { FileTemplate } from './FileTemplate';
+import * as CaseConverts from './FileTemplate/Case';
+import { FileTemplate } from './FileTemplate/FileTemplate';
 
 export enum Commands {
   CREATE_SAMPLE_TEMPLATE = 'new-file-template.createSampleTemplate',
@@ -190,8 +190,6 @@ export type UserConfig = Hooks & {
   overwriteExistingFile?: 'prompt' | 'never' | 'always' | ((context: Context) => 'prompt' | 'never' | 'always');
   promptTemplateFiles?: boolean | ((context: Context) => boolean);
   input: Record<string, InputConfig | ((context: Context) => InputConfig | unknown) | unknown>;
-  interpolateTemplateContent?: boolean | ((context: Context) => boolean);
-  disableInterpolation?: boolean | ((context: Context) => boolean);
   enableSnippetGeneration?: boolean | ((context: Context) => boolean);
   promptVariablePatterns?: string[] | ((context: Context) => string[]);
   openAfterGeneration?: boolean | string[] | ((context: Context) => string[]);

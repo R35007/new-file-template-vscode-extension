@@ -1,7 +1,7 @@
 import * as fsx from 'fs-extra';
 import * as vscode from 'vscode';
+import { resolveWithWorkspaceFolder } from './FileTemplate/utils';
 import { Context } from './types';
-import { resolveWithWorkspaceFolder } from './utils';
 
 export class Settings {
   static get iconsConfiguration() {
@@ -41,14 +41,14 @@ export class Settings {
   static get promptTemplateFiles() {
     return Settings.getSettings('promptTemplateFiles') as boolean;
   }
-  static get disableInterpolation() {
-    return Settings.getSettings('disableInterpolation') as boolean;
+  static get disableInterpolationErrorMessage() {
+    return Settings.getSettings('disableInterpolationErrorMessage') as boolean;
+  }
+  static get interpolateByLine() {
+    return Settings.getSettings('interpolateByLine') as boolean;
   }
   static get promptVariablePatterns() {
     return (Settings.getSettings('promptVariablePatterns') as string[]) || ['\\$\\{input\\.([^\\}]+)\\}'];
-  }
-  static get interpolateTemplateContent() {
-    return Settings.getSettings('interpolateTemplateContent') as boolean;
   }
   static get enableSnippetGeneration() {
     return Settings.getSettings('enableSnippetGeneration') as boolean;

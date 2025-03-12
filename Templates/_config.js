@@ -8,9 +8,9 @@ module.exports = (_context) => ({
   ...hooks,
   out: '${workspaceFolder}/${templateName}',
   inputValues: {
-    // User input values will be added here. If a value is present here, the user will not be prompted.
+    // User input values will be added here. If a value is present here, the user will not be prompted again.
     // This will override the values from variables and input configurations.
-    fileName: 'Index'
+    fileName: 'index'
   },
   variables: {
     fileName: 'test', // This value will be ignored since it is used in inputValues.
@@ -55,10 +55,8 @@ module.exports = (_context) => ({
     }
   },
   // overwriteExistingFile: 'prompt', // Provide a string value or context callback. Set to 'prompt' | 'never' | 'always'.
-  // promptTemplateFiles: true, // Provide a boolean value or context callback. If false, it will never prompt the user to select individual template files.
-  // interpolateTemplateContent: false, // Provide a boolean value or context callback. If true, it searches for the pattern ${input.<variable>} in *.template.js files, returns the data string, and prompts the user for input.
+  // promptTemplateFiles: false, // Provide a boolean value or context callback. If false, it will never prompt the user to select individual template files.
   // enableSnippetGeneration: false, // Provide a boolean value or context callback. If true, it enable snippet generation for template files. Snippets help with cursor placement using placeholders like $<number>.
-  // disableInterpolation: false, // Provide a boolean value or context callback. If true, it disables the data string interpolation;
   // openAfterGeneration: true,  // Provide a list of string or boolean value or context callback. If matches or true, opens all generated files. This will always be true if `enableSnippetGeneration` is not set to true.
   // promptVariablePatterns: ['\\$\\{input\\.([^\\}]+)\\}'] // Provide a list of string or context callback. Prompts the user input for matched pattern variables
   // include: [] // Provide a list of string or context callback.
@@ -68,9 +66,9 @@ module.exports = (_context) => ({
   exclude: ({ tags }) => {
     const files = ['./_hooks.js'];
     const templates = {
-      react: ['./${componentName}.tsx.template.js', './${camelCaseFileName}.ts.template.js'],
-      test: ['./${componentName}.test.tsx.template.js'],
-      story: ['./${componentName}.stories.tsx.template.js']
+      react: ['./${input.componentName}.tsx.template.js', './${fileName}.ts.template.js'],
+      test: ['./${input.componentName}.test.tsx.template.js'],
+      story: ['./${input.componentName}.stories.tsx.template.js']
     };
 
     Object.keys(templates).forEach((key) => {

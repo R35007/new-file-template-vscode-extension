@@ -2,8 +2,8 @@ import fg from 'fast-glob';
 import * as fsx from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { Context, EXIT } from '../../types';
 import { getWorkSpaceFolder } from './pathDetails';
-import { Context, EXIT } from './types';
 
 export function getTopLevelFolders(folderPaths: string[]): Promise<string[]> {
   const folderPromises = folderPaths.map((folderPath) =>
@@ -27,45 +27,6 @@ export const parseInputTransformVariable = (inputNameString: string, context: Co
   const inputName = convertToMethodName ? inputNameString.replace(convertToMethodName, '').trim() : inputNameString;
 
   return { transform, inputName, convertToMethodName };
-};
-
-const handleUndefinedVariable = (
-  error: Error,
-  format: string = '',
-  context: Context = {} as Context,
-  _hideErrorMessage: boolean = false
-) => {
-  const undefinedVariable = error.message.replace('is not defined', '').trim();
-
-  const { transform, inputName, convertToMethodName } = parseInputTransformVariable(undefinedVariable, context);
-
-  const key = !!transform ? `${inputName}${convertToMethodName}` : inputName;
-  const value =
-    context.inputValues[inputName] ||
-    context.variables[inputName] ||
-    (isPlainObject(context.input[inputName]) ? context.input[inputName].value : context.input[inputName]);
-
-  if (value === undefined || typeof value !== 'string') {
-    handleError(error, context);
-    return format;
-  }
-
-  return interpolate(format, { ...context, [key]: !!transform ? transform(value) : value });
-};
-
-// Helps to convert template literal strings to applied values.
-export const interpolate = (format: string = '', context: Context = {} as Context, hideErrorMessage: boolean = false): string => {
-  try {
-    const keys = Object.keys(context);
-    const values = Object.values(context);
-    const interpolatedFunction = new Function(...keys, `return \`${format}\`;`);
-    return interpolatedFunction(...values);
-  } catch (error: unknown) {
-    if (error instanceof Error && error.message.endsWith('is not defined'))
-      return handleUndefinedVariable(error, format, context, hideErrorMessage);
-    handleError(error, context);
-    return format;
-  }
 };
 
 const getFormattedPatternPaths = (folder: string, paths: string[]) =>
@@ -142,15 +103,6 @@ export function shouldOpenGeneratedFile(context: Context): boolean {
     (pattern: string) => pattern === context.templateFileName || new RegExp(pattern).test(context.templateFileName!)
   );
 }
-
-export const formatTime = (date: Date) => {
-  const hours = date.getHours();
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  const seconds = date.getSeconds().toString().padStart(2, '0');
-  const milliseconds = date.getMilliseconds().toString().padStart(3, '0');
-  const formattedHours = (hours % 12 || 12).toString().padStart(2, '0');
-  return `[${formattedHours}:${minutes}:${seconds}.${milliseconds}]`;
-};
 
 export const getRegexValues = (data: string, patternString: string) => {
   const regex = new RegExp(patternString, 'g'); // Add the 'g' flag

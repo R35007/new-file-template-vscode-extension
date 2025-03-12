@@ -1,6 +1,6 @@
 import * as fsx from 'fs-extra';
 import * as path from 'path';
-import { Context } from './types';
+import { Context } from '../types';
 import { handleError, isPlainObject, mergeContext } from './utils';
 
 async function getConfigData(filePath: string, context?: Context) {
@@ -38,7 +38,7 @@ function getConfigFromTemplate(templatePath: string, context?: Context) {
   }
 }
 
-export async function getTemplateConfig(templatePath: string, configPath: string, context?: Context): Promise<Context | undefined> {
+export default async function getTemplateConfig(templatePath: string, configPath: string, context?: Context): Promise<Context | undefined> {
   try {
     const commonConfig = await getConfigFromPath(configPath, context);
     const templateConfig = await getConfigFromTemplate(templatePath, context);

@@ -1,8 +1,8 @@
 {
   "name": "new-file-template",
-  "displayName": "new-file-template",
+  "displayName": "New File Template",
   "description": "Create a new file or folder from custom templates",
-  "version": "3.8.0",
+  "version": "3.9.0",
   "icon": "images/new-file-template-logo.png",
   "engines": {
     "vscode": "^1.97.0"
@@ -103,7 +103,7 @@
           "type": "boolean",
           "default": false,
           "scope": "window",
-          "markdownDescription": "If `#new-file-template.settings.promptMultipleTemplates#` is true, it uses the same instance to create multiple templates. Set to true to generate each template at a separate instance."
+          "description": "If true, prompts for input separately for each template when generating multiple templates."
         },
         "new-file-template.settings.promptTemplateFiles": {
           "order": 6,
@@ -111,14 +111,20 @@
           "default": false,
           "description": "If true, prompts a multiple-choice picker to select the template files to generate."
         },
-        "new-file-template.settings.disableInterpolation": {
+        "new-file-template.settings.interpolateByLine": {
           "order": 7,
           "type": "boolean",
           "default": false,
-          "description": "If true, It disables the data interpolation even for regular template files. Use it with caution."
+          "description": "If true, interpolates each line individually. On error, returns the original line without interpolation."
+        },
+        "new-file-template.settings.disableInterpolationErrorMessage": {
+          "order": 8,
+          "type": "boolean",
+          "default": false,
+          "description": "If true, It ignores interpolation error messages"
         },
         "new-file-template.settings.promptVariablePatterns": {
-          "order": 8,
+          "order": 9,
           "type": "array",
           "items": {
             "type": "string"
@@ -133,12 +139,6 @@
             "\\$\\{input\\.([^\\}]+)\\}"
           ],
           "description": "Specify a custom pattern to prompt user input. By default, it prompts for variable names between `${input` and `}`. For example, `${input.componentName}` prompts the user for the componentName."
-        },
-        "new-file-template.settings.interpolateTemplateContent": {
-          "order": 9,
-          "type": "boolean",
-          "default": false,
-          "description": "If true, searches for the pattern ${input.<variable>} (e.g., ${input.name}) within the *.template.js file string and prompts the user for input."
         },
         "new-file-template.settings.enableSnippetGeneration": {
           "order": 10,
@@ -170,7 +170,7 @@
           "description": "Define custom variables for template generation."
         },
         "new-file-template.settings.input": {
-          "order": 11,
+          "order": 13,
           "type": "object",
           "default": {},
           "examples": [

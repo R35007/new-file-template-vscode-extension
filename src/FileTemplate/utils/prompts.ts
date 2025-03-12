@@ -1,9 +1,10 @@
 import * as fsx from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { Settings } from './Settings';
-import { Commands, Context, EXIT, InputConfig } from './types';
-import { getValueFromCallback, interpolate, isArray, isPlainObject } from './utils';
+import { getValueFromCallback, isArray, isPlainObject } from '.';
+import { Settings } from '../../Settings';
+import { Commands, Context, EXIT, InputConfig } from '../../types';
+import { interpolateFormat } from './interpolation';
 
 export const promptToCreateNewSampleTemplate = async () => {
   const selectedAction = await vscode.window.showInformationMessage(
@@ -71,16 +72,14 @@ export const getInput = async (
   transform?: (input?: string) => string | undefined
 ) => {
   const getTitle = () => {
-    const baseTitle = `${inputConfig.title || context.Case?._toTitleCase(inputName)}`;
-    return context.relativeTemplateFileToTemplate
-      ? `${baseTitle} - ${context.templateName}/${context.relativeTemplateFileToTemplate}`
-      : `${baseTitle} - ${context.templateName}`;
+    const baseTitle = inputConfig.title || context.Case?._toTitleCase(inputName);
+    return context.currentTemplateFile ? `${baseTitle} - ${context.currentTemplateFile}` : `${baseTitle} - ${context.templateName}`;
   };
 
   const transformValue = (value: any) => {
     if (inputConfig.transform) {
       if (typeof inputConfig.transform === 'string' && inputConfig.transform.length > 0)
-        return interpolate(inputConfig.transform, { ...context, value });
+        return interpolateFormat(inputConfig.transform, { ...context, value });
       else if (typeof inputConfig.transform === 'function') return inputConfig.transform(value, context);
     }
     if (transform) return transform(value);
@@ -105,7 +104,7 @@ export const getInput = async (
   const validateInput = (value: any) => {
     if (!inputConfig.validateInput) return;
     if (typeof inputConfig.validateInput === 'string' && inputConfig.validateInput.length > 0)
-      return interpolate(inputConfig.validateInput, { ...context, value });
+      return interpolateFormat(inputConfig.validateInput, { ...context, value });
     else if (typeof inputConfig.validateInput === 'function') return inputConfig.validateInput(value, context);
   };
 

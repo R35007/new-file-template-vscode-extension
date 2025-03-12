@@ -12,18 +12,12 @@ Create new files or folders from a custom template.
 - Provide multiple custom template folders and config paths.
 - Prompt user input on demand or on load.
   - Example: `${input.componentName}` prompts the user for the `componentName`.
-- Configure user input prompts based on conditions.
+- Configure user input prompts based on conditions. For more details, refer to the [template configuration section](#template-configuration).
 - Simplify logic within templates using JavaScript expressions.
   - Example: `${new Date()}`, `${process.env.HOME}`, or `${Math.random()}`.
 - Set predefined variables and user input values for seamless template generation.
 - Configure user input as plain text, single select, or multiple choice, with validation and transformation capabilities.
-- Utilize hook functions for enhanced control:
-  - **beforeAll(context)**: Executes before generating all template files. Return `false` to skip the template or return a new `context` to modify the existing context.
-  - **beforeEach(context)**: Executes before generating each template file. Return `false` to skip the template file or return a new `context` to modify the existing context.
-  - **processBeforeEach({ data, context })**: Executes before interpolating template data for each file. Return `false` to skip the template file or return new `data` and `context` to modify the existing data and context.
-  - **processAfterEach({ data, context })**: Executes after interpolating template data for each file. Return `false` to skip the template file or return new `data` and `context` to modify the existing data and context.
-  - **afterEach(context)**: Executes after generating each template file. Return `false` to skip the template file or return a new `context` to modify the existing context.
-  - **afterAll(context)**: Executes after generating all template files. Return `false` to skip the template file or return a new `context` to modify the existing context.
+- Utilize hook functions for enhanced control. For more details, refer to the [Hooks section](#hooks).
 - Add cursors at specific positions by generating the template as a snippet.
 - Dynamically include and exclude template files based on user inputs.
 - Utilize helper case conversion methods:
@@ -51,6 +45,13 @@ Create new files or folders from a custom template.
 
 ### Simple File
 
+Interpolation occurs for the entire file content. If an error is encountered, the file content is returned without any interpolation. 
+
+To enable partial interpolation, set the `new-file-template.settings.interpolateByLine` setting to `true`. This will interpolate the content line by line. 
+If an error occurs, only the problematic line will be returned without interpolation, while the remaining lines will still be interpolated.\
+
+Set the `new-file-template.settings.disableInterpolationErrorMessage` setting to `true` to suppress error messages of interpolation.
+
 - Example: `./vscode/Templates/MyTemplate/package.json`
 - This will prompt inputs with the pattern `${input.<variable name without spaces>}`
 
@@ -75,7 +76,13 @@ Create new files or folders from a custom template.
 
 ### Template File
 
-Any file under the templates folder that ends with `.template.js` is considered a template module file. It is expected to return a module function from this template file, which will be called with a `context` object. While generating this file as an output file, the `.template.js` suffix will be removed from the file name. This helps in writing dynamic script logic to generate a template file. Please make sure to return a template string to generate the template data.
+Any file within the templates folder that ends with `.template.js` is considered a template module file. 
+These files are expected to export a function that will be called with a `context` object. 
+
+When generating the output file, the `.template.js` suffix will be removed from the file name. This allows for dynamic script logic to generate a template file. 
+Ensure that the function returns a template string to generate the template data.
+
+> Note: Template contents will not be interpolated for files ending with `*.template.js`.
 
 <details>
   <summary>Example 1: Basic Usage</summary>
@@ -100,7 +107,6 @@ export const ${componentName} = (${_toCamelCase(componentName)}Props: ${componen
   <summary>Example 2: Escaping backticks (`) in the template.</summary>
 
 - File: `./vscode/Templates/MyTemplate/${input.componentName}.tsx.template.js`
-- Enabling `interpolateTemplateContent` to `true` may cause errors in this case. Be cautious and use it only when you are certain of its implications.
 
 ```js
 module.exports = async ({ componentName, _toCamelCase }) => `import styled from 'styled-components';
@@ -259,7 +265,6 @@ export type UserConfig = Hooks & {
   input: Record<string, InputConfig | ((context: Context) => InputConfig | unknown) | unknown>; // Configuration for user input prompts.
   overwriteExistingFile?: 'prompt' | 'never' | 'always' | ((context: Context) => 'prompt' | 'never' | 'always'); // Behavior for overwriting existing files.
   promptTemplateFiles?: boolean | ((context: Context) => boolean); // Whether to prompt for template files.
-  interpolateTemplateContent?: boolean | ((context: Context) => boolean); // Enable to interpolate template content. Use with caution as it may cause errors.
   enableSnippetGeneration?: boolean | ((context: Context) => boolean); // Whether to enable snippet generation.
   openAfterGeneration?: boolean | string[] | ((context: Context) => string[]); // Files to open after generation.
   include: string[] | ((context: Context) => string[]); // Files to include in the template.
@@ -282,6 +287,17 @@ export interface InputConfig {
 }
 ```
 
+#### Hooks
+
+Hooks are used to execute custom code before or after generating template files. They provide flexibility and control over the template generation process, allowing you to modify data or context as needed.
+
+- **beforeAll(context)**: Executes before generating all template files. Return `false` to skip the template or return a new `context` to modify the existing context.
+- **beforeEach(context)**: Executes before generating each template file. Return `false` to skip the template file or return a new `context` to modify the existing context.
+- **processBeforeEach({ data, context })**: Executes before interpolating template data for each file. Return `false` to skip the template file or return new `data` and `context` to modify the existing data and context.
+- **processAfterEach({ data, context })**: Executes after interpolating template data for each file. Return `false` to skip the template file or return new `data` and `context` to modify the existing data and context.
+- **afterEach(context)**: Executes after generating each template file. Return `false` to skip the template file or return a new `context` to modify the existing context.
+- **afterAll(context)**: Executes after generating all template files. Return `false` to skip the template file or return a new `context` to modify the existing context.
+
 ### Extension Configuration Settings
 
 The extension can be configured using the following settings in your `settings.json` file:
@@ -292,9 +308,9 @@ The extension can be configured using the following settings in your `settings.j
 - `new-file-template.settings.promptMultipleTemplates`: If true, prompts a multiple-choice picker to select multiple template folders to generate.
 - `new-file-template.settings.useSeparateInstance`: If `new-file-template.settings.promptMultipleTemplates` is true, it uses the same instance to create multiple templates. Set to true to generate each template at a separate instance.
 - `new-file-template.settings.promptTemplateFiles`: If true, prompts a multiple-choice picker to select the template files to generate.
-- `new-file-template.settings.disableInterpolation`: If true, disables interpolating template data.
+- `new-file-template.settings.interpolateByLine`: If true, interpolates each line individually. On error, returns the original line without interpolation.
+- `new-file-template.settings.disableInterpolationErrorMessage`: If true, It ignores interpolation error messages
 - `new-file-template.settings.promptVariablePatterns`: Provide list of patterns to recognize and prmpt the user input variables. Defaults to `["\\$\\{input\\.([^\\}]+)\\}"]`
-- `new-file-template.settings.interpolateTemplateContent`: If true, searches for the pattern `${input.<variable>}` (e.g., `${input.name}`) within the \*.template.js file string and prompts the user for input.
 - `new-file-template.settings.enableSnippetGeneration`: If true, it enables snippet generation for template files. Snippets help with cursor placement using placeholders like `$<number>`.
 - `new-file-template.settings.openAfterGeneration`: If true, opens all generated files. This will always be `true` if `new-file-template.settings.enableSnippetGeneration` is set to `true`.
 - `new-file-template.settings.variables`: Define custom variables for template generation.
@@ -312,9 +328,9 @@ Add the following configuration to your `settings.json` file:
   "new-file-template.settings.promptMultipleTemplates": false,
   "new-file-template.settings.useSeparateInstance": false,
   "new-file-template.settings.promptTemplateFiles": false,
-  "new-file-template.settings.disableInterpolation": false,
+  "new-file-template.settings.interpolateByLine": false,
+  "new-file-template.settings.disableInterpolationErrorMessage": false,
   "new-file-template.settings.promptVariablePatterns": ["\\$\\{input\\.([^\\}]+)\\}"],
-  "new-file-template.settings.interpolateTemplateContent": false,
   "new-file-template.settings.enableSnippetGeneration": false,
   "new-file-template.settings.openAfterGeneration": true,
   "new-file-template.settings.variables": {

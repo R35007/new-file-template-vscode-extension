@@ -79,6 +79,7 @@
     "selectedTemplateFiles":${JSON.stringify(selectedTemplateFiles)},
     "selectedTemplateFileNames": ${JSON.stringify(selectedTemplateFileNames)},
     "templateFile": "${templateFile}",
+    "currentTemplateFile": "${currentTemplateFile}",
     "relativeTemplateFile": "${relativeTemplateFile}",
     "relativeTemplateFileToTemplate": "${relativeTemplateFileToTemplate}",
     "relativeTemplateFileDirname": "${relativeTemplateFileDirname}",

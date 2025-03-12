@@ -1,16 +1,17 @@
 import * as fsx from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { Settings } from './Settings';
-import { TemplateUtils } from './TemplateUtils';
-import * as caseConverter from './caseConverter';
-import { getTemplateConfig } from './getTemplateConfig';
-import { getTemplateName, selectTemplateFiles, shouldSkipFile } from './inputs';
-import { getOutputFilePathDetails, getTemplateFilePathDetails, getTemplatePathDetails } from './pathDetails';
-import { Context, EXIT } from './types';
-import { getOutputFilePath, getValueFromCallback, handleError, interpolate, listNestedFiles } from './utils';
+import { Settings } from '../Settings';
+import { Context, EXIT } from '../types';
+import * as Case from './Case';
+import getTemplateConfig from './FileTemplate.Config';
+import TemplateUtils from './FileTemplate.Utils';
+import { getOutputFilePath, getValueFromCallback, handleError, listNestedFiles } from './utils';
+import { interpolateFormat } from './utils/interpolation';
+import { getOutputFilePathDetails, getTemplateFilePathDetails, getTemplatePathDetails } from './utils/pathDetails';
+import { getTemplateName, selectTemplateFiles, shouldSkipFile } from './utils/prompts';
 
-const exampleTemplatePath = path.resolve(__dirname, '../Templates');
+const exampleTemplatePath = path.resolve(__dirname, '../../Templates');
 
 export class FileTemplate extends TemplateUtils {
   static #fileTemplate: FileTemplate | undefined;
@@ -42,7 +43,6 @@ export class FileTemplate extends TemplateUtils {
   };
 
   static Destroy = () => {
-    FileTemplate.#fileTemplate?.clearLog();
     FileTemplate.#fileTemplate = undefined;
   };
 
@@ -58,7 +58,7 @@ export class FileTemplate extends TemplateUtils {
       generateTemplateFile: this.generateTemplateFile.bind(this),
       generateTemplateFiles: this.generateTemplateFiles.bind(this),
       generateTemplate: this.generateTemplate.bind(this),
-      Case: caseConverter,
+      Case,
       FileTemplate,
       ...context
     });
@@ -71,9 +71,9 @@ export class FileTemplate extends TemplateUtils {
    */
   async createTemplate() {
     try {
-      this.log('Prompting for template name...');
+      this.log('Prompting for template name...', '\n');
       const templateName = await getTemplateName();
-      if (!templateName) return;
+      if (!templateName) throw Error(EXIT);
       const newTemplatePath = path.join(Settings.vscodeTemplatePath, templateName);
 
       if (fsx.existsSync(newTemplatePath)) {
@@ -92,11 +92,12 @@ export class FileTemplate extends TemplateUtils {
       await vscode.window.showTextDocument(newFile, undefined, true);
 
       vscode.window.showInformationMessage(`✨ ${templateName} template has been created successfully! 🎉`);
-      this.log(`[SUCCESS] Template ${templateName} has been created successfully! Time to celebrate! 🎉🎈`);
+      this.log(`[SUCCESS] Template '${templateName}' has been created successfully! Time to celebrate! 🎉🎈`);
     } catch (error) {
       this.errorMessage = handleError(error, this.context, this.errorMessage);
       throw error;
     }
+    this.log('-------------------------------------------------------------------------------------------------------', '\n');
   }
 
   /**
@@ -118,7 +119,7 @@ export class FileTemplate extends TemplateUtils {
 
       await this._promptInputsFromPattern(templateFile);
 
-      const parsedTemplatePaths = interpolate(templateFile, this.context);
+      const parsedTemplatePaths = interpolateFormat(templateFile, this.context);
       let outputFile = getOutputFilePath(this.context.template!, this.context.out, parsedTemplatePaths);
 
       const templateFileIndex = this.context.selectedTemplateFiles?.indexOf(templateFile);
@@ -192,7 +193,7 @@ export class FileTemplate extends TemplateUtils {
       this.setContext(templateConfig as Context);
 
       const fsPathFolder = this.context.fsPathFolder || this.context.workspaceFolder;
-      this.context.out = path.resolve(fsPathFolder, interpolate(this.context.out, this.context) || fsPathFolder).replace(/\\/g, '/');
+      this.context.out = path.resolve(fsPathFolder, interpolateFormat(this.context.out, this.context) || fsPathFolder).replace(/\\/g, '/');
 
       await this._promptInputs(Object.keys(this.context.input), true);
 
@@ -228,5 +229,6 @@ export class FileTemplate extends TemplateUtils {
       this.errorMessage = handleError(error, this.context, this.errorMessage);
       throw error;
     }
+    this.log('-------------------------------------------------------------------------------------------------------', '\n');
   }
 }

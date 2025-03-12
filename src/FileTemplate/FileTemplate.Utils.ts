@@ -1,34 +1,25 @@
 import * as fsx from 'fs-extra';
 import * as vscode from 'vscode';
-import { Settings } from './Settings';
-import * as caseConverter from './caseConverter';
-import { getInput } from './inputs';
-import { getActiveFileDetails, getFSPathDetails, getWorkSpaceFolder, getWorkSpaceFolderDetails } from './pathDetails';
-import { Context, EXIT, InputConfig, UserConfig } from './types';
+import { Settings } from '../Settings';
+import { Context, EXIT, InputConfig, UserConfig } from '../types';
+import * as caseConverter from './Case';
+import { clearLog, log } from './FileTemplate.log';
 import {
-  formatTime,
   getRegexValues,
   getTemplateData,
   getValueFromCallback,
   handleError,
-  interpolate,
   isPlainObject,
   mergeContext,
   parseInputTransformVariable,
   resolveWithWorkspaceFolder,
   shouldOpenGeneratedFile
 } from './utils';
+import { interpolateTemplate } from './utils/interpolation';
+import { getActiveFileDetails, getFSPathDetails, getWorkSpaceFolder, getWorkSpaceFolderDetails } from './utils/pathDetails';
+import { getInput } from './utils/prompts';
 
-const output = vscode.window.createOutputChannel('New File Template');
-
-const log = (message: string, newLine: string = '', noDate: boolean = false) => {
-  const formattedTime = formatTime(new Date());
-  const logMessage = noDate ? message : `${formattedTime} ${message}`;
-  output.appendLine(`${newLine}${logMessage}`);
-};
-const clearLog = output.clear;
-
-export class TemplateUtils {
+export default class TemplateUtils {
   context: Context = {} as Context;
   log = log;
   clearLog = clearLog;
@@ -50,10 +41,8 @@ export class TemplateUtils {
       ...getWorkSpaceFolderDetails(),
       overwriteExistingFile: Settings.overwriteExistingFile,
       promptTemplateFiles: Settings.promptTemplateFiles,
-      interpolateTemplateContent: Settings.interpolateTemplateContent,
       enableSnippetGeneration: Settings.enableSnippetGeneration,
       openAfterGeneration: Settings.openAfterGeneration,
-      disableInterpolation: Settings.disableInterpolation,
       promptVariablePatterns: Settings.promptVariablePatterns,
       variables: Settings.variables,
       input: Settings.input,
@@ -230,20 +219,19 @@ export class TemplateUtils {
       this.log(`Retrieving template file data for: ${this.context.templateFileName}`);
       this.setContext(context);
 
+      const shouldRequire = templateFile.endsWith('.template.js');
+
       let data = await getTemplateData(templateFile, this.context);
 
-      await this._promptInputsFromPattern(data);
+      !shouldRequire && (await this._promptInputsFromPattern(data));
 
       const processedDataBefore = await this._processHooks(data, this.context.processBeforeEach, 'processBeforeEach');
       if (processedDataBefore === false) return false;
       data = processedDataBefore;
 
-      const shouldRequire = templateFile.endsWith('.template.js');
-      const shouldInterpolate = !this.context.disableInterpolation && (!shouldRequire || this.context.interpolateTemplateContent);
-
-      if (shouldInterpolate) {
+      if (!shouldRequire) {
         this.log(`Interpolating template content...`);
-        data = await interpolate(String(data), this.context, shouldRequire);
+        data = await interpolateTemplate(String(data), this.context);
       }
       const processedDataAfter = await this._processHooks(data, this.context.processAfterEach, 'processAfterEach');
       if (processedDataAfter === false) return false;
