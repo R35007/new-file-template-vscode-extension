@@ -25,8 +25,11 @@
     "workspaceFolderBasename": "${workspaceFolderBasename}",
     "workspaceFolderName": "${workspaceFolderName}"
   },
-  "fsPath": "${fsPath}", // fsPath is the selected explorer file or folder
+  "fsPath": "${fsPath}", // fsPath is the selected file or folder in the vscode explorer view
   "fsPathFolder": "${fsPathFolder}", // always give you the folder path
+  "isFile": "${isFile}", // true if fsPath is a file
+  "isFolder": "${isFolder}", // true if fsPath is a directory
+  "isDirectory": "${isDirectory}", // true if fsPath is a directory
   "folders": {
     "folder": "${folder}",
     "relativeFolder": "${relativeFolder}",
@@ -92,6 +95,22 @@
     "templateFileDirname": "${templateFileDirname}",
     "templateFileDirBasename": "${templateFileDirBasename}",
     "templateFileFolderName": "${templateFileFolderName}"
+  },
+  "parsedTemplateFiles": {
+    "parsedTemplateFile": "${parsedTemplateFile}",
+    "currentParsedTemplateFile": "${currentParsedTemplateFile}",
+    "relativeParsedTemplateFile": "${relativeParsedTemplateFile}",
+    "relativeParsedTemplateFileToTemplate": "${relativeParsedTemplateFileToTemplate}",
+    "relativeParsedTemplateFileDirname": "${relativeParsedTemplateFileDirname}",
+    "relativeParsedTemplateFileToTemplateDirname": "${relativeParsedTemplateFileToTemplateDirname}",
+    "parsedTemplateFileBasename": "${parsedTemplateFileBasename}",
+    "parsedTemplateFileName": "${parsedTemplateFileName}",
+    "parsedTemplateFileBasenameNoExtension": "${parsedTemplateFileBasenameNoExtension}",
+    "parsedTemplateFileNameNoExtension": "${parsedTemplateFileNameNoExtension}",
+    "parsedTemplateFileExtname": "${parsedTemplateFileExtname}",
+    "parsedTemplateFileDirname": "${parsedTemplateFileDirname}",
+    "parsedTemplateFileDirBasename": "${parsedTemplateFileDirBasename}",
+    "parsedTemplateFileFolderName": "${parsedTemplateFileFolderName}"
   },
   "outputFiles": {
     "outputFile": "${outputFile}",

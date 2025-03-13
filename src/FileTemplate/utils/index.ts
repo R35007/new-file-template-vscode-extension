@@ -67,13 +67,13 @@ export function mergeContext(existingContext: Partial<Context> = {}, newContext:
   return existingContext;
 }
 
-export function getOutputFilePath(templatePath: string, destinationPath: string, parsedTemplatePaths: string) {
-  let outputFile = path.join(destinationPath, path.relative(templatePath, parsedTemplatePaths));
+export function getOutputFilePath(destinationPath: string, relativeParsedTemplateFile: string) {
+  let outputFile = path.resolve(destinationPath, relativeParsedTemplateFile);
   const shouldRequire = path.basename(outputFile).endsWith('.template.js');
   return shouldRequire ? outputFile.replace(/\.template\.js$/, '') : outputFile;
 }
 
-export async function getTemplateData(templateFile: string, context: Context) {
+export async function readFile(templateFile: string, context: Partial<Context>) {
   let data = '';
   const shouldRequire = path.basename(templateFile).endsWith('.template.js');
 

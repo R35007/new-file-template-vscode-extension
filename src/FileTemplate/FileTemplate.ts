@@ -6,9 +6,15 @@ import { Context, EXIT } from '../types';
 import * as Case from './Case';
 import getTemplateConfig from './FileTemplate.Config';
 import TemplateUtils from './FileTemplate.Utils';
-import { getOutputFilePath, getValueFromCallback, handleError, listNestedFiles } from './utils';
-import { interpolateFormat } from './utils/interpolation';
-import { getOutputFilePathDetails, getTemplateFilePathDetails, getTemplatePathDetails } from './utils/pathDetails';
+import { getOutputFilePath, getValueFromCallback, handleError, listNestedFiles, readFile } from './utils';
+import { interpolate, interpolateFormat } from './utils/interpolation';
+import {
+  getOutputFilePathDetails,
+  getParsedTemplateFilePathDetails,
+  getTemplateFilePathDetails,
+  getTemplatePathDetails,
+  normalizeSeparator
+} from './utils/pathDetails';
 import { getTemplateName, selectTemplateFiles, shouldSkipFile } from './utils/prompts';
 
 const exampleTemplatePath = path.resolve(__dirname, '../../Templates');
@@ -59,15 +65,18 @@ export class FileTemplate extends TemplateUtils {
       generateTemplateFiles: this.generateTemplateFiles.bind(this),
       generateTemplate: this.generateTemplate.bind(this),
       Case,
+      readFile,
+      interpolate,
       FileTemplate,
       ...context
     });
   }
 
   /**
-   * Creates a new template by copying the example template to a new location.
-   * Prompts the user for the template name and shows an error message if the template already exists.
-   * Opens the new template file in the editor and shows a success message.
+   * Asynchronously creates a new template by prompting the user for a template name,
+   * ensuring the template directory does not already exist, copying an example template,
+   * and opening the new template file in the editor.
+   * @throws Will throw an error if the template name is not provided or if an error occurs during the process.
    */
   async createTemplate() {
     try {
@@ -101,17 +110,21 @@ export class FileTemplate extends TemplateUtils {
   }
 
   /**
-   * Generates a template file by processing the template file data and creating the output file.
-   * Executes hooks before and after processing the template file.
-   * @param {string} templateFile - The path to the template file.
-   * @param {Context} [newContext] - The context to merge.
+   * Generates a template file based on the provided template file name and context.
+   *
+   * @param templateFile - The name of the template file to generate.
+   * @param context - An optional partial context object to override the default context.
+   * @throws Will throw an error if the template file generation fails.
    */
-  async generateTemplateFile(templateFile: string, context?: Context) {
+  async generateTemplateFile(templateFile: string, contextOrOutputFile?: Partial<Context> | string) {
     try {
+      const context = typeof contextOrOutputFile === 'string' ? { outputFile: contextOrOutputFile } : {};
       this.setContext({
+        ...getParsedTemplateFilePathDetails(), // clear parsed template file path details
+        ...getOutputFilePathDetails(), // clear outputFile path details
         ...context,
         ...getTemplateFilePathDetails(this.context.workspaceFolder, this.context.template!, templateFile)
-      } as Context);
+      });
 
       this.log(`Generating template file: '${this.context.relativeTemplateFileToTemplate}'...`, '\n');
 
@@ -119,13 +132,14 @@ export class FileTemplate extends TemplateUtils {
 
       await this._promptInputsFromPattern(templateFile);
 
-      const parsedTemplatePaths = interpolateFormat(templateFile, this.context);
-      let outputFile = getOutputFilePath(this.context.template!, this.context.out, parsedTemplatePaths);
+      const parsedTemplateFile = interpolateFormat(templateFile, this.context);
+      this.setContext(getParsedTemplateFilePathDetails(this.context.workspaceFolder, this.context.template!, parsedTemplateFile));
+      const outputFile = this.context.outputFile || getOutputFilePath(this.context.out, this.context.relativeParsedTemplateFileToTemplate!);
 
       const templateFileIndex = this.context.selectedTemplateFiles?.indexOf(templateFile);
       if (await shouldSkipFile(outputFile, this.context, templateFileIndex, this.log)) return;
 
-      this.setContext(getOutputFilePathDetails(this.context.workspaceFolder, outputFile) as Context);
+      this.setContext(getOutputFilePathDetails(this.context.workspaceFolder, outputFile));
 
       const data = await this.getTemplateFileData(templateFile);
 
@@ -145,19 +159,22 @@ export class FileTemplate extends TemplateUtils {
   }
 
   /**
-   * Generates multiple template files by processing each template file and creating the output files.
-   * Executes hooks before and after processing all template files.
-   * @param {string[]} templateFiles - The paths to the template files.
-   * @param {Context} [newContext] - The context to merge.
+   * Generates multiple template files based on the provided template file paths and context or output file.
+   *
+   * @param templateFiles - An array of strings representing the paths to the template files to be generated.
+   * @param contextOrOutputFile - An optional parameter that can be either a partial context object or a string representing the output file path.
+   * @throws Will throw an error if the generation process fails.
    */
-  async generateTemplateFiles(templateFiles: string[], context?: Context) {
+  async generateTemplateFiles(templateFiles: string[], contextOrOutputFile?: Partial<Context> | string) {
     try {
       this.log("Starting generation of multiple template files... Let's do this! 💪");
+
+      const context = typeof contextOrOutputFile === 'string' ? { outputFile: contextOrOutputFile } : {};
       this.setContext({
         ...context,
         selectedTemplateFiles: templateFiles,
         selectedTemplateFileNames: templateFiles.map((t) => path.basename(t))
-      } as Context);
+      });
 
       if (!(await this._hooks(this.context.beforeAll, 'beforeAll'))) return;
 
@@ -178,22 +195,24 @@ export class FileTemplate extends TemplateUtils {
   }
 
   /**
-   * Generates a template by processing the template configuration and files.
-   * Prompts the user for input values and generates the output files.
-   * @param {string} template - The path to the template.
-   * @param {Context} [newContext] - The context to merge.
+   * Generates a template based on the provided template name and context.
+   *
+   * @param template - The name of the template to generate.
+   * @param context - Optional partial context to override the default context.
+   * @throws Will throw an error if no template files are selected or if any other error occurs during the process.
    */
-  async generateTemplate(template: string, context?: Context) {
+  async generateTemplate(template: string, context?: Partial<Context>) {
     try {
       this.setContext({ ...context, ...getTemplatePathDetails(this.context.workspaceFolder, template) } as Context);
+
       this.log(`Starting template generation for: '${this.context.templateName}'... Here we go! 🎉`, '\n');
 
       this.log('Fetching template configuration... Getting things ready! 🛠️');
       const templateConfig = await getTemplateConfig(template, Settings.configPath, this.context);
       this.setContext(templateConfig as Context);
 
-      const fsPathFolder = this.context.fsPathFolder || this.context.workspaceFolder;
-      this.context.out = path.resolve(fsPathFolder, interpolateFormat(this.context.out, this.context) || fsPathFolder).replace(/\\/g, '/');
+      const outFolder = this.context.fsPathFolder || this.context.workspaceFolder;
+      this.context.out = normalizeSeparator(path.resolve(outFolder, interpolateFormat(this.context.out, this.context) || outFolder));
 
       await this._promptInputs(Object.keys(this.context.input), true);
 

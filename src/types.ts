@@ -15,11 +15,13 @@ export type Utils = typeof CaseConverts & {
   clearLog: () => void;
   setContext: (context?: Context) => void;
   promptInput: (inputName: string, inputConfig: InputConfig) => unknown;
-  getTemplateFileData: (templateFile: string) => Promise<unknown>;
-  createOutputFile: (data: string, context: Context) => Promise<void>;
-  generateTemplateFile: (templateFile: string) => Promise<void>;
-  generateTemplateFiles: (templateFiles: string[]) => Promise<void>;
-  generateTemplate: (template: string) => Promise<void>;
+  readFile: (templateFile: string, context: Partial<Context>) => Promise<string>;
+  getTemplateFileData: (templateFile: string, context?: Partial<Context>) => Promise<string | false>;
+  createOutputFile: (data: string, contextOrOutputFile?: Partial<Context> | string) => Promise<void>;
+  generateTemplateFile: (templateFile: string, contextOrOutputFile?: Partial<Context>) => Promise<void>;
+  generateTemplateFiles: (templateFiles: string[], context?: Partial<Context>) => Promise<void>;
+  generateTemplate: (template: string, context?: Partial<Context>) => Promise<void>;
+  interpolate: (template: string, context: Context, hideError?: boolean, interpolateByLine?: boolean) => string;
   Case: {
     _toNumericCase: (input?: string) => string;
     _toAlphaCase: (input?: string) => string;
@@ -95,6 +97,22 @@ export type PredefinedVariables = Utils & {
   templateFileDirBasename?: string;
   templateFileFolderName?: string;
 
+  /* Parsed Template Files */
+  parsedTemplateFile?: string;
+  currentParsedTemplateFile?: string;
+  relativeParsedTemplateFile?: string;
+  relativeParsedTemplateFileDirname?: string;
+  relativeParsedTemplateFileToTemplate?: string;
+  relativeParsedTemplateFileToTemplateDirname?: string;
+  parsedTemplateFileBasename?: string;
+  parsedTemplateFileName?: string;
+  parsedTemplateFileBasenameNoExtension?: string;
+  parsedTemplateFileNameNoExtension?: string;
+  parsedTemplateFileExtname?: string;
+  parsedTemplateFileDirname?: string;
+  parsedTemplateFileDirBasename?: string;
+  parsedTemplateFileFolderName?: string;
+
   /* Output Files */
   outputFile?: string;
   relativeOutputFile?: string;
@@ -121,6 +139,9 @@ export type PredefinedVariables = Utils & {
   /* File System Paths */
   fsPath?: string;
   fsPathFolder?: string;
+  isFile?: boolean;
+  isFolder?: boolean;
+  isDirectory?: boolean;
 
   /* Folders (if fsPath is a folder) */
   folder?: string;

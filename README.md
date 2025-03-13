@@ -45,9 +45,9 @@ Create new files or folders from a custom template.
 
 ### Simple File
 
-Interpolation occurs for the entire file content. If an error is encountered, the file content is returned without any interpolation. 
+Interpolation occurs for the entire file content. If an error is encountered, the file content is returned without any interpolation.
 
-To enable partial interpolation, set the `new-file-template.settings.interpolateByLine` setting to `true`. This will interpolate the content line by line. 
+To enable partial interpolation, set the `new-file-template.settings.interpolateByLine` setting to `true`. This will interpolate the content line by line.
 If an error occurs, only the problematic line will be returned without interpolation, while the remaining lines will still be interpolated.\
 
 Set the `new-file-template.settings.disableInterpolationErrorMessage` setting to `true` to suppress error messages of interpolation.
@@ -76,10 +76,10 @@ Set the `new-file-template.settings.disableInterpolationErrorMessage` setting to
 
 ### Template File
 
-Any file within the templates folder that ends with `.template.js` is considered a template module file. 
-These files are expected to export a function that will be called with a `context` object. 
+Any file within the templates folder that ends with `.template.js` is considered a template module file.
+These files are expected to export a function that will be called with a `context` object.
 
-When generating the output file, the `.template.js` suffix will be removed from the file name. This allows for dynamic script logic to generate a template file. 
+When generating the output file, the `.template.js` suffix will be removed from the file name. This allows for dynamic script logic to generate a template file.
 Ensure that the function returns a template string to generate the template data.
 
 > Note: Template contents will not be interpolated for files ending with `*.template.js`.
@@ -176,8 +176,12 @@ module.exports = async ({ componentName, templateFile, FileTemplate, log }) => {
       const newFileTemplate = FileTemplate.Create(); // Create a new instance
       const componentNames = ['AppComponent', 'TextComponent', 'MainComponent'];
       for (let componentName of componentNames) {
-        // Make sure to set the current hook as undefined, else it will go into an infinite loop. In this case, it is `beforeEach`
-        const newContext = { ...context, componentName, beforeEach: undefined };
+        const newContext = {
+          ...context,
+          componentName,
+          outputFile: context.outputFile // set custom output file path
+          beforeEach: undefined // Make sure to set the current hook as undefined, else it will go into an infinite loop. In this case, it is `beforeEach`
+        };
         await newFileTemplate.generateTemplateFile(templateFile, newContext);
         log(`${newFileTemplate.outputFile} generated successfully!`); // Use log method for debugging
       }
@@ -358,13 +362,17 @@ The `context` object contains many utility methods to create a template explicit
 
 ````ts
 export type Utils = typeof CaseConverts & {
+  log: (message: string, newLine?: string, noDate?: boolean) => void;
+  clearLog: () => void;
   setContext: (context?: Context) => void;
-  promptInput: (inputName: string, inputConfig: InputConfig, context?: Context) => void;
-  getTemplateFileData: (templateFile: string, context?: Context) => Promise<unknown>;
-  createOutputFile: (data: string, context: Context) => Promise<void>;
-  generateTemplateFile: (templateFile: string, context?: Context) => Promise<void>;
-  generateTemplateFiles: (templateFiles: string[], context?: Context) => Promise<void>;
-  generateTemplate: (template: string, context?: Context) => Promise<void>;
+  promptInput: (inputName: string, inputConfig: InputConfig) => unknown;
+  readFile: (templateFile: string, context: Partial<Context>) => Promise<string>;
+  getTemplateFileData: (templateFile: string, context?: Partial<Context>) => Promise<string | false>;
+  createOutputFile: (data: string, contextOrOutputFile?: Partial<Context> | string) => Promise<void>;
+  generateTemplateFile: (templateFile: string, contextOrOutputFile?: Partial<Context>) => Promise<void>;
+  generateTemplateFiles: (templateFiles: string[], context?: Partial<Context>) => Promise<void>;
+  generateTemplate: (template: string, context?: Partial<Context>) => Promise<void>;
+  interpolate: (template: string, context: Context, hideError?: boolean, interpolateByLine?: boolean) => string;
   Case: {
     _toNumericCase: (input?: string) => string;
     _toAlphaCase: (input?: string) => string;
@@ -392,13 +400,17 @@ export type Utils = typeof CaseConverts & {
     @example
     ```js
       const newFileTemplate = new FileTemplate(fsPath, allTemplates, selectedTemplates, newContext);
+      newFileTemplate.log(messageString);
+      newFileTemplate.clearLog();
       newFileTemplate.setContext(context);
-      newFileTemplate.promptInput(inputName, inputConfig, context);
-      newFileTemplate.getTemplateFileData(templateFile, context);
-      newFileTemplate.createOutputFile(data, context);
-      newFileTemplate.generateTemplateFile(templateFile, context);
-      newFileTemplate.generateTemplateFiles(templateFiles, context);
-      newFileTemplate.generateTemplate(template, context);
+      const input = await newFileTemplate.promptInput('inputName', inputConfig);
+      const fileData = await newFileTemplate.readFile(templateFile, context);
+      const templateFileData = await newFileTemplate.getTemplateFileData(templateFile, context);
+      await newFileTemplate.createOutputFile(data, contextOrOutputFile);
+      await newFileTemplate.generateTemplateFile(templateFile, contextOrOutputFile);
+      await newFileTemplate.generateTemplateFiles(templateFiles, context);
+      await newFileTemplate.generateTemplate(template, context);
+      const interpolatedData = newFileTemplate.interpolate(template, context, hideError, interpolateByLine);
     ```
   */
   FileTemplate: typeof FileTemplate;

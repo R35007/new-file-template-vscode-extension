@@ -22,7 +22,7 @@ export const getWorkSpaceFolderDetails = (filePath: string = '') =>
     workspaceFolderName: path.basename(getWorkSpaceFolder(filePath))
   });
 
-export function getFSPathDetails(fsPath: string = ''): Record<string, string> {
+export function getFSPathDetails(fsPath: string = '') {
   const wfd = getWorkSpaceFolderDetails(fsPath);
   const isDirectory = fs.existsSync(fsPath) && fs.statSync(fsPath).isDirectory();
 
@@ -49,12 +49,17 @@ export function getFSPathDetails(fsPath: string = ''): Record<string, string> {
     fileFolderName: isDirectory ? '' : path.basename(path.dirname(fsPath))
   };
 
-  return normalizeSeparator({
-    fsPath,
-    fsPathFolder: isDirectory ? fsPath : path.dirname(fsPath),
-    ...folderDetails,
-    ...fileDetails
-  });
+  return {
+    isDirectory,
+    isFolder: isDirectory,
+    isFile: !isDirectory,
+    ...normalizeSeparator({
+      fsPath,
+      fsPathFolder: isDirectory ? fsPath : path.dirname(fsPath),
+      ...folderDetails,
+      ...fileDetails
+    })
+  };
 }
 
 export function getActiveFileDetails() {
@@ -82,7 +87,7 @@ export function getActiveFileDetails() {
   });
 }
 
-export const getTemplatePathDetails = (workspaceFolder: string, template: string = '') =>
+export const getTemplatePathDetails = (workspaceFolder: string = '', template: string = '') =>
   normalizeSeparator({
     template,
     relativeTemplate: path.relative(workspaceFolder, template),
@@ -90,7 +95,7 @@ export const getTemplatePathDetails = (workspaceFolder: string, template: string
     templateName: path.basename(template)
   });
 
-export const getTemplateFilePathDetails = (workspaceFolder: string, template: string, templateFile: string = '') =>
+export const getTemplateFilePathDetails = (workspaceFolder: string = '', template: string = '', templateFile: string = '') =>
   normalizeSeparator({
     templateFile,
     currentTemplateFile: `${path.basename(template)}/${path.relative(template, templateFile)}`,
@@ -108,7 +113,25 @@ export const getTemplateFilePathDetails = (workspaceFolder: string, template: st
     templateFileFolderName: path.basename(path.dirname(templateFile))
   });
 
-export const getOutputFilePathDetails = (workspaceFolder: string, outputFile: string = '') =>
+export const getParsedTemplateFilePathDetails = (workspaceFolder: string = '', template: string = '', parsedTemplateFile: string = '') =>
+  normalizeSeparator({
+    parsedTemplateFile,
+    currentParsedTemplateFile: `${path.basename(template)}/${path.relative(template, parsedTemplateFile)}`,
+    relativeParsedTemplateFile: path.relative(workspaceFolder, parsedTemplateFile),
+    relativeParsedTemplateFileDirname: path.relative(workspaceFolder, path.dirname(parsedTemplateFile)),
+    relativeParsedTemplateFileToTemplate: path.relative(template, parsedTemplateFile),
+    relativeParsedTemplateFileToTemplateDirname: path.relative(template, path.dirname(parsedTemplateFile)),
+    parsedTemplateFileBasename: path.basename(parsedTemplateFile),
+    parsedTemplateFileName: path.basename(parsedTemplateFile),
+    parsedTemplateFileBasenameNoExtension: path.basename(parsedTemplateFile, path.extname(parsedTemplateFile)),
+    parsedTemplateFileNameNoExtension: path.basename(parsedTemplateFile, path.extname(parsedTemplateFile)),
+    parsedTemplateFileExtname: path.extname(parsedTemplateFile),
+    parsedTemplateFileDirname: path.dirname(parsedTemplateFile),
+    parsedTemplateFileDirBasename: path.basename(path.dirname(parsedTemplateFile)),
+    parsedTemplateFileFolderName: path.basename(path.dirname(parsedTemplateFile))
+  });
+
+export const getOutputFilePathDetails = (workspaceFolder: string = '', outputFile: string = '') =>
   normalizeSeparator({
     outputFile,
     relativeOutputFile: path.relative(workspaceFolder, outputFile),

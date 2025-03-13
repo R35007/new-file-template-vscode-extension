@@ -42,7 +42,7 @@ export default async function getTemplateConfig(templatePath: string, configPath
   try {
     const commonConfig = await getConfigFromPath(configPath, context);
     const templateConfig = await getConfigFromTemplate(templatePath, context);
-    return mergeContext(commonConfig as Context, templateConfig as Context) as Context;
+    return mergeContext(commonConfig, templateConfig) as Context;
   } catch (error) {
     handleError(error, context);
   }

@@ -6,17 +6,17 @@ import * as caseConverter from './Case';
 import { clearLog, log } from './FileTemplate.log';
 import {
   getRegexValues,
-  getTemplateData,
   getValueFromCallback,
   handleError,
   isPlainObject,
   mergeContext,
   parseInputTransformVariable,
+  readFile,
   resolveWithWorkspaceFolder,
   shouldOpenGeneratedFile
 } from './utils';
-import { interpolateTemplate } from './utils/interpolation';
-import { getActiveFileDetails, getFSPathDetails, getWorkSpaceFolder, getWorkSpaceFolderDetails } from './utils/pathDetails';
+import { interpolate } from './utils/interpolation';
+import { getActiveFileDetails, getFSPathDetails, getWorkSpaceFolderDetails } from './utils/pathDetails';
 import { getInput } from './utils/prompts';
 
 export default class TemplateUtils {
@@ -37,7 +37,6 @@ export default class TemplateUtils {
       include: [],
       exclude: [],
       inputValues: {},
-      out: getWorkSpaceFolder(),
       ...getWorkSpaceFolderDetails(),
       overwriteExistingFile: Settings.overwriteExistingFile,
       promptTemplateFiles: Settings.promptTemplateFiles,
@@ -163,7 +162,7 @@ export default class TemplateUtils {
         : inputConfig;
     }
     await this._promptInputs([inputName]);
-    this.log(`Input received for: ${inputName}`);
+    this.log(`\t Input received for: ${inputName}`);
     return this.context[inputName];
   }
 
@@ -208,20 +207,20 @@ export default class TemplateUtils {
   }
 
   /**
-   * Retrieves the template file data and processes it using the context and hooks.
-   * Prompts the user for input values based on the patterns found in the template file.
-   * @param {string} templateFile - The path to the template file.
-   * @param {Context} [newContext] - The context to merge.
-   * @returns {Promise<string>} The processed template file data.
+   * Retrieves and processes template file data.
+   *
+   * @param templateFile - The path to the template file.
+   * @param context - Optional partial context to override the default context.
+   * @throws Will throw an error if there is an issue reading or processing the template file.
    */
-  async getTemplateFileData(templateFile: string, context?: Context) {
+  async getTemplateFileData(templateFile: string, context?: Partial<Context>) {
     try {
-      this.log(`Retrieving template file data for: ${this.context.templateFileName}`);
+      this.log(`Retrieving template file data for: './${this.context.currentTemplateFile}'`);
       this.setContext(context);
 
       const shouldRequire = templateFile.endsWith('.template.js');
 
-      let data = await getTemplateData(templateFile, this.context);
+      let data = await readFile(templateFile, this.context);
 
       !shouldRequire && (await this._promptInputsFromPattern(data));
 
@@ -231,7 +230,7 @@ export default class TemplateUtils {
 
       if (!shouldRequire) {
         this.log(`Interpolating template content...`);
-        data = await interpolateTemplate(String(data), this.context);
+        data = await interpolate(String(data), this.context);
       }
       const processedDataAfter = await this._processHooks(data, this.context.processAfterEach, 'processAfterEach');
       if (processedDataAfter === false) return false;
@@ -244,15 +243,16 @@ export default class TemplateUtils {
   }
 
   /**
-   * Creates an output file with the provided data and context.
-   * If snippet generation is enabled, inserts the data as a snippet in the editor.
-   * @param {string} data - The data to write to the output file.
-   * @param {Context} [newContext] - The context to merge.
+   * Creates an output file with the provided data and handles snippet generation if enabled.
+   *
+   * @param data - The content to be written to the output file.
+   * @param contextOrOutputFile - Either a partial context object or a string representing the output file path.
+   * @throws Will throw an error if there is an issue reading or processing the template file.
    */
-  async createOutputFile(data: string, context?: Context) {
+  async createOutputFile(data: string, contextOrOutputFile?: Partial<Context> | string) {
     try {
-      this.log('Creating output file...');
-      this.setContext(context as Context);
+      this.setContext(typeof contextOrOutputFile === 'string' ? { outputFile: contextOrOutputFile } : contextOrOutputFile);
+      this.log(`Creating output file at: './${this.context.relativeOutputFile}'`);
 
       await fsx.ensureFile(this.context.outputFile!);
 
