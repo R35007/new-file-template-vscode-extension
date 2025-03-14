@@ -126,30 +126,24 @@ export const getInput = async (
   return inputConfig.options?.length ? getQuickPickValue() : getInputBoxValue();
 };
 
-export async function shouldSkipFile(outputFile: string, context: Context, templateFileIndex?: number, log?: (message: string) => void) {
+export async function shouldSkipFile(outputFile: string, context: Context, log?: (message: string) => void) {
   if (!fsx.existsSync(outputFile)) return false;
 
   const overwriteExistingFile = getValueFromCallback(context.overwriteExistingFile, context);
 
   if (overwriteExistingFile === 'never') {
-    log?.(`Skipping file (never overwrite): '${outputFile}'`);
+    log?.(`Skipping file (never overwrite): ${outputFile}`);
     return true; // if true skip the file
   }
 
   if (overwriteExistingFile === 'always') {
-    log?.(`Overwriting file (always overwrite): '${outputFile}'`);
+    log?.(`Overwriting file (always overwrite): ${outputFile}`);
     return false; // if false overwrite the file
   }
 
   log?.('Prompting user for action: file already exists, asking whether to overwrite or skip files...');
 
-  const fileCategory = templateFileIndex === 0 ? 'All' : 'Remaining';
-  const actions = [
-    `Overwrite ${fileCategory} Existing Files`,
-    `Skip ${fileCategory} Existing Files`,
-    'Overwrite this file',
-    'Skip this file'
-  ];
+  const actions = [`Overwrite all Existing Files`, `Skip all Existing Files`, 'Overwrite this file', 'Skip this file'];
   const selectedAction = await vscode.window.showWarningMessage(
     `${path.basename(outputFile)} file already exists.`,
     { modal: true },
@@ -178,6 +172,6 @@ export async function shouldSkipFile(outputFile: string, context: Context, templ
     log?.(`Skipping all files`);
     return true;
   }
-  log?.(`Overwriting file: '${outputFile}'`);
+  log?.(`Overwriting file: ${outputFile}`);
   return false;
 }

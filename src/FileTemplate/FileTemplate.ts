@@ -118,30 +118,29 @@ export class FileTemplate extends TemplateUtils {
    */
   async generateTemplateFile(templateFile: string, contextOrOutputFile?: Partial<Context> | string) {
     try {
-      const context = typeof contextOrOutputFile === 'string' ? { outputFile: contextOrOutputFile } : {};
+      const context = typeof contextOrOutputFile === 'string' ? { outputFile: contextOrOutputFile } : contextOrOutputFile;
       this.setContext({
         ...getParsedTemplateFilePathDetails(), // clear parsed template file path details
         ...getOutputFilePathDetails(), // clear outputFile path details
         ...context,
-        ...getTemplateFilePathDetails(this.context.workspaceFolder, this.context.template!, templateFile)
+        ...getTemplateFilePathDetails(this.context.workspaceFolder, this.context.template!, normalizeSeparator(templateFile))
       });
 
       this.log(`Generating template file: '${this.context.relativeTemplateFileToTemplate}'...`, '\n');
 
       if (!(await this._hooks(this.context.beforeEach, 'beforeEach'))) return;
 
-      await this._promptInputsFromPattern(templateFile);
+      await this._promptInputsFromPattern(normalizeSeparator(templateFile));
 
-      const parsedTemplateFile = interpolateFormat(templateFile, this.context);
+      const parsedTemplateFile = interpolateFormat(normalizeSeparator(templateFile), this.context);
       this.setContext(getParsedTemplateFilePathDetails(this.context.workspaceFolder, this.context.template!, parsedTemplateFile));
       const outputFile = this.context.outputFile || getOutputFilePath(this.context.out, this.context.relativeParsedTemplateFileToTemplate!);
 
-      const templateFileIndex = this.context.selectedTemplateFiles?.indexOf(templateFile);
-      if (await shouldSkipFile(outputFile, this.context, templateFileIndex, this.log)) return;
+      if (await shouldSkipFile(outputFile, this.context, this.log)) return;
 
       this.setContext(getOutputFilePathDetails(this.context.workspaceFolder, outputFile));
 
-      const data = await this.getTemplateFileData(templateFile);
+      const data = await this.getTemplateFileData(normalizeSeparator(templateFile));
 
       if (data === false) {
         this.log('[WARNING] Template file data retrieval returned false. Exiting...');
@@ -169,7 +168,7 @@ export class FileTemplate extends TemplateUtils {
     try {
       this.log("Starting generation of multiple template files... Let's do this! 💪");
 
-      const context = typeof contextOrOutputFile === 'string' ? { outputFile: contextOrOutputFile } : {};
+      const context = typeof contextOrOutputFile === 'string' ? { outputFile: contextOrOutputFile } : contextOrOutputFile;
       this.setContext({
         ...context,
         selectedTemplateFiles: templateFiles,
@@ -179,7 +178,7 @@ export class FileTemplate extends TemplateUtils {
       if (!(await this._hooks(this.context.beforeAll, 'beforeAll'))) return;
 
       for (let templateFile of templateFiles) {
-        await this.generateTemplateFile(templateFile);
+        await this.generateTemplateFile(normalizeSeparator(templateFile));
       }
 
       await this._hooks(this.context.afterAll, 'afterAll');
