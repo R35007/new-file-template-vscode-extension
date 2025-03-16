@@ -50,18 +50,28 @@ export const resolveWithWorkspaceFolder = (relativePath: string) => {
   return path.resolve(workspaceFolder, relativePath);
 };
 
-export function mergeContext(existingContext: Partial<Context> = {}, newContext: Partial<Context> = {}) {
-  const variables = { ...existingContext.variables, ...newContext.variables };
-  const inputValues = { ...existingContext.inputValues, ...newContext.inputValues };
-  const input = { ...existingContext.input, ...newContext.input, ...inputValues };
+const merge = (target: any, source: any) => {
+  Object.entries(source).forEach(([key, value]) => {
+    if (isPlainObject(target[key]) && isPlainObject(value)) {
+      const mergedValue = merge(target[key], value);
+      target[key] = mergedValue;
+    } else if (isPlainObject(value)) {
+      // Initialize target[key] as an empty object if needed
+      target[key] = {};
+      target[key] = merge(target[key], value);
+    } else {
+      target[key] = value;
+    }
+  });
+  return target;
+};
 
-  Object.assign(existingContext, {
-    ...newContext,
-    ...variables,
-    ...inputValues,
-    input,
-    variables,
-    inputValues
+export function mergeContext(existingContext: Record<string, unknown> = {}, newContext: Record<string, unknown> = {}): Partial<Context> {
+  merge(existingContext, newContext);
+
+  ['variables', 'input', 'inputValues'].forEach((key) => {
+    if (newContext[key] === undefined) return;
+    merge(existingContext, newContext[key]);
   });
 
   return existingContext;
@@ -90,15 +100,15 @@ export async function readFile(templateFile: string, context: Partial<Context>) 
   return data;
 }
 
-export function getValueFromCallback(callback: unknown | ((context: Context) => string[]) = [], context: Context, isList?: boolean) {
+export async function getValueFromCallback(callback: unknown | ((context: Context) => string[]) = [], context: Context, isList?: boolean) {
   if (!callback) return isList ? [] : callback;
-  const value = typeof callback === 'function' ? callback(context) : callback;
+  const value = typeof callback === 'function' ? await callback(context) : callback;
   return isList ? (isArray(value) ? [...new Set(value)] : []) : value;
 }
 
-export function shouldOpenGeneratedFile(context: Context): boolean {
+export async function shouldOpenGeneratedFile(context: Context): Promise<boolean> {
   if (typeof context.openAfterGeneration === 'boolean') return context.openAfterGeneration;
-  const openGeneratedFilesList = getValueFromCallback(context.openAfterGeneration, context, true);
+  const openGeneratedFilesList = await getValueFromCallback(context.openAfterGeneration, context, true);
   return openGeneratedFilesList.some(
     (pattern: string) => pattern === context.templateFileName || new RegExp(pattern).test(context.templateFileName!)
   );
@@ -134,4 +144,15 @@ export function handleError(error: any, context?: Partial<Context>, errorMessage
     vscode.window.showErrorMessage(message);
     return message;
   }
+}
+
+export async function getTimes(context: Context): Promise<Array<Partial<Context> | ((context: Context) => unknown)>> {
+  const resolvedTimes = typeof context.times === 'function' ? await getValueFromCallback(context.times, context) : context.times;
+
+  if (isArray(resolvedTimes)) return resolvedTimes;
+
+  const parsedTimes = parseInt(resolvedTimes as string, 10);
+  if (isNaN(parsedTimes) || parsedTimes === 0) return [];
+
+  return Array.from({ length: parsedTimes });
 }

@@ -2,7 +2,7 @@
 
 All notable changes to the "new-file-template" extension will be documented in this file.
 
-## 3.10.0 - pre release. BREAKING CHANGE !
+## 3.11.0 - pre release. BREAKING CHANGE !
 
 ## v3.1.0
 

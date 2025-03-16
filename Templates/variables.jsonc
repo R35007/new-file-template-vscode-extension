@@ -127,29 +127,36 @@
     "outputFileFolderName": "${outputFileFolderName}"
   },
   "helperMethods": {
-    "exampleVariablesFoobar": "@foo1Bar2 3jaz4Qux$",
+    "exampleVariablesFoobar": "${variables.foobar}",
     "caseConverters": {
-      "_toAlphaCase": "${_toAlphaCase(variables.foobar)}",
       "_toNumericCase": "${_toNumericCase(variables.foobar)}",
+      "_toAlphaCase": "${_toAlphaCase(variables.foobar)}",
       "_toAlphaNumericCase": "${_toAlphaNumericCase(variables.foobar)}",
       "_toSpaceCase": "${_toSpaceCase(variables.foobar)}",
       "_toTitleCase": "${_toTitleCase(variables.foobar)}",
       "_toCamelCase": "${_toCamelCase(variables.foobar)}",
       "_toPascalCase": "${_toPascalCase(variables.foobar)}",
+      "_toComponentNameCase": "${_toComponentNameCase(variables.foobar)}",
       "_toSnakeCase": "${_toSnakeCase(variables.foobar)}",
       "_toSnakeUpperCase": "${_toSnakeUpperCase(variables.foobar)}",
+      "_toConstantCase": "alias of _toSnakeUpperCase",
       "_toSnakeTitleCase": "${_toSnakeTitleCase(variables.foobar)}",
       "_toKebabCase": "${_toKebabCase(variables.foobar)}",
       "_toKebabUpperCase": "${_toKebabUpperCase(variables.foobar)}",
       "_toKebabTitleCase": "${_toKebabTitleCase(variables.foobar)}",
+      "_toHeaderCase": "alias of _toKebabTitleCase",
+      "_toTrainCase": "alias of _toKebabTitleCase",
       "_toDotCase": "${_toDotCase(variables.foobar)}",
       "_toDotUpperCase": "${_toDotUpperCase(variables.foobar)}",
       "_toDotTitleCase": "${_toDotTitleCase(variables.foobar)}",
       "_toSentenceCase": "${_toSentenceCase(variables.foobar)}",
-      "_toCapitalizedWords": "${_toCapitalizedWords(variables.foobar)}",
+      "_toCapitalCase": "${_toCapitalCase(variables.foobar)}",
       "_toStudlyCaps": "${_toStudlyCaps(variables.foobar)}",
       "_toUpperCase": "${_toUpperCase(variables.foobar)}",
-      "_toLowerCase": "${_toLowerCase(variables.foobar)}"
-    }
+      "_toLowerCase": "${_toLowerCase(variables.foobar)}",
+      "_toPathCase": "${_toPathCase(variables.foobar)}"
+    },
+    "_split": "${_split(variables.foobar)}",
+    "Custom PathCase": "${_split(variables.foobar, { numeric: false }).join('/')}"
   }
 }

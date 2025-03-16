@@ -53,7 +53,7 @@ export async function selectTemplateFiles(files: string[], templatePath: string,
     picked: true
   }));
 
-  if (!getValueFromCallback(context.promptTemplateFiles, context)) return options;
+  if (!(await getValueFromCallback(context.promptTemplateFiles, context))) return options;
 
   return vscode.window.showQuickPick(options, {
     title: `${context.Case?._toPascalCase?.(templateName)} - File Templates`,
@@ -129,7 +129,7 @@ export const getInput = async (
 export async function shouldSkipFile(outputFile: string, context: Context, log?: (message: string) => void) {
   if (!fsx.existsSync(outputFile)) return false;
 
-  const overwriteExistingFile = getValueFromCallback(context.overwriteExistingFile, context);
+  const overwriteExistingFile = await getValueFromCallback(context.overwriteExistingFile, context);
 
   if (overwriteExistingFile === 'never') {
     log?.(`Skipping file (never overwrite): ${outputFile}`);

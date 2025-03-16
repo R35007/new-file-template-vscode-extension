@@ -84,7 +84,7 @@ Ensure that the function returns a template string to generate the template data
 
 > Note: Template contents will not be interpolated for files ending with `*.template.js`.
 
-<details>
+<details open>
   <summary>Example 1: Basic Usage</summary>
   
   - File: `./vscode/Templates/MyTemplate/${input.componentName}.tsx.template.js`
@@ -194,7 +194,26 @@ module.exports = async ({ componentName, templateFile, FileTemplate, log }) => {
 </details>
 
 <details>
-  <summary>Example 4: Generating Template as a Snippet for cursor placement</summary>
+  <summary>Example 5: Generate template multiple times</summary>
+  
+  - File: `./vscode/Templates/MyTemplate/_config.js`
+  - This example demonstrates prompting inputs on demand for each template.
+
+```js
+module.exports = async () => {
+  // times: 4 // this generates the same template 4 times with same context
+  // this example generates the same template 3 times with different componentName in a context
+  times: async (context) => {
+    const componentNames = ['AppComponent', 'TextComponent', 'MainComponent'];
+    return componentNames.map((componentName) => ({ componentName }));
+  };
+};
+```
+
+</details>
+
+<details>
+  <summary>Example 6: Generating Template as a Snippet for cursor placement</summary>
 
 - File: `./vscode/Templates/MyTemplate/${Date.now()}.log.md`
 - This example demonstrates adding multi-cursor positions with `$<number>`.
@@ -223,28 +242,35 @@ Activities:
 {
   "exampleVariablesFoobar": "@foo1Bar2 3jaz4Qux$",
   "caseConverters": {
+    "_toNumericCase": "1 1 2 3 4",
     "_toAlphaCase": "foo Bar jaz Qux",
-    "_toNumericCase": "1 2 3 4",
-    "_toAlphaNumericCase": "foo1Bar2 3jaz4Qux",
-    "_toSpaceCase": "foo1 Bar2 3jaz4 Qux",
-    "_toTitleCase": "Foo1 Bar2 3jaz4 Qux",
-    "_toCamelCase": "foo1Bar23jaz4Qux",
-    "_toPascalCase": "Foo1Bar23jaz4Qux",
-    "_toSnakeCase": "foo1_bar2_3jaz4_qux",
-    "_toSnakeUpperCase": "FOO1_BAR2_3JAZ4_QUX",
-    "_toSnakeTitleCase": "Foo1_Bar2_3jaz4_Qux",
-    "_toKebabCase": "foo1-bar2-3jaz4-qux",
-    "_toKebabUpperCase": "FOO1-BAR2-3JAZ4-QUX",
-    "_toKebabTitleCase": "Foo1-Bar2-3jaz4-Qux",
-    "_toDotCase": "foo1.bar2.3jaz4.qux",
-    "_toDotUpperCase": "FOO1.BAR2.3JAZ4.QUX",
-    "_toDotTitleCase": "Foo1.Bar2.3jaz4.Qux",
-    "_toSentenceCase": "Foo1Bar2 3jaz4Qux",
-    "_toCapitalizedWords": "Foo1Bar2 3jaz4Qux",
-    "_toStudlyCaps": "FoO1BaR2 3JaZ4QuX",
-    "_toUpperCase": "FOO1BAR2 3JAZ4QUX",
-    "_toLowerCase": "foo1bar2 3jaz4qux"
-  }
+    "_toAlphaNumericCase": "1 foo1Bar2 3jaz4Qux",
+    "_toSpaceCase": "1 foo1 Bar2 3jaz4 Qux",
+    "_toTitleCase": "1 Foo1 Bar2 3jaz4 Qux",
+    "_toCamelCase": "1Foo1Bar23jaz4Qux",
+    "_toPascalCase": "1Foo1Bar23jaz4Qux",
+    "_toComponentNameCase": "Foo1Bar23jaz4Qux",
+    "_toSnakeCase": "1_foo1_bar2_3jaz4_qux",
+    "_toSnakeUpperCase": "1_FOO1_BAR2_3JAZ4_QUX",
+    "_toConstantCase": "alias of _toSnakeUpperCase",
+    "_toSnakeTitleCase": "1_Foo1_Bar2_3jaz4_Qux",
+    "_toKebabCase": "1-foo1-bar2-3jaz4-qux",
+    "_toKebabUpperCase": "1-FOO1-BAR2-3JAZ4-QUX",
+    "_toKebabTitleCase": "1-Foo1-Bar2-3jaz4-Qux",
+    "_toHeaderCase": "alias of _toKebabTitleCase",
+    "_toTrainCase": "alias of _toKebabTitleCase",
+    "_toDotCase": "1.foo1.bar2.3jaz4.qux",
+    "_toDotUpperCase": "1.FOO1.BAR2.3JAZ4.QUX",
+    "_toDotTitleCase": "1.Foo1.Bar2.3jaz4.Qux",
+    "_toSentenceCase": "1 foo1Bar2 3jaz4Qux",
+    "_toCapitalCase": "1 Foo1Bar2 3jaz4Qux",
+    "_toStudlyCaps": "1 FoO1BaR2 3JaZ4QuX",
+    "_toUpperCase": "1 FOO1BAR2 3JAZ4QUX",
+    "_toLowerCase": "1 foo1bar2 3jaz4qux",
+    "_toPathCase": "/foo1bar2/3jaz4qux"
+  },
+  "_split": "1,foo1Bar2,3jaz4Qux",
+  "Custom PathCase": "foo/Bar/jaz/Qux"
 }
 ```
 
@@ -263,6 +289,7 @@ export type Hooks = {
 };
 
 export type UserConfig = Hooks & {
+  times: number | ((context: Context) => number | Context[] | ((context: Context) => number | Context)[]); // define number of times to generate template multiple times
   out: string; // Output directory for generated files.
   inputValues: Record<string, unknown>; // Predefined input values for template generation.
   variables: Record<string, unknown>; // Additional variables for template generation.
@@ -374,27 +401,33 @@ export type Utils = typeof CaseConverts & {
   generateTemplate: (template: string, context?: Partial<Context>) => Promise<void>;
   interpolate: (template: string, context: Context, hideError?: boolean, interpolateByLine?: boolean) => string;
   Case: {
-    _toNumericCase: (input?: string) => string;
-    _toAlphaCase: (input?: string) => string;
-    _toAlphaNumericCase: (input?: string) => string;
-    _toSpaceCase: (input?: string) => string;
-    _toTitleCase: (input?: string) => string;
-    _toCamelCase: (input?: string) => string;
-    _toPascalCase: (input?: string) => string;
-    _toSnakeCase: (input?: string) => string;
-    _toSnakeUpperCase: (input?: string) => string;
-    _toSnakeTitleCase: (input?: string) => string;
-    _toKebabCase: (input?: string) => string;
-    _toKebabUpperCase: (input?: string) => string;
-    _toKebabTitleCase: (input?: string) => string;
-    _toDotCase: (input?: string) => string;
-    _toDotUpperCase: (input?: string) => string;
-    _toDotTitleCase: (input?: string) => string;
-    _toSentenceCase: (input?: string) => string;
-    _toCapitalizedWords: (input?: string) => string;
-    _toStudlyCaps: (input?: string) => string;
-    _toUpperCase: (input?: string) => string;
-    _toLowerCase: (input?: string) => string;
+    _toNumericCase: (input?: string, options?: { preserve?: string }) => string;
+    _toAlphaCase: (input?: string, options?: { preserve?: string }) => string;
+    _toAlphaNumericCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _split: (input?: string, options?: { numeric?: boolean; alpha?: boolean; preserve?: string; startWithAlpha?: boolean }) => string[];
+    _toSpaceCase: (input?: string, options?: { numeric?: boolean; alpha?: boolean; preserve?: string; startWithAlpha?: boolean }) => string;
+    _toTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toCamelCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toPascalCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toComponentNameCase: (input?: string) => string;
+    _toSnakeCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toSnakeUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toConstantCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toSnakeTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toKebabCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toKebabUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toKebabTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toHeaderCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toTrainCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toDotCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toDotUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toDotTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toSentenceCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toCapitalizedWords: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toCapitalCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toStudlyCaps: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toLowerCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
   };
   /* 
     @example

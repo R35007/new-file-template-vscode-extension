@@ -38,6 +38,12 @@ export default class TemplateUtils {
       exclude: [],
       inputValues: {},
       ...getWorkSpaceFolderDetails(),
+      allTemplates,
+      selectedTemplates,
+      allTemplateFiles: [],
+      allTemplateFileNames: [],
+      selectedTemplateFiles: [],
+      selectedTemplateFileNames: [],
       overwriteExistingFile: Settings.overwriteExistingFile,
       promptTemplateFiles: Settings.promptTemplateFiles,
       enableSnippetGeneration: Settings.enableSnippetGeneration,
@@ -47,8 +53,6 @@ export default class TemplateUtils {
       input: Settings.input,
       ...getFSPathDetails(fsPath),
       ...getActiveFileDetails(),
-      allTemplates,
-      selectedTemplates,
       log: log,
       clearLog: clearLog
     });
@@ -60,7 +64,7 @@ export default class TemplateUtils {
    * @param {Context} [newContext] - The context to merge.
    */
   setContext(newContext?: Partial<Context>) {
-    if (!newContext || !isPlainObject(newContext) || !Object.keys(newContext).length || this.context === newContext) return;
+    if (!isPlainObject(newContext) || !Object.keys(newContext).length) return;
     mergeContext(this.context, newContext);
   }
 
@@ -95,7 +99,7 @@ export default class TemplateUtils {
       const { inputName, transform } = parseInputTransformVariable(inputNameStr, this.context);
 
       const userInputConfig = this.context.input[inputName];
-      const inputConfig = (getValueFromCallback(userInputConfig, this.context) || {}) as InputConfig;
+      const inputConfig = ((await getValueFromCallback(userInputConfig, this.context)) || {}) as InputConfig;
 
       const inputValue = (this.context.inputValues[inputName] || (isPlainObject(inputConfig) ? undefined : inputConfig)) as unknown;
 
@@ -138,7 +142,7 @@ export default class TemplateUtils {
    * @param {string} [data=''] - The data to search for input patterns.
    */
   async _promptInputsFromPattern(data: string = '') {
-    const promptPatterns = getValueFromCallback(this.context.promptVariablePatterns, this.context, true);
+    const promptPatterns = await getValueFromCallback(this.context.promptVariablePatterns, this.context, true);
     const unknownInputs = (promptPatterns.length ? promptPatterns : ['\\$\\{input\\.([^\\}]+)\\}'])
       .map((pattern: string) => getRegexValues(data, pattern))
       .flat();
@@ -256,9 +260,9 @@ export default class TemplateUtils {
 
       await fsx.ensureFile(this.context.outputFile!);
 
-      if (!Boolean(getValueFromCallback(this.context.enableSnippetGeneration, this.context))) {
+      if (!Boolean(await getValueFromCallback(this.context.enableSnippetGeneration, this.context))) {
         await fsx.writeFile(this.context.outputFile!, data);
-        if (shouldOpenGeneratedFile(this.context)) {
+        if (await shouldOpenGeneratedFile(this.context)) {
           const newFile = await vscode.workspace.openTextDocument(this.context.outputFile!);
           await vscode.window.showTextDocument(newFile, undefined, false);
         }

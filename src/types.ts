@@ -18,46 +18,39 @@ export type Utils = typeof CaseConverts & {
   readFile: (templateFile: string, context: Partial<Context>) => Promise<string>;
   getTemplateFileData: (templateFile: string, context?: Partial<Context>) => Promise<string | false>;
   createOutputFile: (data: string, contextOrOutputFile?: Partial<Context> | string) => Promise<void>;
-  generateTemplateFile: (templateFile: string, contextOrOutputFile?: Partial<Context>) => Promise<void>;
+  generateTemplateFile: (templateFile: string, contextOrOutputFile?: Partial<Context> | string) => Promise<void>;
   generateTemplateFiles: (templateFiles: string[], context?: Partial<Context>) => Promise<void>;
   generateTemplate: (template: string, context?: Partial<Context>) => Promise<void>;
   interpolate: (template: string, context: Context, hideError?: boolean, interpolateByLine?: boolean) => string;
   Case: {
-    _toNumericCase: (input?: string) => string;
-    _toAlphaCase: (input?: string) => string;
-    _toAlphaNumericCase: (input?: string) => string;
-    _toSpaceCase: (input?: string) => string;
-    _toTitleCase: (input?: string) => string;
-    _toCamelCase: (input?: string) => string;
-    _toPascalCase: (input?: string) => string;
-    _toSnakeCase: (input?: string) => string;
-    _toSnakeUpperCase: (input?: string) => string;
-    _toSnakeTitleCase: (input?: string) => string;
-    _toKebabCase: (input?: string) => string;
-    _toKebabUpperCase: (input?: string) => string;
-    _toKebabTitleCase: (input?: string) => string;
-    _toDotCase: (input?: string) => string;
-    _toDotUpperCase: (input?: string) => string;
-    _toDotTitleCase: (input?: string) => string;
-    _toSentenceCase: (input?: string) => string;
-    _toCapitalizedWords: (input?: string) => string;
-    _toStudlyCaps: (input?: string) => string;
-    _toUpperCase: (input?: string) => string;
-    _toLowerCase: (input?: string) => string;
+    _toNumericCase: (input?: string, options?: { preserve?: string }) => string;
+    _toAlphaCase: (input?: string, options?: { preserve?: string }) => string;
+    _toAlphaNumericCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _split: (input?: string, options?: { numeric?: boolean; alpha?: boolean; preserve?: string; startWithAlpha?: boolean }) => string[];
+    _toSpaceCase: (input?: string, options?: { numeric?: boolean; alpha?: boolean; preserve?: string; startWithAlpha?: boolean }) => string;
+    _toTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toCamelCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toPascalCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toComponentNameCase: (input?: string) => string;
+    _toSnakeCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toSnakeUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toConstantCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toSnakeTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toKebabCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toKebabUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toKebabTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toHeaderCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toTrainCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toDotCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toDotUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toDotTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toSentenceCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toCapitalCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toStudlyCaps: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toLowerCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toPathCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
   };
-  /* 
-    @example
-    ```js
-      const newFileTemplate = new FileTemplate(fsPath, allTemplates, selectedTemplates, newContext);
-      newFileTemplate.setContext(...args)
-      newFileTemplate.promptInput(...args)
-      newFileTemplate.getTemplateFileData(...args)
-      newFileTemplate.createOutputFile(...args)
-      newFileTemplate.generateTemplateFile(...args)
-      newFileTemplate.generateTemplateFiles(...args)
-      newFileTemplate.generateTemplate(...args)
-    ```
-  */
   FileTemplate: typeof FileTemplate;
 };
 
@@ -216,6 +209,7 @@ export type UserConfig = Hooks & {
   openAfterGeneration?: boolean | string[] | ((context: Context) => string[]);
   include: string[] | ((context: Context) => string[]);
   exclude: string[] | ((context: Context) => string[]);
+  times: number | ((context: Context) => number | Context[] | ((context: Context) => number | Context)[]);
 };
 
-export type Context = PredefinedVariables & UserConfig & Record<Exclude<string, keyof PredefinedVariables & UserConfig>, unknown>;
+export type Context = PredefinedVariables & UserConfig & Record<Exclude<string, PredefinedVariables & UserConfig>, unknown>;

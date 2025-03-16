@@ -15,7 +15,7 @@ module.exports = (_context) => ({
   variables: {
     fileName: 'test', // This value will be ignored since it is used in inputValues.
     componentName: 'AppComponent', // Sets the default input value for componentName.
-    foobar: '@foo1Bar2 3jaz4Qux$',
+    foobar: '1@foo1Bar2 3jaz4Qux$',
     lorem: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
     user: { name: 'r35007' }
   },
@@ -77,4 +77,11 @@ module.exports = (_context) => ({
 
     return files;
   }
+  // times: 3 // set number or a callback that return number or a list new contexts
+  // times: (context) => {
+  //   return [
+  //     { ...context, fileName: new Date().getTime() },
+  //     { ...context, fileName: new Date().getTime() }
+  //   ];
+  // }
 });
