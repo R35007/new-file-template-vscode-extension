@@ -2,7 +2,23 @@
 
 All notable changes to the "new-file-template" extension will be documented in this file.
 
-## 3.11.0 - pre release. BREAKING CHANGE !
+## v4.0.0 🎉 BREAKING CHANGE 🚀
+
+We've revamped the entire extension with many exciting new features and some breaking changes. For a detailed list of features and advantages, please check the [README](./README.md#features) file. Here are the breaking changes in this version:
+
+- **Renamed:**
+    - `promptAlways` to `prePrompt` in the config setting.
+    - `_toCapitalizedWords` to `_toCapitalCase` in the helper method.
+    - `validator` to `validateInput` in the input config setting.
+    - `afterInput` to `transform` in the input config setting.
+
+- **Removed:**
+    - `new-file-template.settings.templatesPath` from settings. Please use `new-file-template.settings.templatesPaths` instead. This allows for multiple template path strings.
+
+- **Modified:**
+    - `new-file-template.settings.overwriteExistingFile` now accepts three values: `prompt`, `never`, `always` instead of a boolean value.
+
+Enjoy the new version! 🎉✨
 
 ## v3.1.0
 

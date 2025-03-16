@@ -1,6 +1,6 @@
 # New File Template
 
-Create new files or folders from a custom template.
+Effortlessly create new files or folders from custom templates with this versatile tool. 🎉 It supports multiple template folders, user input prompts, JavaScript expressions, dynamic file inclusion/exclusion, and various case conversion methods to streamline your template generation process. 🚀
 
 <a href="https://buymeacoffee.com/r35007" target="_blank">
   <img src="https://r35007.github.io/Siva_Profile/images//buymeacoffee.png" />
@@ -8,9 +8,11 @@ Create new files or folders from a custom template.
 
 ## Features
 
-- Create custom template files and folders effortlessly.
-- Provide multiple custom template folders and config paths.
-- Prompt user input on demand or on load.
+- Effortlessly create custom template files and folders. 📁
+- Support for multiple custom template folders and config paths.
+- Generate templates multiple times with the same or new contexts.
+- Generate multiple output files from a single template file.
+- Prompt user input on demand or on load. 📝
   - Example: `${input.componentName}` prompts the user for the `componentName`.
 - Configure user input prompts based on conditions. For more details, refer to the [template configuration section](#template-configuration).
 - Simplify logic within templates using JavaScript expressions.
@@ -22,18 +24,17 @@ Create new files or folders from a custom template.
 - Dynamically include and exclude template files based on user inputs.
 - Utilize helper case conversion methods:
   - Example 1: `${input.componentName_toPascalCase}` prompts input and converts it to PascalCase.
-  - Example 2: `${_toPascalCase(componentName)}` converts an existing variable value to PascalCase.
-- Generate multiple templates simultaneously.
+  - Example 2: `${_toPascalCase(componentName, { startWithAlpha: true })}` converts an existing variable value to PascalCase.
 - Configure settings to open specific template files after generation.
 - Configure custom patterns to identify variables and prompt users.
-- Add logs for debugging.
-- Create multiple output file from a single template file.
+- Add logs for debugging. 🐛
+
 
 ### Preview
 
 > This demonstration uses sample React component templates. However, this extension is not limited to React; it is a versatile tool that can create any template to meet various business needs.
 
-![Demo](https://github.com/R35007/Assets/blob/main/New_File_Tempalte/demo.gif?raw=true)
+![Demo](https://github.com/R35007/Assets/blob/main/New_File_Tempalte/demo_v4.0.0.gif?raw=true)
 
 ### Usage
 
@@ -48,7 +49,7 @@ Create new files or folders from a custom template.
 Interpolation occurs for the entire file content. If an error is encountered, the file content is returned without any interpolation.
 
 To enable partial interpolation, set the `new-file-template.settings.interpolateByLine` setting to `true`. This will interpolate the content line by line.
-If an error occurs, only the problematic line will be returned without interpolation, while the remaining lines will still be interpolated.\
+If an error occurs, only the problematic line will be returned without interpolation, while the remaining lines will still be interpolated.
 
 Set the `new-file-template.settings.disableInterpolationErrorMessage` setting to `true` to suppress error messages of interpolation.
 
@@ -163,7 +164,34 @@ module.exports = async ({ componentName, _toCamelCase, promptInput }) => {
 </details>
 
 <details>
-  <summary>Example 4: Generate multiple output file from a single Template file</summary>
+  <summary>Example 4: Generate template multiple times</summary>
+  
+  - File: `./vscode/Templates/MyTemplate/_config.js`
+  - This example demonstrates prompting inputs on demand for each template.
+
+```js
+module.exports = async () => {
+  // times: 4 // generates the templates 4 times with the same context
+  // Generates the template 3 times with different component names
+  times: async (context) => {
+    const componentNames = ['AppComponent', 'TextComponent', 'MainComponent'];
+    return componentNames.map((componentName) => ({ componentName }));
+  };
+
+  // Alternatively, return a list of callbacks that generate the template multiple times
+  // This example returns 5 callbacks, each generating the template with a unique context
+  // times: async (context) => {
+  //   return Array(5)
+  //     .fill('')
+  //     .map(() => (context) => ({ ...context, fileName: new Date().getTime() }));
+  // };
+};
+```
+
+</details>
+
+<details>
+  <summary>Example 5: Generate multiple output files</summary>
   
   - File: `./vscode/Templates/MyTemplate/_hooks.js`
   - This example demonstrates prompting inputs on demand for each template.
@@ -187,25 +215,6 @@ module.exports = async ({ componentName, templateFile, FileTemplate, log }) => {
       }
       return false; // Return false to skip the current file
     }
-  };
-};
-```
-
-</details>
-
-<details>
-  <summary>Example 5: Generate template multiple times</summary>
-  
-  - File: `./vscode/Templates/MyTemplate/_config.js`
-  - This example demonstrates prompting inputs on demand for each template.
-
-```js
-module.exports = async () => {
-  // times: 4 // this generates the same template 4 times with same context
-  // this example generates the same template 3 times with different componentName in a context
-  times: async (context) => {
-    const componentNames = ['AppComponent', 'TextComponent', 'MainComponent'];
-    return componentNames.map((componentName) => ({ componentName }));
   };
 };
 ```
@@ -276,7 +285,7 @@ Activities:
 
 ### Template Configuration
 
-By default, the extension searches for `_config.json`, `_config.js`, or `_config/index.js` within the template folder. You can also specify a custom configuration file path using the `new-file-template.settings.configPath` extension setting.
+By default, the extension searches for configuration files named `_config.json`, `_config.js`, or `_config/index.js` within the template folder. Alternatively, you can specify a custom configuration file path using the `new-file-template.settings.configPath` setting in the extension.
 
 ```ts
 export type Hooks = {
@@ -289,7 +298,7 @@ export type Hooks = {
 };
 
 export type UserConfig = Hooks & {
-  times: number | ((context: Context) => number | Context[] | ((context: Context) => number | Context)[]); // define number of times to generate template multiple times
+  times: number | ((context: Context) => number | Array<Context | ((context: Context) => Partial<Context>)>); // define number of times to generate template multiple times
   out: string; // Output directory for generated files.
   inputValues: Record<string, unknown>; // Predefined input values for template generation.
   variables: Record<string, unknown>; // Additional variables for template generation.
@@ -428,6 +437,7 @@ export type Utils = typeof CaseConverts & {
     _toStudlyCaps: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
     _toUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
     _toLowerCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+    _toPathCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
   };
   /* 
     @example

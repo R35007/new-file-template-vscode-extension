@@ -71,6 +71,7 @@ export function mergeContext(existingContext: Record<string, unknown> = {}, newC
 
   ['variables', 'input', 'inputValues'].forEach((key) => {
     if (newContext[key] === undefined) return;
+    if (key === 'input' && isPlainObject(newContext[key])) return;
     merge(existingContext, newContext[key]);
   });
 

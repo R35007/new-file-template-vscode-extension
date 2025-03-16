@@ -251,7 +251,7 @@ export class FileTemplate extends TemplateUtils {
         }
         this.log(`Generating template files for times: ${index + 1}/${times.length}...`, '\n');
         await this.generateTemplateFiles(templateFiles);
-        this.log('-------------------------------------------------', '\n');
+        this.log('----------------------------------------', '\n');
       }
       if (!times.length) await this.generateTemplateFiles(templateFiles);
 
@@ -262,6 +262,6 @@ export class FileTemplate extends TemplateUtils {
       this.errorMessage = handleError(error, this.context, this.errorMessage);
       throw error;
     }
-    this.log('============================================================================================================', '\n');
+    this.log('================================================================================', '\n', false);
   }
 }

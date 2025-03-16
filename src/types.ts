@@ -209,7 +209,7 @@ export type UserConfig = Hooks & {
   openAfterGeneration?: boolean | string[] | ((context: Context) => string[]);
   include: string[] | ((context: Context) => string[]);
   exclude: string[] | ((context: Context) => string[]);
-  times: number | ((context: Context) => number | Context[] | ((context: Context) => number | Context)[]);
+  times: number | ((context: Context) => number | Array<Context | ((context: Context) => Partial<Context>)>);
 };
 
 export type Context = PredefinedVariables & UserConfig & Record<Exclude<string, PredefinedVariables & UserConfig>, unknown>;

@@ -80,8 +80,8 @@ module.exports = (_context) => ({
   // times: 3 // set number or a callback that return number or a list new contexts
   // times: (context) => {
   //   return [
-  //     { ...context, fileName: new Date().getTime() },
-  //     { ...context, fileName: new Date().getTime() }
+  //     { fileName: new Date().getTime() },
+  //     { fileName: new Date().getTime() }
   //   ];
   // }
 });
