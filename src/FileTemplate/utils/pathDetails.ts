@@ -55,7 +55,7 @@ export function getFSPathDetails(fsPath: string = '') {
     isFile: !isDirectory,
     ...normalizeSeparator({
       fsPath,
-      fsPathFolder: isDirectory ? fsPath : path.dirname(fsPath),
+      fsPathFolder: fsPath ? (isDirectory ? fsPath : path.dirname(fsPath)) : '',
       ...folderDetails,
       ...fileDetails
     })

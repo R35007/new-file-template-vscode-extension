@@ -68,6 +68,9 @@ export class FileTemplate extends TemplateUtils {
       readFile,
       interpolate,
       FileTemplate,
+      showInformationMessage: vscode.window.showInformationMessage,
+      showErrorMessage: vscode.window.showErrorMessage,
+      showWarningMessage: vscode.window.showWarningMessage,
       ...context
     });
   }
@@ -242,18 +245,34 @@ export class FileTemplate extends TemplateUtils {
       const templateFiles = selectedTemplateFiles.map((templateFile) => templateFile.value);
 
       this.log('Generating template files... Almost there! 🛠️');
+
+      const isTimesDefined = this.context.times !== undefined;
       const times = await getTimes(this.context);
+
+      if (isTimesDefined && times.length === 0) {
+        this.log('[WARNING] No times provided for template generation. Exiting...');
+        vscode.window.showWarningMessage('No times provided for template generation.');
+        return;
+      }
+
       for (let [index, time] of times.entries()) {
         const newContext = await getValueFromCallback(time, this.context);
+        if (newContext === false) {
+          this.log(`[SKIP] Skipping iteration ${index + 1} due to false context...`, '\n');
+          continue;
+        }
+
         if (isPlainObject(newContext)) {
           this.log(`Setting new context...`);
           this.setContext(newContext);
         }
+
         this.log(`Generating template files for times: ${index + 1}/${times.length}...`, '\n');
         await this.generateTemplateFiles(templateFiles);
         this.log('----------------------------------------', '\n');
       }
-      if (!times.length) await this.generateTemplateFiles(templateFiles);
+
+      if (!isTimesDefined) await this.generateTemplateFiles(templateFiles);
 
       this.log(`[SUCCESS] Template generation completed for: '${this.context.templateName}'... High five! ✋`, '\n');
       vscode.window.showInformationMessage(`✨ ${this.context.templateName} templates have been generated successfully! 🎉`);

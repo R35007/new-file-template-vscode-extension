@@ -29,7 +29,6 @@ Effortlessly create new files or folders from custom templates with this versati
 - Configure custom patterns to identify variables and prompt users.
 - Add logs for debugging. 🐛
 
-
 ### Preview
 
 > This demonstration uses sample React component templates. However, this extension is not limited to React; it is a versatile tool that can create any template to meet various business needs.
@@ -168,6 +167,7 @@ module.exports = async ({ componentName, _toCamelCase, promptInput }) => {
   
   - File: `./vscode/Templates/MyTemplate/_config.js`
   - This example demonstrates prompting inputs on demand for each template.
+  - Note: times doesn't respect `new-file-template.settings.useSeparateInstance` settings. It always runs in a same instance.
 
 ```js
 module.exports = async () => {
@@ -397,7 +397,38 @@ Add the following configuration to your `settings.json` file:
 The `context` object contains many utility methods to create a template explicitly. These are the following methods:
 
 ````ts
-export type Utils = typeof CaseConverts & {
+export type Case = {
+  _toNumericCase: (input?: string, options?: { preserve?: string }) => string;
+  _toAlphaCase: (input?: string, options?: { preserve?: string }) => string;
+  _toAlphaNumericCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _split: (input?: string, options?: { numeric?: boolean; alpha?: boolean; preserve?: string; startWithAlpha?: boolean }) => string[];
+  _toSpaceCase: (input?: string, options?: { numeric?: boolean; alpha?: boolean; preserve?: string; startWithAlpha?: boolean }) => string;
+  _toTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toCamelCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toPascalCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toComponentNameCase: (input?: string) => string;
+  _toSnakeCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toSnakeUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toConstantCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toSnakeTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toKebabCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toKebabUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toKebabTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toHeaderCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toTrainCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toDotCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toDotUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toDotTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toSentenceCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toCapitalizedWords: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toCapitalCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toStudlyCaps: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toLowerCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+  _toPathCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
+};
+
+export type Utils = typeof Case & {
   log: (message: string, newLine?: string, noDate?: boolean) => void;
   clearLog: () => void;
   setContext: (context?: Context) => void;
@@ -409,37 +440,11 @@ export type Utils = typeof CaseConverts & {
   generateTemplateFiles: (templateFiles: string[], context?: Partial<Context>) => Promise<void>;
   generateTemplate: (template: string, context?: Partial<Context>) => Promise<void>;
   interpolate: (template: string, context: Context, hideError?: boolean, interpolateByLine?: boolean) => string;
-  Case: {
-    _toNumericCase: (input?: string, options?: { preserve?: string }) => string;
-    _toAlphaCase: (input?: string, options?: { preserve?: string }) => string;
-    _toAlphaNumericCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _split: (input?: string, options?: { numeric?: boolean; alpha?: boolean; preserve?: string; startWithAlpha?: boolean }) => string[];
-    _toSpaceCase: (input?: string, options?: { numeric?: boolean; alpha?: boolean; preserve?: string; startWithAlpha?: boolean }) => string;
-    _toTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toCamelCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toPascalCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toComponentNameCase: (input?: string) => string;
-    _toSnakeCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toSnakeUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toConstantCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toSnakeTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toKebabCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toKebabUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toKebabTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toHeaderCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toTrainCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toDotCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toDotUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toDotTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toSentenceCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toCapitalizedWords: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toCapitalCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toStudlyCaps: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toLowerCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toPathCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-  };
-  /* 
+  showInformationMessage: typeof window.showInformationMessage;
+  showErrorMessage: typeof window.showErrorMessage;
+  showWarningMessage: typeof window.showWarningMessage;
+  Case: typeof Case;
+  /*
     @example
     ```js
       const newFileTemplate = new FileTemplate(fsPath, allTemplates, selectedTemplates, newContext);

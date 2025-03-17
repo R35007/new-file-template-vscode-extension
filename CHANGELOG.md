@@ -2,6 +2,16 @@
 
 All notable changes to the "new-file-template" extension will be documented in this file.
 
+## v4.1.0 
+
+ - fixed - template is generated even if times is set to 0 issue fixed
+ - Added more util functions to the context
+  ```ts
+  showInformationMessage: typeof window.showInformationMessage;
+  showErrorMessage: typeof window.showErrorMessage;
+  showWarningMessage: typeof window.showWarningMessage;
+  ```
+
 ## v4.0.0 🎉 BREAKING CHANGE 🚀
 
 We've revamped the entire extension with many exciting new features and some breaking changes. For a detailed list of features and advantages, please check the [README](./README.md#features) file. Here are the breaking changes in this version:

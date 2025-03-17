@@ -1,5 +1,5 @@
-import { QuickPickItem } from 'vscode';
-import * as CaseConverts from './FileTemplate/Case';
+import { QuickPickItem, window } from 'vscode';
+import * as Case from './FileTemplate/Case';
 import { FileTemplate } from './FileTemplate/FileTemplate';
 
 export enum Commands {
@@ -10,7 +10,7 @@ export enum Commands {
 export const EXIT = 'Exit';
 export const CONTINUE = 'continue';
 
-export type Utils = typeof CaseConverts & {
+export type Utils = typeof Case & {
   log: (message: string, newLine?: string, noDate?: boolean) => void;
   clearLog: () => void;
   setContext: (context?: Context) => void;
@@ -22,40 +22,14 @@ export type Utils = typeof CaseConverts & {
   generateTemplateFiles: (templateFiles: string[], context?: Partial<Context>) => Promise<void>;
   generateTemplate: (template: string, context?: Partial<Context>) => Promise<void>;
   interpolate: (template: string, context: Context, hideError?: boolean, interpolateByLine?: boolean) => string;
-  Case: {
-    _toNumericCase: (input?: string, options?: { preserve?: string }) => string;
-    _toAlphaCase: (input?: string, options?: { preserve?: string }) => string;
-    _toAlphaNumericCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _split: (input?: string, options?: { numeric?: boolean; alpha?: boolean; preserve?: string; startWithAlpha?: boolean }) => string[];
-    _toSpaceCase: (input?: string, options?: { numeric?: boolean; alpha?: boolean; preserve?: string; startWithAlpha?: boolean }) => string;
-    _toTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toCamelCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toPascalCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toComponentNameCase: (input?: string) => string;
-    _toSnakeCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toSnakeUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toConstantCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toSnakeTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toKebabCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toKebabUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toKebabTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toHeaderCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toTrainCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toDotCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toDotUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toDotTitleCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toSentenceCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toCapitalCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toStudlyCaps: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toUpperCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toLowerCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-    _toPathCase: (input?: string, options?: { preserve?: string; startWithAlpha?: boolean }) => string;
-  };
+  showInformationMessage: typeof window.showInformationMessage;
+  showErrorMessage: typeof window.showErrorMessage;
+  showWarningMessage: typeof window.showWarningMessage;
+  Case: typeof Case;
   FileTemplate: typeof FileTemplate;
 };
 
 export type PredefinedVariables = Utils & {
-  Case: typeof CaseConverts;
   __dirname: string;
   __filename: string;
   process: NodeJS.Process;
@@ -209,7 +183,7 @@ export type UserConfig = Hooks & {
   openAfterGeneration?: boolean | string[] | ((context: Context) => string[]);
   include: string[] | ((context: Context) => string[]);
   exclude: string[] | ((context: Context) => string[]);
-  times: number | ((context: Context) => number | Array<Context | ((context: Context) => Partial<Context>)>);
+  times: false | number | ((context: Context) => false | number | Array<false | Context | ((context: Context) => Partial<Context>)>);
 };
 
 export type Context = PredefinedVariables & UserConfig & Record<Exclude<string, PredefinedVariables & UserConfig>, unknown>;
