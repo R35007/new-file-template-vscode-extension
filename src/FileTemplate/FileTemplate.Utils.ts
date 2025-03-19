@@ -232,9 +232,12 @@ export default class TemplateUtils {
       if (processedDataBefore === false) return false;
       data = processedDataBefore;
 
-      if (!shouldRequire) {
+      const disableInterpolate = await getValueFromCallback(this.context?.disableInterpolation, this.context);
+
+      if (!shouldRequire && !disableInterpolate) {
+        const shouldInterpolateByLineByLine = await getValueFromCallback(this.context?.interpolateByLine, this.context);
         this.log(`Interpolating template content...`);
-        data = await interpolate(String(data), this.context);
+        data = interpolate(String(data), this.context, false, shouldInterpolateByLineByLine);
       }
       const processedDataAfter = await this._processHooks(data, this.context.processAfterEach, 'processAfterEach');
       if (processedDataAfter === false) return false;

@@ -20,6 +20,7 @@ Effortlessly create new files or folders from custom templates with this versati
 - Set predefined variables and user input values for seamless template generation.
 - Configure user input as plain text, single select, or multiple choice, with validation and transformation capabilities.
 - Utilize hook functions for enhanced control. For more details, refer to the [Hooks section](#hooks).
+- Utilize hooks to do a find and replace data text manually.
 - Add cursors at specific positions by generating the template as a snippet.
 - Dynamically include and exclude template files based on user inputs.
 - Utilize helper case conversion methods:
@@ -163,7 +164,27 @@ module.exports = async ({ componentName, _toCamelCase, promptInput }) => {
 </details>
 
 <details>
-  <summary>Example 4: Generate template multiple times</summary>
+  <summary>Example 4: Find and Replace a data string manually</summary>
+
+- File: `./vscode/Templates/MyTemplate/_hooks.js`
+- This example demonstrates find and replacing the data string manually
+
+```js
+module.exports = async ({ componentName, _toCamelCase, promptInput }) => ({
+  // This data provides you the data string before interpolation
+  processBeforeEach: ({ data, context }) => ({ data, context }), // return new data string or new context;
+  // this data provides you the interpolated data string 
+  processAfterEach: ({ data, context }) => {
+    const updateData = data.replace(/__componentName__/g, context._toPascalCase(context.componentName));
+    return { data: updateData, context }; // return new data string or new context;
+  }
+});
+```
+
+</details>
+
+<details>
+  <summary>Example 5: Generate template multiple times</summary>
   
   - File: `./vscode/Templates/MyTemplate/_config.js`
   - This example demonstrates prompting inputs on demand for each template.
@@ -191,7 +212,7 @@ module.exports = async () => {
 </details>
 
 <details>
-  <summary>Example 5: Generate multiple output files</summary>
+  <summary>Example 6: Generate multiple output files</summary>
   
   - File: `./vscode/Templates/MyTemplate/_hooks.js`
   - This example demonstrates prompting inputs on demand for each template.
@@ -222,7 +243,7 @@ module.exports = async ({ componentName, templateFile, FileTemplate, log }) => {
 </details>
 
 <details>
-  <summary>Example 6: Generating Template as a Snippet for cursor placement</summary>
+  <summary>Example 7: Generating Template as a Snippet for cursor placement</summary>
 
 - File: `./vscode/Templates/MyTemplate/${Date.now()}.log.md`
 - This example demonstrates adding multi-cursor positions with `$<number>`.
@@ -289,12 +310,12 @@ By default, the extension searches for configuration files named `_config.json`,
 
 ```ts
 export type Hooks = {
-  beforeAll?: (context: Context) => Context | false | void; // Executes before generating all template files.
-  beforeEach?: (context: Context) => Context | false | void; // Executes before generating each template file.
-  processBeforeEach?: ({ data, context }: { data: string; context: Context }) => { data: string; context: Context } | false | void; // Executes before interpolating template data for each file.
-  processAfterEach?: ({ data, context }: { data: string; context: Context }) => { data: string; context: Context } | false | void; // Executes after interpolating template data for each file.
-  afterEach?: (context: Context) => Context | false | void; // Executes after generating each template file.
-  afterAll?: (context: Context) => Context | false | void; // Executes after generating all template files.
+  beforeAll?: (context: Context) => Promise<Context | false | void>; // Executes before generating all template files. return new context
+  beforeEach?: (context: Context) => Promise<Context | false | void>; // Executes before generating each template file. return new context
+  processBeforeEach?: ({ data, context }: { data: string; context: Context }) => Promise<{ data: string; context: Context } | false | void>; // Executes before interpolating template data for each file. Return new data string or context
+  processAfterEach?: ({ data, context }: { data: string; context: Context }) => Promise<{ data: string; context: Context } | false | void>; // Executes after interpolating template data for each file. Return new data string or context
+  afterEach?: (context: Context) => Promise<Context | false | void>; // Executes after generating each template file. return new context
+  afterAll?: (context: Context) => Promise<Context | false | void>; // Executes after generating all template files. return new context
 };
 
 export type UserConfig = Hooks & {
@@ -306,6 +327,8 @@ export type UserConfig = Hooks & {
   overwriteExistingFile?: 'prompt' | 'never' | 'always' | ((context: Context) => 'prompt' | 'never' | 'always'); // Behavior for overwriting existing files.
   promptTemplateFiles?: boolean | ((context: Context) => boolean); // Whether to prompt for template files.
   enableSnippetGeneration?: boolean | ((context: Context) => boolean); // Whether to enable snippet generation.
+  interpolateByLine?: boolean | ((context: Context) => boolean); // interpolates line by line
+  disableInterpolation?: boolean | ((context: Context) => boolean); // disables interpolation
   openAfterGeneration?: boolean | string[] | ((context: Context) => string[]); // Files to open after generation.
   include: string[] | ((context: Context) => string[]); // Files to include in the template.
   exclude: string[] | ((context: Context) => string[]); // Files to exclude from the template.

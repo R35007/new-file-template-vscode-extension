@@ -2,7 +2,7 @@
   "name": "new-file-template",
   "displayName": "New File Template",
   "description": "Create a new file or folder from custom templates",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "icon": "images/new-file-template-logo.png",
   "engines": {
     "vscode": "^1.97.0"
@@ -117,14 +117,20 @@
           "default": false,
           "description": "If true, interpolates each line individually. On error, returns the original line without interpolation."
         },
-        "new-file-template.settings.disableInterpolationErrorMessage": {
+        "new-file-template.settings.disableInterpolation": {
           "order": 8,
+          "type": "boolean",
+          "default": false,
+          "description": "If true, it disables JavaScript expression interpolation for manual or text-based replacements."
+        },
+        "new-file-template.settings.disableInterpolationErrorMessage": {
+          "order": 9,
           "type": "boolean",
           "default": false,
           "description": "If true, It ignores interpolation error messages"
         },
         "new-file-template.settings.promptVariablePatterns": {
-          "order": 9,
+          "order": 10,
           "type": "array",
           "items": {
             "type": "string"
@@ -141,20 +147,20 @@
           "description": "Specify a custom pattern to prompt user input. By default, it prompts for variable names between `${input` and `}`. For example, `${input.componentName}` prompts the user for the componentName."
         },
         "new-file-template.settings.enableSnippetGeneration": {
-          "order": 10,
+          "order": 11,
           "type": "boolean",
           "default": false,
           "description": "If true, it enables snippet generation for template files. Snippets help with cursor placement using placeholders like $<number>."
         },
         "new-file-template.settings.openAfterGeneration": {
-          "order": 11,
+          "order": 12,
           "type": "boolean",
           "default": true,
           "scope": "window",
           "markdownDescription": "If true, opens all generated files. This always be `true` if `#new-file-template.settings.enableSnippetGeneration#` is set to `true`."
         },
         "new-file-template.settings.variables": {
-          "order": 12,
+          "order": 13,
           "type": "object",
           "default": {},
           "examples": [
@@ -170,7 +176,7 @@
           "description": "Define custom variables for template generation."
         },
         "new-file-template.settings.input": {
-          "order": 13,
+          "order": 14,
           "type": "object",
           "default": {},
           "examples": [

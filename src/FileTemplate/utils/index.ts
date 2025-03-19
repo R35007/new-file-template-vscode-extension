@@ -101,7 +101,11 @@ export async function readFile(templateFile: string, context: Partial<Context>) 
   return data;
 }
 
-export async function getValueFromCallback(callback: unknown | ((context: Context) => string[]) = [], context: Context, isList?: boolean) {
+export async function getValueFromCallback(
+  callback: unknown | ((context: Context) => string[]) = [],
+  context: Partial<Context>,
+  isList?: boolean
+) {
   if (!callback) return isList ? [] : callback;
   const value = typeof callback === 'function' ? await callback(context) : callback;
   return isList ? (isArray(value) ? [...new Set(value)] : []) : value;
@@ -157,3 +161,9 @@ export async function getTimes(context: Context): Promise<Array<Partial<Context>
 
   return Array.from({ length: parsedTimes });
 }
+
+export const getInputValue = (context: Context, inputName: string) =>
+  context[inputName] ??
+  context.inputValues[inputName] ??
+  context.variables[inputName] ??
+  (!isPlainObject(context.input[inputName]) ? context.input[inputName] : undefined);

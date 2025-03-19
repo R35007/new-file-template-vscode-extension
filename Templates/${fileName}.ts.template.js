@@ -1,1 +1,1 @@
-module.exports = ({ componentName }) => `export * from './${componentName}';`;
+module.exports = () => `export * from './__componentName__';`;

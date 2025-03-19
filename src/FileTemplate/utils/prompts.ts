@@ -8,7 +8,7 @@ import { interpolateFormat } from './interpolation';
 
 export const promptToCreateNewSampleTemplate = async () => {
   const selectedAction = await vscode.window.showInformationMessage(
-    `No templates found. Would you like to create a new sample template in ./.vscode/templates?`,
+    `No templates found. Would you like to create a new sample template ?`,
     { modal: true },
     'Yes'
   );
@@ -17,14 +17,30 @@ export const promptToCreateNewSampleTemplate = async () => {
   return;
 };
 
-export const getTemplateName = () =>
+export const getTemplatePath = (templatePaths: string[]) =>
+  vscode.window.showQuickPick(
+    templatePaths.map((tPath) => ({
+      label: path.basename(tPath),
+      value: tPath,
+      description: tPath
+    })),
+    {
+      title: 'Template Paths',
+      ignoreFocusOut: true,
+      matchOnDescription: true,
+      matchOnDetail: true,
+      placeHolder: 'Please pick a template path to create a new sample template'
+    }
+  );
+
+export const getTemplateName = (templatePath: string) =>
   vscode.window.showInputBox({
     title: 'Template Name',
     value: 'React_Component',
     ignoreFocusOut: true,
     placeHolder: 'Please enter the template name',
     validateInput: (value) =>
-      fsx.existsSync(path.join(Settings.vscodeTemplatePath, value)) ? 'Template already exist. Please provide a different name.' : undefined
+      fsx.existsSync(path.join(templatePath, value)) ? 'Template already exist. Please provide a different name.' : undefined
   });
 
 export const pickTemplateFolders = async (templates: string[]): Promise<string[]> => {
@@ -34,6 +50,8 @@ export const pickTemplateFolders = async (templates: string[]): Promise<string[]
       title: 'Templates',
       placeHolder: 'Please select a template',
       canPickMany: Settings.promptMultipleTemplates,
+      matchOnDescription: true,
+      matchOnDetail: true,
       ignoreFocusOut: true
     }
   );

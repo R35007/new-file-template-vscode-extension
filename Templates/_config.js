@@ -1,68 +1,63 @@
 /**
- * This configuration file demonstrates all available features.
- * Every attribute in this configuration is optional. The configuration below is an advanced example for demonstration purposes.
+ * Configuration file demonstrating available features.
+ * All attributes are optional. This is an advanced example.
  */
 const hooks = require('./_hooks');
 
-module.exports = (_context) => ({
+module.exports = (context) => ({
   ...hooks,
-  out: '${workspaceFolder}/${templateName}',
+  out: `${context.workspaceFolder}/${context.templateName}`, // Output folder for generated template files.
   inputValues: {
-    // User input values will be added here. If a value is present here, the user will not be prompted again.
-    // This will override the values from variables and input configurations.
+    // Predefined user input values. These override variables and input configurations.
     fileName: 'index'
   },
   variables: {
-    fileName: 'test', // This value will be ignored since it is used in inputValues.
-    componentName: 'AppComponent', // Sets the default input value for componentName.
+    fileName: 'test', // Ignored because it is overridden in inputValues.
+    componentName: 'AppComponent', // Default value for componentName.
     foobar: '1@foo1Bar2 3jaz4Qux$',
     lorem: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
     user: { name: 'r35007' }
   },
-  // Input configurations. Inputs will always be prompted on demand if the file or folder contains ${input.<user variable>} and the value is not present.
   input: {
     tags: {
       title: 'Filter',
-      placeHolder: 'Please pick a file type to filter',
-      prePrompt: true, // If true, it prompts on load if the value is not present.
-      canPickMany: true, // If true, it allows multiple choices.
+      placeHolder: 'Select a file type to filter',
+      prePrompt: true, // Prompts on load if the value is not set.
+      canPickMany: true, // Allows multiple selections.
       matchOnDescription: false,
       matchOnDetail: false,
-      ignoreFocusOut: true, // Set to false to close the input dialog on focus out.
-      // options: ["react", "story", "test"] // can also provide list of string values
+      ignoreFocusOut: true, // Keeps the input dialog open on focus out.
       options: [
         { label: 'React', description: 'React', detail: 'Generates React component files', value: 'react', picked: true },
         { label: 'Story', description: 'Story', detail: 'Generates Storybook files', value: 'story', picked: true },
         { label: 'Test', description: 'Test', detail: 'Generates test case files', value: 'test', picked: true }
       ]
-      /* Select input won't have validateInput, password */
     },
     description: ({ tags }) => ({
       title: 'Storybook Description',
-      value: 'This is a sample storybook description',
-      prePrompt: tags?.includes('story') // Prompts on load only when tags include 'story'.
+      value: 'Sample storybook description',
+      prePrompt: tags?.includes('story') // Prompts on load only if 'story' is selected.
     }),
     componentName: {
       value: 'AppComponent',
       password: false,
       ignoreFocusOut: true,
-      placeHolder: 'Please provide a component name in PascalCase',
-      // validateInput: "${value?.trim().length >= 5 ? '' : 'Please enter a minimum of 5 characters'}", // Use this if using _config.json.
-      validateInput: (value) => (value?.trim().length >= 5 ? '' : 'Please enter a minimum of 5 characters'), // validateInput always takes precedence.
-      // transform: '${_toPascalCase(value)}', // Use this if using _config.json.
-      transform: (value, context) => context._toPascalCase(value) // transform always takes precedence.
-      /* Text input won't have matchOnDescription, matchOnDetail, canPickMany */
+      placeHolder: 'Enter a component name in PascalCase',
+      validateInput: (value) => (value?.trim().length >= 5 ? '' : 'Enter at least 5 characters'), // Validates input length.
+      transform: (value, context) => context._toPascalCase(value) // Transforms input to PascalCase.
     }
   },
-  // overwriteExistingFile: 'prompt', // Provide a string value or context callback. Set to 'prompt' | 'never' | 'always'.
-  // promptTemplateFiles: false, // Provide a boolean value or context callback. If false, it will never prompt the user to select individual template files.
-  // enableSnippetGeneration: false, // Provide a boolean value or context callback. If true, it enable snippet generation for template files. Snippets help with cursor placement using placeholders like $<number>.
-  // openAfterGeneration: true,  // Provide a list of string or boolean value or context callback. If matches or true, opens all generated files. This will always be true if `enableSnippetGeneration` is not set to true.
-  // promptVariablePatterns: ['\\$\\{input\\.([^\\}]+)\\}'] // Provide a list of string or context callback. Prompts the user input for matched pattern variables
-  // include: [] // Provide a list of string or context callback.
-  // exclude: ['./_hooks.js'] // Provide a list of string or context callback.
+  // overwriteExistingFile: 'prompt', // Options: 'prompt' | 'never' | 'always'.
+  // promptTemplateFiles: false, // If false, skips prompting for individual template files.
+  // enableSnippetGeneration: false, // Enables snippet generation for template files.
+  // openAfterGeneration: true,  // Opens generated files if true or matches a condition.
+  // interpolateByLine: false,  // Interpolates each line individually. On error, returns the original line.
+  // disableInterpolation: false,  // Disables JavaScript expression interpolation for replacements.
+  // promptVariablePatterns: ['\\$\\{input\\.([^\\}]+)\\}'] // Prompts user input for matched pattern variables.
+  // include: [] // List of files or conditions to include.
+  // exclude: ['./_hooks.js'] // List of files or conditions to exclude.
 
-  // This example demonstrates filtering the template files based on user input selection
+  // Filters template files based on user input.
   exclude: ({ tags }) => {
     const files = ['./_hooks.js'];
     const templates = {
@@ -77,11 +72,9 @@ module.exports = (_context) => ({
 
     return files;
   }
-  // times: 3 // set number or a callback that return number or a list new contexts
-  // times: (context) => {
-  //   return [
-  //     { fileName: new Date().getTime() },
-  //     { fileName: new Date().getTime() }
-  //   ];
-  // }
+  // times: 3 // Number of iterations or a callback returning contexts or iterations.
+  // times: (context) => [
+  //   { fileName: new Date().getTime() },
+  //   { fileName: new Date().getTime() }
+  // ]
 });

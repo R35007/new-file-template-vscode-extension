@@ -1,4 +1,3 @@
-import * as fsx from 'fs-extra';
 import * as vscode from 'vscode';
 import { resolveWithWorkspaceFolder } from './FileTemplate/utils';
 import { Context } from './types';
@@ -19,9 +18,8 @@ export class Settings {
   static get templatePaths() {
     const templatePaths = (Settings.getSettings('templatePaths') as string[]) || ['./.vscode/templates'];
     const resolvedPaths = templatePaths.map(resolveWithWorkspaceFolder);
-    const filteredPaths = resolvedPaths.filter(fsx.existsSync);
 
-    if (filteredPaths.length) return [...new Set(filteredPaths)];
+    if (resolvedPaths.length) return [...new Set(resolvedPaths)];
 
     return [resolveWithWorkspaceFolder('./.vscode/templates')];
   }
@@ -47,6 +45,9 @@ export class Settings {
   static get interpolateByLine() {
     return Settings.getSettings('interpolateByLine') as boolean;
   }
+  static get disableInterpolation() {
+    return Settings.getSettings('disableInterpolation') as boolean;
+  }
   static get promptVariablePatterns() {
     return (Settings.getSettings('promptVariablePatterns') as string[]) || ['\\$\\{input\\.([^\\}]+)\\}'];
   }
@@ -58,9 +59,6 @@ export class Settings {
   }
   static get input() {
     return (Settings.getSettings('input') as Context['input']) || ({} as Context['input']);
-  }
-  static get vscodeTemplatePath() {
-    return resolveWithWorkspaceFolder('./.vscode/templates') as string;
   }
   static get variables() {
     return (Settings.getSettings('variables') as Context['variables']) || ({} as Context['variables']);

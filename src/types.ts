@@ -163,27 +163,31 @@ export interface InputConfig {
 }
 
 export type Hooks = {
-  beforeAll?: (context: Context) => Context | false | void;
-  beforeEach?: (context: Context) => Context | false | void;
-  processBeforeEach?: ({ data, context }: { data: string; context: Context }) => { data: string; context: Context } | false | void;
-  processAfterEach?: ({ data, context }: { data: string; context: Context }) => { data: string; context: Context } | false | void;
-  afterEach?: (context: Context) => Context | false | void;
-  afterAll?: (context: Context) => Context | false | void;
+  beforeAll?: (context: Context) => Promise<Context | false | void>;
+  beforeEach?: (context: Context) => Promise<Context | false | void>;
+  processBeforeEach?: ({ data, context }: { data: string; context: Context }) => Promise<{ data: string; context: Context } | false | void>;
+  processAfterEach?: ({ data, context }: { data: string; context: Context }) => Promise<{ data: string; context: Context } | false | void>;
+  afterEach?: (context: Context) => Promise<Context | false | void>;
+  afterAll?: (context: Context) => Promise<Context | false | void>;
 };
 
 export type UserConfig = Hooks & {
   out: string;
   inputValues: Record<string, unknown>;
   variables: Record<string, unknown>;
-  overwriteExistingFile?: 'prompt' | 'never' | 'always' | ((context: Context) => 'prompt' | 'never' | 'always');
-  promptTemplateFiles?: boolean | ((context: Context) => boolean);
-  input: Record<string, InputConfig | ((context: Context) => InputConfig | unknown) | unknown>;
-  enableSnippetGeneration?: boolean | ((context: Context) => boolean);
-  promptVariablePatterns?: string[] | ((context: Context) => string[]);
-  openAfterGeneration?: boolean | string[] | ((context: Context) => string[]);
-  include: string[] | ((context: Context) => string[]);
-  exclude: string[] | ((context: Context) => string[]);
-  times: false | number | ((context: Context) => false | number | Array<false | Context | ((context: Context) => Partial<Context>)>);
+  overwriteExistingFile?: 'prompt' | 'never' | 'always' | ((context: Context) => Promise<'prompt' | 'never' | 'always'>);
+  promptTemplateFiles?: boolean | ((context: Context) => Promise<boolean>);
+  input: Record<string, InputConfig | ((context: Context) => Promise<InputConfig | unknown>) | unknown>;
+  enableSnippetGeneration?: boolean | ((context: Context) => Promise<boolean>);
+  interpolateByLine?: boolean | ((context: Context) => Promise<boolean>);
+  disableInterpolation?: boolean | ((context: Context) => Promise<boolean>);
+  promptVariablePatterns?: string[] | ((context: Context) => Promise<string[]>);
+  openAfterGeneration?: boolean | string[] | ((context: Context) => Promise<string[]>);
+  include: string[] | ((context: Context) => Promise<string[]>);
+  exclude: string[] | ((context: Context) => Promise<string[]>);
+  times:
+    | number
+    | ((context: Context) => Promise<false | number | Array<false | Context | ((context: Context) => Promise<Partial<Context>>)>>);
 };
 
 export type Context = PredefinedVariables & UserConfig & Record<Exclude<string, PredefinedVariables & UserConfig>, unknown>;

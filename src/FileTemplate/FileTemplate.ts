@@ -15,7 +15,7 @@ import {
   getTemplatePathDetails,
   normalizeSeparator
 } from './utils/pathDetails';
-import { getTemplateName, selectTemplateFiles, shouldSkipFile } from './utils/prompts';
+import { getTemplateName, getTemplatePath, selectTemplateFiles, shouldSkipFile } from './utils/prompts';
 
 const exampleTemplatePath = path.resolve(__dirname, '../../Templates');
 
@@ -83,10 +83,18 @@ export class FileTemplate extends TemplateUtils {
    */
   async createTemplate() {
     try {
+      const templatePaths = Settings.templatePaths;
+      const selectedTemplatePath =
+        templatePaths.length > 1 ? await getTemplatePath(templatePaths) : await Promise.resolve({ value: templatePaths[0] });
+
+      if (!selectedTemplatePath) throw Error(EXIT);
+
+      const templatePath = selectedTemplatePath.value;
+
       this.log('Prompting for template name...', '\n');
-      const templateName = await getTemplateName();
+      const templateName = await getTemplateName(templatePath);
       if (!templateName) throw Error(EXIT);
-      const newTemplatePath = path.join(Settings.vscodeTemplatePath, templateName);
+      const newTemplatePath = path.join(templatePath, templateName);
 
       if (fsx.existsSync(newTemplatePath)) {
         this.log('Template already exists.');

@@ -2,6 +2,10 @@
 
 All notable changes to the "new-file-template" extension will be documented in this file.
 
+## v4.2.0 
+ - Added - `new-file-template.settings.disableInterpolation` setting to disable any javascript expression interpolation. Use it when we need to manually do a find and replace a data text.
+ - Enhanced - `Create New Sample Template` command now prompts multiple template paths (if provided in `new-file-template.settings.templatePaths` setting) to create a sample template.  
+  
 ## v4.1.0 
 
  - fixed - template is generated even if times is set to 0 issue fixed

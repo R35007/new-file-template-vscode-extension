@@ -1,4 +1,4 @@
-import { handleError, isPlainObject, parseInputTransformVariable } from '.';
+import { getInputValue, handleError, parseInputTransformVariable } from '.';
 import { Settings } from '../../Settings';
 import { Context } from '../../types';
 
@@ -22,10 +22,7 @@ export const handleUndefinedVariable = (
   const { transform, inputName, convertToMethodName } = parseInputTransformVariable(undefinedVariable, context);
 
   const key = !!transform ? `${inputName}${convertToMethodName}` : inputName;
-  const value =
-    context.inputValues[inputName] ||
-    context.variables[inputName] ||
-    (isPlainObject(context.input[inputName]) ? context.input[inputName].value : context.input[inputName]);
+  const value = getInputValue(context, inputName);
 
   if (value === undefined || typeof value !== 'string') {
     !hideError && handleError(error, context);
