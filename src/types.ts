@@ -42,6 +42,7 @@ export type PredefinedVariables = Utils & {
   selectedTemplates?: string[];
   selectedTemplateNames?: string[];
   template?: string;
+  templateIndex?: number;
   relativeTemplate?: string;
   templateBasename?: string;
   templateName?: string;
@@ -52,6 +53,7 @@ export type PredefinedVariables = Utils & {
   selectedTemplateFiles?: string[];
   selectedTemplateFileNames?: string[];
   templateFile?: string;
+  templateFileIndex?: number;
   currentTemplateFile?: string;
   relativeTemplateFile?: string;
   relativeTemplateFileDirname?: string;
@@ -175,12 +177,13 @@ export type UserConfig = Hooks & {
   out: string;
   inputValues: Record<string, unknown>;
   variables: Record<string, unknown>;
+  input: Record<string, InputConfig | ((context: Context) => Promise<InputConfig | unknown>) | unknown>;
   overwriteExistingFile?: 'prompt' | 'never' | 'always' | ((context: Context) => Promise<'prompt' | 'never' | 'always'>);
   promptTemplateFiles?: boolean | ((context: Context) => Promise<boolean>);
-  input: Record<string, InputConfig | ((context: Context) => Promise<InputConfig | unknown>) | unknown>;
   enableSnippetGeneration?: boolean | ((context: Context) => Promise<boolean>);
   interpolateByLine?: boolean | ((context: Context) => Promise<boolean>);
   disableInterpolation?: boolean | ((context: Context) => Promise<boolean>);
+  disableInterpolationErrorMessage?: boolean | ((context: Context) => Promise<boolean>);
   promptVariablePatterns?: string[] | ((context: Context) => Promise<string[]>);
   openAfterGeneration?: boolean | string[] | ((context: Context) => Promise<string[]>);
   include: string[] | ((context: Context) => Promise<string[]>);

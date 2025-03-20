@@ -119,7 +119,7 @@ export default class TemplateUtils {
 
       isPrompted = true;
 
-      this.log(`\t Prompting input for: ${inputName}`);
+      this.log(`\t Prompting input for "${inputName}"...`);
 
       const value = await getInput(inputName, inputConfig, this.context, transform);
       if (value === undefined) throw Error(EXIT); // Don't proceed if user exits
@@ -132,6 +132,8 @@ export default class TemplateUtils {
         this.context.input[inputNameStr] = value;
         this.context[inputNameStr] = value;
       }
+
+      this.log(`\t Input successfully received for "${inputName}": ${JSON.stringify(value)}`);
     }
 
     if (!isPrompted) this.log('Nothing was prompted. Looks like we have all the info we need!');
@@ -166,7 +168,6 @@ export default class TemplateUtils {
         : inputConfig;
     }
     await this._promptInputs([inputName]);
-    this.log(`\t Input received for: ${inputName}`);
     return this.context[inputName];
   }
 
@@ -180,12 +181,15 @@ export default class TemplateUtils {
   async _hooks(callback?: UserConfig['beforeEach'], hookName: string = 'hook') {
     if (!callback) return true;
     this.log(`Executing ${hookName} callback...`, hookName === 'afterAll' ? '\n' : '');
-    const context = await callback(this.context);
-    if (context === false) {
+    const newContext = await callback(this.context);
+    if (newContext === false) {
       this.log(`[WARNING] ${hookName} callback returned false.`);
       return false;
     }
-    this.setContext(context as Context);
+    if (isPlainObject(newContext) && Object.keys(newContext).length) {
+      this.log(`Setting Context...`);
+      this.setContext(newContext);
+    }
     return true;
   }
 
@@ -205,9 +209,11 @@ export default class TemplateUtils {
       this.log(`[WARNING] ${hookName} callback returned false or invalid data.`);
       return false;
     }
-    const processedData = processedObject?.data || data;
-    this.setContext(processedObject?.context as Context);
-    return processedData;
+    if (isPlainObject(processedObject?.context) && Object.keys(processedObject?.context).length) {
+      this.log(`Setting Context...`);
+      this.setContext(processedObject?.context);
+    }
+    return processedObject?.data || data;
   }
 
   /**
@@ -233,11 +239,12 @@ export default class TemplateUtils {
       data = processedDataBefore;
 
       const disableInterpolate = await getValueFromCallback(this.context?.disableInterpolation, this.context);
+      const disableInterpolationErrorMessage = await getValueFromCallback(this.context?.disableInterpolationErrorMessage, this.context);
 
       if (!shouldRequire && !disableInterpolate) {
         const shouldInterpolateByLineByLine = await getValueFromCallback(this.context?.interpolateByLine, this.context);
         this.log(`Interpolating template content...`);
-        data = interpolate(String(data), this.context, false, shouldInterpolateByLineByLine);
+        data = interpolate(String(data), this.context, disableInterpolationErrorMessage, shouldInterpolateByLineByLine);
       }
       const processedDataAfter = await this._processHooks(data, this.context.processAfterEach, 'processAfterEach');
       if (processedDataAfter === false) return false;

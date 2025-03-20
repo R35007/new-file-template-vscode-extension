@@ -16,7 +16,11 @@ module.exports = (context) => ({
     componentName: 'AppComponent', // Default value for componentName.
     foobar: '1@foo1Bar2 3jaz4Qux$',
     lorem: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
-    user: { name: 'r35007' }
+    repoUrl: 'https://github.com/R35007/new-file-template-vscode-extension',
+    author: {
+      name: 'R35007',
+      email: 'sendmsg2siva@gmail.com'
+    }
   },
   input: {
     tags: {
@@ -36,7 +40,7 @@ module.exports = (context) => ({
     description: ({ tags }) => ({
       title: 'Storybook Description',
       value: 'Sample storybook description',
-      prePrompt: tags?.includes('story') // Prompts on load only if 'story' is selected.
+      prePrompt: tags?.includes('story') // Prompts on load only if 'story' is selected inm tags.
     }),
     componentName: {
       value: 'AppComponent',
@@ -47,12 +51,13 @@ module.exports = (context) => ({
       transform: (value, context) => context._toPascalCase(value) // Transforms input to PascalCase.
     }
   },
-  // overwriteExistingFile: 'prompt', // Options: 'prompt' | 'never' | 'always'.
-  // promptTemplateFiles: false, // If false, skips prompting for individual template files.
-  // enableSnippetGeneration: false, // Enables snippet generation for template files.
+  // overwriteExistingFile: 'always', // Options: 'prompt' | 'never' | 'always'. Defaults to 'prompt'
+  // promptTemplateFiles: true, // If false, skips prompting for individual template files.
+  // enableSnippetGeneration: true, // Enables snippet generation for template files.
   // openAfterGeneration: true,  // Opens generated files if true or matches a condition.
-  // interpolateByLine: false,  // Interpolates each line individually. On error, returns the original line.
-  // disableInterpolation: false,  // Disables JavaScript expression interpolation for replacements.
+  // interpolateByLine: true,  // Interpolates each line individually. On error, returns the original line.
+  // disableInterpolation: true,  // Disables JavaScript expression interpolation for replacements.
+  // disableInterpolationErrorMessage: true,  // Disables interpolation error messages.
   // promptVariablePatterns: ['\\$\\{input\\.([^\\}]+)\\}'] // Prompts user input for matched pattern variables.
   // include: [] // List of files or conditions to include.
   // exclude: ['./_hooks.js'] // List of files or conditions to exclude.
@@ -73,8 +78,9 @@ module.exports = (context) => ({
     return files;
   }
   // times: 3 // Number of iterations or a callback returning contexts or iterations.
+  // In the example below, the same template is executed twice by assigning a different fileName in the context.
   // times: (context) => [
-  //   { fileName: new Date().getTime() },
-  //   { fileName: new Date().getTime() }
+  //   (context) => ({ fileName: new Date().getTime() }),
+  //   (context) => ({ fileName: new Date().getTime() })
   // ]
 });

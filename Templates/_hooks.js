@@ -1,63 +1,35 @@
 module.exports = {
   /**
    * Runs before generating all template files.
-   * @param {Object} context - The context object.
-   * @returns {Object|undefined|void|false} - The function can return different types based on the context:
-   * - {Object}: Returns a new context object to proceed with the next iteration.
-   * - {false}: Returns false to skip the current iteration.
-   * - {undefined|void}: Returns undefined or void to proceed without changing the context.
+   * Return a modified context to proceed, `false` to skip, or nothing to continue unchanged.
    */
   beforeAll: (context) => context,
   /**
-   * Runs before generating all template files.
-   * @param {Object} context - The context object.
-   * @returns {Object|undefined|void|false} - The function can return different types based on the context:
-   * - {Object}: Returns a new context object to proceed with the next iteration.
-   * - {false}: Returns false to skip the current iteration.
-   * - {undefined|void}: Returns undefined or void to proceed without changing the context.
+   * Runs before generating each template file.
+   * Return a modified context to proceed, `false` to skip, or nothing to continue unchanged.
    */
   beforeEach: (context) => ({ ...context, camelCaseComponentName: context._toCamelCase(context.componentName) }),
   /**
-   * Runs before interpolating template data for each file.
-   * @param {Object} params - The parameters object.
-   * @param {string} params.data - The data string.
-   * @param {Object} params.context - The context object.
-   * @returns {Object|undefined|void|false} - The function can return different types based on the context:
-   * - {Object}: Returns a new data string and context object to proceed with the next iteration.
-   * - {false}: Returns false to skip the current iteration.
-   * - {undefined|void}: Returns undefined or void to proceed without changing the context or data string
+   * Processes data before interpolation for each file.
+   * `data` is always a string. Return updated `data` as a string and/or modified context to proceed, `false` to skip, or nothing to continue unchanged.
    */
-  processBeforeEach: ({ data, context }) => ({ data, context }), // return new data string or new context;
+  processBeforeEach: ({ data, context }) => ({ data, context }),
   /**
-   * Runs after interpolating template data for each file.
-   * @param {Object} params - The parameters object.
-   * @param {string} params.data - The data string.
-   * @param {Object} params.context - The context object.
-   * @returns {Object|undefined|void|false} - The function can return different types based on the context:
-   * - {Object}: Returns a new data string and context object to proceed with the next iteration.
-   * - {false}: Returns false to skip the current iteration.
-   * - {undefined|void}: Returns undefined or void to proceed without changing the context or data string.
+   * Processes data after interpolation for each file.
+   * `data` is always a string. Return updated `data` as a string and/or modified context to proceed, `false` to skip, or nothing to continue unchanged.
    */
   processAfterEach: ({ data, context }) => {
     const updateData = data.replace(/__componentName__/g, context._toPascalCase(context.componentName));
-    return { data: updateData, context }; // return new data string or new context;
+    return { data: updateData, context };
   },
   /**
    * Runs after generating each template file.
-   * @param {Object} context - The context object.
-   * @returns {Object|undefined|void|false} - The function can return different types based on the context:
-   * - {Object}: Returns a new context object to proceed with the next iteration.
-   * - {false}: Returns false to skip the current iteration.
-   * - {undefined|void}: Returns undefined or void to proceed without changing the context.
+   * Return a modified context to proceed, `false` to skip, or nothing to continue unchanged.
    */
   afterEach: (context) => context,
   /**
    * Runs after generating all template files.
-   * @param {Object} context - The context object.
-   * @returns {Object|undefined|void|false} - The function can return different types based on the context:
-   * - {Object}: Returns a new context object to proceed with the next iteration.
-   * - {false}: Returns false to skip the current iteration.
-   * - {undefined|void}: Returns undefined or void to proceed without changing the context.
+   * Return a modified context to proceed, `false` to skip, or nothing to continue unchanged.
    */
   afterAll: (context) => context
 };

@@ -2,7 +2,7 @@
   "name": "new-file-template",
   "displayName": "New File Template",
   "description": "Create a new file or folder from custom templates",
-  "version": "4.2.0",
+  "version": "4.3.0",
   "icon": "images/new-file-template-logo.png",
   "engines": {
     "vscode": "^1.97.0"
@@ -13,7 +13,7 @@
   "publisher": "Thinker",
   "license": "MIT",
   "author": {
-    "name": "Sivaraman",
+    "name": "R35007",
     "email": "sendmsg2siva@gmail.com"
   },
   "repository": {
@@ -26,18 +26,19 @@
     "Templates"
   ],
   "keywords": [
+    "Template",
+    "Template Generator",
+    "Boilerplate",
+    "Blueprint",
     "New Template",
     "New File Template",
+    "New File From Template",
     "New Folder Template",
     "Create Template",
+    "Create New Sample Template",
     "File Template",
     "Folder Template",
-    "Blueprint",
-    "Template",
-    "explorer",
-    "Module Template",
-    "React Template",
-    "Storybook Template"
+    "Dynamic Template"
   ],
   "activationEvents": [
     "onStartupFinished"

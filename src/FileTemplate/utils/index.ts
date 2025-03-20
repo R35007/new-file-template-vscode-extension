@@ -102,7 +102,7 @@ export async function readFile(templateFile: string, context: Partial<Context>) 
 }
 
 export async function getValueFromCallback(
-  callback: unknown | ((context: Context) => string[]) = [],
+  callback: unknown | ((context: Context) => unknown),
   context: Partial<Context>,
   isList?: boolean
 ) {

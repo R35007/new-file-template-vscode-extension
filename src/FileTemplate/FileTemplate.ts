@@ -191,8 +191,8 @@ export class FileTemplate extends TemplateUtils {
 
       if (!(await this._hooks(this.context.beforeAll, 'beforeAll'))) return;
 
-      for (let templateFile of templateFiles) {
-        await this.generateTemplateFile(normalizeSeparator(templateFile));
+      for (let [templateFileIndex, templateFile] of templateFiles.entries()) {
+        await this.generateTemplateFile(normalizeSeparator(templateFile), { templateFileIndex });
       }
 
       await this._hooks(this.context.afterAll, 'afterAll');
@@ -263,10 +263,10 @@ export class FileTemplate extends TemplateUtils {
         return;
       }
 
-      for (let [index, time] of times.entries()) {
+      for (let [timeIndex, time] of times.entries()) {
         const newContext = await getValueFromCallback(time, this.context);
         if (newContext === false) {
-          this.log(`[SKIP] Skipping iteration ${index + 1} due to false context...`, '\n');
+          this.log(`[SKIP] Skipping iteration ${timeIndex + 1} due to false context...`, '\n');
           continue;
         }
 
@@ -275,8 +275,8 @@ export class FileTemplate extends TemplateUtils {
           this.setContext(newContext);
         }
 
-        this.log(`Generating template files for times: ${index + 1}/${times.length}...`, '\n');
-        await this.generateTemplateFiles(templateFiles);
+        this.log(`Generating template files for times: ${timeIndex + 1}/${times.length}...`, '\n');
+        await this.generateTemplateFiles(templateFiles, { timeIndex });
         this.log('----------------------------------------', '\n');
       }
 

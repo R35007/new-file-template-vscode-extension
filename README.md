@@ -319,19 +319,20 @@ export type Hooks = {
 };
 
 export type UserConfig = Hooks & {
-  times: number | ((context: Context) => number | Array<Context | ((context: Context) => Partial<Context>)>); // define number of times to generate template multiple times
+  times: number | ((context: Context) => Promise<false | number | Array<false | Context | ((context: Context) => Promise<Partial<Context>>)>>); // define number of times to generate template multiple times
   out: string; // Output directory for generated files.
   inputValues: Record<string, unknown>; // Predefined input values for template generation.
   variables: Record<string, unknown>; // Additional variables for template generation.
   input: Record<string, InputConfig | ((context: Context) => InputConfig | unknown) | unknown>; // Configuration for user input prompts.
-  overwriteExistingFile?: 'prompt' | 'never' | 'always' | ((context: Context) => 'prompt' | 'never' | 'always'); // Behavior for overwriting existing files.
-  promptTemplateFiles?: boolean | ((context: Context) => boolean); // Whether to prompt for template files.
-  enableSnippetGeneration?: boolean | ((context: Context) => boolean); // Whether to enable snippet generation.
-  interpolateByLine?: boolean | ((context: Context) => boolean); // interpolates line by line
-  disableInterpolation?: boolean | ((context: Context) => boolean); // disables interpolation
-  openAfterGeneration?: boolean | string[] | ((context: Context) => string[]); // Files to open after generation.
-  include: string[] | ((context: Context) => string[]); // Files to include in the template.
-  exclude: string[] | ((context: Context) => string[]); // Files to exclude from the template.
+  overwriteExistingFile?: 'prompt' | 'never' | 'always' | ((context: Context) => Promise<'prompt' | 'never' | 'always'>); // Behavior for overwriting existing files.
+  promptTemplateFiles?: boolean | ((context: Context) => Promise<boolean>); // Whether to prompt for template files.
+  enableSnippetGeneration?: boolean | ((context: Context) => Promise<boolean>); // Whether to enable snippet generation.
+  interpolateByLine?: boolean | ((context: Context) => Promise<boolean>); // interpolates line by line
+  disableInterpolation?: boolean | ((context: Context) => Promise<boolean>); // disables interpolation
+  disableInterpolationErrorMessage?: boolean | ((context: Context) => Promise<boolean>); // disables interpolation error messages
+  openAfterGeneration?: boolean | string[] | ((context: Context) => Promise<string[]>); // Files to open after generation.
+  include: string[] | ((context: Context) => Promise<string[]>); // Files to include in the template.
+  exclude: string[] | ((context: Context) => Promise<string[]>); // Files to exclude from the template.
 };
 
 export interface InputConfig {

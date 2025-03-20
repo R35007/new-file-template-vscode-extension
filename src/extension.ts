@@ -49,14 +49,14 @@ export function activate(context: vscode.ExtensionContext) {
         const selectedTemplates = await pickTemplateFolders(allTemplates);
         if (!selectedTemplates?.length) return;
 
-        for (const template of selectedTemplates) {
+        for (const [templateIndex, template] of selectedTemplates.entries()) {
           const newTemplates = FileTemplate.Create(args?.fsPath, allTemplates, selectedTemplates);
           await vscode.window.withProgress(
             {
               location: vscode.ProgressLocation.Notification,
               title: `Please wait. Generating Template: ${path.basename(template)}...`
             },
-            async () => await newTemplates.generateTemplate(template)
+            async () => await newTemplates.generateTemplate(template, { templateIndex })
           );
         }
       } catch (err) {

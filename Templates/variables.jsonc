@@ -1,4 +1,11 @@
-/* 
+/** 
+* * New File Template
+* 
+*  - Author: ${variables.author.name} 
+*  - Email: ${variables.author.email} 
+*  - Repo Url: ${variables.repoUrl} 
+*  - Date: ${new Date().toString()}
+*
 > Note: Input variable must not contain any spaces. Inputs are prompted on demand only when the input values are not present.
 */
 {
@@ -72,6 +79,7 @@
     "selectedTemplates": ${JSON.stringify(selectedTemplates)},
     "selectedTemplateNames": ${JSON.stringify(selectedTemplateNames)},
     "template": "${template}",
+    "templateIndex": "${templateIndex}",
     "relativeTemplate": "${relativeTemplate}",
     "templateBasename": "${templateBasename}",
     "templateName": "${templateName}"
@@ -82,6 +90,7 @@
     "selectedTemplateFiles":${JSON.stringify(selectedTemplateFiles)},
     "selectedTemplateFileNames": ${JSON.stringify(selectedTemplateFileNames)},
     "templateFile": "${templateFile}",
+    "templateFileIndex": "${templateFileIndex}",
     "currentTemplateFile": "${currentTemplateFile}",
     "relativeTemplateFile": "${relativeTemplateFile}",
     "relativeTemplateFileToTemplate": "${relativeTemplateFileToTemplate}",
