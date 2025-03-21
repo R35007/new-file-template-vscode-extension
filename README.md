@@ -86,7 +86,7 @@ Ensure that the function returns a template string to generate the template data
 > Note: Template contents will not be interpolated for files ending with `*.template.js`.
 
 <details open>
-  <summary>Example 1: Basic Usage</summary>
+  <summary>Basic Usage</summary>
   
   - File: `./vscode/Templates/MyTemplate/${input.componentName}.tsx.template.js`
   - File names ending with `*.template.js` should always expose a method and will be called with a `context` object as an argument.
@@ -104,167 +104,26 @@ export const ${componentName} = (${_toCamelCase(componentName)}Props: ${componen
 
 </details>
 
-<details>
-  <summary>Example 2: Escaping backticks (`) in the template.</summary>
+### Example Templates
 
-- File: `./vscode/Templates/MyTemplate/${input.componentName}.tsx.template.js`
+We've added **more example templates** to this repository to help you get started quickly and efficiently with various use cases. These templates are designed to simplify your workflow and showcase the flexibility of this extension.
 
-```js
-module.exports = async ({ componentName, _toCamelCase }) => `import styled from 'styled-components';
-export interface ${componentName}Props {};
+For detailed examples, please refer to the following link:  
+[Example Templates](https://github.com/R35007/new-file-template-vscode-extension/tree/master/Example%20Templates)
 
-// Escape all backticks (\`) and dollar (\$) symbols inside the template 
-const Styled${componentName} = styled.div\`
-  \${({ width }) => \`
-    width: \${width}
-  \`}
-\`;
+#### What to Expect in Example Templates
+- Simple Templates
+- Templates with JS Integration
+- Templates with JS Config
+- Prompt Inputs on Demand
+- Backtick Escaping
+- Find and Replace Templates
+- Multi-template Generation
+- Output File Generation
+- Snippet Generation
 
-export const ${componentName} = (${_toCamelCase(componentName)}Props: ${componentName}Props) => { 
-  // your component logic goes here 👇
-  return <Styled${componentName} {...${_toCamelCase(componentName)}Props} />
-};
-`;
-```
+Explore these examples to learn how to utilize this extension to its full potential. We hope these templates help streamline your development process!
 
-</details>
-
-<details>
-  <summary>Example 3: Prompt inputs on demand</summary>
-
-- File: `./vscode/Templates/MyTemplate/${input.componentName}.tsx.template.js`
-- This example demonstrates prompting inputs on demand for each template.
-
-```js
-module.exports = async ({ componentName, _toCamelCase, promptInput }) => {
-  const name = await promptInput('name', { title: 'What is your name?' }); // make sure to await the response
-
-  return `import styled from 'styled-components';
-    export interface ${componentName}Props {};
-
-    // Escape all backticks (\`) and dollar (\$) symbols inside the template
-    const Styled${componentName} = styled.div\`
-      \${({ width }) => \`
-        width: \$\{width}
-      \`}
-    \`;
-
-    export const ${componentName} = (${_toCamelCase(componentName)}Props: ${componentName}Props) => {
-      // your component logic goes here 👇
-      return (
-        <Styled${componentName} {...${_toCamelCase(componentName)}Props}>
-          Hi ${name}!
-        </Styled${componentName}>
-      )
-    };
-    `;
-};
-```
-
-</details>
-
-<details>
-  <summary>Example 4: Find and Replace a data string manually</summary>
-
-- File: `./vscode/Templates/MyTemplate/_hooks.js`
-- This example demonstrates find and replacing the data string manually
-
-```js
-module.exports = async ({ componentName, _toCamelCase, promptInput }) => ({
-  // This data provides you the data string before interpolation
-  processBeforeEach: ({ data, context }) => ({ data, context }), // return new data string or new context;
-  // this data provides you the interpolated data string 
-  processAfterEach: ({ data, context }) => {
-    const updateData = data.replace(/__componentName__/g, context._toPascalCase(context.componentName));
-    return { data: updateData, context }; // return new data string or new context;
-  }
-});
-```
-
-</details>
-
-<details>
-  <summary>Example 5: Generate template multiple times</summary>
-  
-  - File: `./vscode/Templates/MyTemplate/_config.js`
-  - This example demonstrates prompting inputs on demand for each template.
-  - Note: times doesn't respect `new-file-template.settings.useSeparateInstance` settings. It always runs in a same instance.
-
-```js
-module.exports = async () => {
-  // times: 4 // generates the templates 4 times with the same context
-  // Generates the template 3 times with different component names
-  times: async (context) => {
-    const componentNames = ['AppComponent', 'TextComponent', 'MainComponent'];
-    return componentNames.map((componentName) => ({ componentName }));
-  };
-
-  // Alternatively, return a list of callbacks that generate the template multiple times
-  // This example returns 5 callbacks, each generating the template with a unique context
-  // times: async (context) => {
-  //   return Array(5)
-  //     .fill('')
-  //     .map(() => (context) => ({ ...context, fileName: new Date().getTime() }));
-  // };
-};
-```
-
-</details>
-
-<details>
-  <summary>Example 6: Generate multiple output files</summary>
-  
-  - File: `./vscode/Templates/MyTemplate/_hooks.js`
-  - This example demonstrates prompting inputs on demand for each template.
-
-```js
-module.exports = async ({ componentName, templateFile, FileTemplate, log }) => {
-  beforeEach: async (context) => {
-    // Generate custom template output file
-    if (context.templateFile === '${input.componentName}.tsx.template.js') {
-      const newFileTemplate = FileTemplate.Create(); // Create a new instance
-      const componentNames = ['AppComponent', 'TextComponent', 'MainComponent'];
-      for (let componentName of componentNames) {
-        const newContext = {
-          ...context,
-          componentName,
-          outputFile: context.outputFile // set custom output file path
-          beforeEach: undefined // Make sure to set the current hook as undefined, else it will go into an infinite loop. In this case, it is `beforeEach`
-        };
-        await newFileTemplate.generateTemplateFile(templateFile, newContext);
-        log(`${newFileTemplate.outputFile} generated successfully!`); // Use log method for debugging
-      }
-      return false; // Return false to skip the current file
-    }
-  };
-};
-```
-
-</details>
-
-<details>
-  <summary>Example 7: Generating Template as a Snippet for cursor placement</summary>
-
-- File: `./vscode/Templates/MyTemplate/${Date.now()}.log.md`
-- This example demonstrates adding multi-cursor positions with `$<number>`.
-- Make sure to enable the snippet generation settings `(new-file-template.settings.enableSnippetGeneration)` to do this.
-
-```md
-# Daily Log
-
-- Author: $1
-- Email: $2
-- Version: $3
-- Date: ${new Date().toString()}
-
----
-
-Activities:
-
-- $4
-```
-
-</details>
 
 ### Case Conversions
 

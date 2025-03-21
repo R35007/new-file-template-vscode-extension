@@ -2,6 +2,11 @@
 
 All notable changes to the "new-file-template" extension will be documented in this file.
 
+## v4.4.1
+
+ - Update `README.md`
+ - Add more Example files in the repo
+
 ## v4.4.0
 
 - Updated Logo
