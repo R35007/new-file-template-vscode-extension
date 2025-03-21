@@ -1,0 +1,16 @@
+{
+  "displayName": "${input.extensionName}", // this will prompt extensionName from the user
+  "name": "${extensionName_toKebabCase}", //  this will convert the extensionName to kebab case
+  "description": "${input.description_toSentenceCase}", // this prompts the description and then converts into a sentence case
+  "version": "${input.version}",
+  "publisher": "Thinker",
+  "license": "MIT",
+  "author": {
+    "name": "r35007",
+    "email": "sendmsg2siva@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/R35007/${_toKebabCase(extensionName)}" // can use helper methods to convert any variable values
+  }
+}
