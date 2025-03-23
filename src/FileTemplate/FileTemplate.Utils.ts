@@ -36,7 +36,7 @@ export default class TemplateUtils {
       package: {},
       include: [],
       exclude: [],
-      inputValues: {},
+      input: {},
       ...getWorkSpaceFolderDetails(),
       allTemplates,
       selectedTemplates,
@@ -46,11 +46,14 @@ export default class TemplateUtils {
       selectedTemplateFileNames: [],
       overwriteExistingFile: Settings.overwriteExistingFile,
       promptTemplateFiles: Settings.promptTemplateFiles,
+      disableInterpolationErrorMessage: Settings.disableInterpolationErrorMessage,
+      interpolateByLine: Settings.interpolateByLine,
+      disableInterpolation: Settings.disableInterpolation,
+      promptVariablePatterns: Settings.promptVariablePatterns,
       enableSnippetGeneration: Settings.enableSnippetGeneration,
       openAfterGeneration: Settings.openAfterGeneration,
-      promptVariablePatterns: Settings.promptVariablePatterns,
       variables: Settings.variables,
-      input: Settings.input,
+      inputConfig: Settings.inputConfig,
       ...getFSPathDetails(fsPath),
       ...getActiveFileDetails(),
       log: log,
@@ -98,10 +101,10 @@ export default class TemplateUtils {
     for (const inputNameStr of inputNames) {
       const { inputName, transform } = parseInputTransformVariable(inputNameStr, this.context);
 
-      const userInputConfig = this.context.input[inputName];
+      const userInputConfig = this.context.inputConfig[inputName];
       const inputConfig = ((await getValueFromCallback(userInputConfig, this.context)) || {}) as InputConfig;
 
-      const inputValue = (this.context.inputValues[inputName] || (isPlainObject(inputConfig) ? undefined : inputConfig)) as unknown;
+      const inputValue = this.context.input[inputName];
 
       const shouldPrePrompt =
         !!inputConfig.prePrompt &&
@@ -110,7 +113,6 @@ export default class TemplateUtils {
       const shouldPrompt = (inputValue === undefined && isPreLoadInput && shouldPrePrompt) || (inputValue === undefined && !isPreLoadInput);
 
       if (inputValue !== undefined && transform) {
-        this.context.inputValues[inputNameStr] = transform(inputValue as string);
         this.context.input[inputNameStr] = transform(inputValue as string);
         this.context[inputNameStr] = transform(inputValue as string);
       }
@@ -122,15 +124,15 @@ export default class TemplateUtils {
       this.log(`\t Prompting input for "${inputName}"...`);
 
       const value = await getInput(inputName, inputConfig, this.context, transform);
+
       if (value === undefined) throw Error(EXIT); // Don't proceed if user exits
-      this.context.inputValues[inputName] = value;
-      this.context.input[inputName] = value;
-      this.context[inputName] = value;
+
+      this.context.input[inputName] = value || this.context[inputName];
+      this.context[inputName] = value || this.context[inputName];
 
       if (transform) {
-        this.context.inputValues[inputNameStr] = value;
-        this.context.input[inputNameStr] = value;
-        this.context[inputNameStr] = value;
+        this.context.input[inputNameStr] = value || this.context[inputName];
+        this.context[inputNameStr] = value || this.context[inputName];
       }
 
       this.log(`\t Input successfully received for "${inputName}": ${JSON.stringify(value)}`);
@@ -145,7 +147,7 @@ export default class TemplateUtils {
    */
   async _promptInputsFromPattern(data: string = '') {
     const promptPatterns = await getValueFromCallback(this.context.promptVariablePatterns, this.context, true);
-    const unknownInputs = (promptPatterns.length ? promptPatterns : ['\\$\\{input\\.([^\\}]+)\\}'])
+    const unknownInputs = (promptPatterns.length ? promptPatterns : ['\\${input\\.([a-zA-Z0-9_]+)}'])
       .map((pattern: string) => getRegexValues(data, pattern))
       .flat();
     return await this._promptInputs(unknownInputs);
@@ -163,8 +165,8 @@ export default class TemplateUtils {
 
     if (!inputName?.trim()) return;
     if (isPlainObject(inputConfig)) {
-      this.context.input[inputName] = isPlainObject(this.context.input[inputName])
-        ? { ...this.context.input[inputName], ...inputConfig }
+      this.context.inputConfig[inputName] = isPlainObject(this.context.inputConfig[inputName])
+        ? { ...this.context.inputConfig[inputName], ...inputConfig }
         : inputConfig;
     }
     await this._promptInputs([inputName]);

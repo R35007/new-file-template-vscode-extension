@@ -2,7 +2,7 @@
   "name": "new-file-template",
   "displayName": "New File Template",
   "description": "Create a new file or folder from custom templates",
-  "version": "4.4.1",
+  "version": "5.0.0",
   "icon": "images/new-file-template-logo.png",
   "engines": {
     "vscode": "^1.97.0"
@@ -23,7 +23,7 @@
   "files": [
     "out",
     "images",
-    "Templates"
+    "Example Templates"
   ],
   "keywords": [
     "Template",
@@ -143,7 +143,7 @@
             ]
           ],
           "default": [
-            "\\$\\{input\\.([^\\}]+)\\}"
+            "\\${input\\.([a-zA-Z0-9_]+)}"
           ],
           "description": "Specify a custom pattern to prompt user input. By default, it prompts for variable names between `${input` and `}`. For example, `${input.componentName}` prompts the user for the componentName."
         },
@@ -176,7 +176,7 @@
           "additionalProperties": true,
           "description": "Define custom variables for template generation."
         },
-        "new-file-template.settings.input": {
+        "new-file-template.settings.inputConfig": {
           "order": 14,
           "type": "object",
           "default": {},

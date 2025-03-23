@@ -2,6 +2,14 @@
 
 All notable changes to the "new-file-template" extension will be documented in this file.
 
+## v5.0.0 🎉 BREAKING CHANGE 🚀
+
+ - Renamed - `input` to `inputConfig` in the template `_config` file. Any input configurations goes into `inputConfig` object instead of `input` object. 
+ - Renamed - `inputValues` to `input` in the template `_config` file. 
+ - Renamed - `new-file-template.settings.input` to `new-file-template.settings.inputConfig` in the settings.
+ - Added  - Added more example templates to get started.
+ - Fixed - fixed the variable prompt patterns from `\\$\\{input\\.([^\\}]+)\\}` to `\\${input\\.([a-zA-Z0-9_]+)}`
+
 ## v4.4.1
 
  - Update `README.md`

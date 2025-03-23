@@ -162,6 +162,7 @@ export interface InputConfig {
   matchOnDetail?: boolean;
   ignoreFocusOut?: boolean;
   password?: boolean;
+  pattern?: string;
 }
 
 export type Hooks = {
@@ -175,9 +176,9 @@ export type Hooks = {
 
 export type UserConfig = Hooks & {
   out: string;
-  inputValues: Record<string, unknown>;
   variables: Record<string, unknown>;
-  input: Record<string, InputConfig | ((context: Context) => Promise<InputConfig | unknown>) | unknown>;
+  input: Record<string, unknown>;
+  inputConfig: Record<string, InputConfig | ((context: Context) => Promise<InputConfig>)>;
   overwriteExistingFile?: 'prompt' | 'never' | 'always' | ((context: Context) => Promise<'prompt' | 'never' | 'always'>);
   promptTemplateFiles?: boolean | ((context: Context) => Promise<boolean>);
   enableSnippetGeneration?: boolean | ((context: Context) => Promise<boolean>);

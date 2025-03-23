@@ -43,7 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
       try {
         FileTemplate.Destroy();
 
-        const allTemplates = await getTopLevelFolders(Settings.templatePaths);
+        const allTemplates = getTopLevelFolders(Settings.templatePaths);
         if (!allTemplates?.length) return await promptToCreateNewSampleTemplate();
 
         const selectedTemplates = await pickTemplateFolders(allTemplates);

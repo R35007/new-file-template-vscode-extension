@@ -1,4 +1,4 @@
-import { getInputValue, handleError, parseInputTransformVariable } from '.';
+import { handleError, parseInputTransformVariable } from '.';
 import { Settings } from '../../Settings';
 import { Context } from '../../types';
 
@@ -19,17 +19,18 @@ export const handleUndefinedVariable = (
 ) => {
   const undefinedVariable = error.message.replace('is not defined', '').trim();
 
-  const { transform, inputName, convertToMethodName } = parseInputTransformVariable(undefinedVariable, context);
+  const { transform, inputName } = parseInputTransformVariable(undefinedVariable, context);
 
-  const key = !!transform ? `${inputName}${convertToMethodName}` : inputName;
-  const value = getInputValue(context, inputName);
+  const key = !!transform ? undefinedVariable : inputName;
 
-  if (value === undefined || typeof value !== 'string') {
+  const value = context[inputName] ?? context.input[inputName] ?? context.variables[inputName];
+
+  if (value === undefined || value === null) {
     !hideError && handleError(error, context);
     return format;
   }
 
-  return interpolateFormat(format, { ...context, [key]: !!transform ? transform(value) : value }, hideError);
+  return interpolateFormat(format, { ...context, [key]: !!transform ? transform(value.toString()) : value }, hideError);
 };
 
 export const interpolateFormat = (

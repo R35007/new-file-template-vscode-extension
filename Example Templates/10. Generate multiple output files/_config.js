@@ -1,9 +1,9 @@
 module.exports = (context) => ({
   out: `${context.workspaceFolder}/${context.templateName}`, // Specifies the output directory for the generated template files.
   variables: {
-    componentName: 'AppComponent' // Default value for componentName.
+    commentDescription: 'your component logic goes here'
   },
-  input: {
+  inputConfig: {
     componentName: {
       title: 'Component Name',
       value: 'AppComponent',

@@ -15,9 +15,9 @@ import {
   getTemplatePathDetails,
   normalizeSeparator
 } from './utils/pathDetails';
-import { getTemplateName, getTemplatePath, selectTemplateFiles, shouldSkipFile } from './utils/prompts';
+import { getExampleTemplatePath, getTemplateName, getTemplatePath, selectTemplateFiles, shouldSkipFile } from './utils/prompts';
 
-const exampleTemplatePath = path.resolve(__dirname, '../../Templates');
+const exampleTemplatePath = path.resolve(__dirname, '../../Example Templates');
 
 export class FileTemplate extends TemplateUtils {
   static #fileTemplate: FileTemplate | undefined;
@@ -84,32 +84,20 @@ export class FileTemplate extends TemplateUtils {
   async createTemplate() {
     try {
       const templatePaths = Settings.templatePaths;
-      const selectedTemplatePath =
-        templatePaths.length > 1 ? await getTemplatePath(templatePaths) : await Promise.resolve({ value: templatePaths[0] });
+      this.log('Prompting for template path...', '\n');
+      const templatePath = templatePaths.length > 1 ? await getTemplatePath(templatePaths) : await Promise.resolve(templatePaths[0]);
 
-      if (!selectedTemplatePath) throw Error(EXIT);
-
-      const templatePath = selectedTemplatePath.value;
+      this.log('Prompting for template...', '\n');
+      const selectedExampleTemplate = await getExampleTemplatePath();
+      const shouldCreateAll = selectedExampleTemplate.value === 'Create All';
 
       this.log('Prompting for template name...', '\n');
-      const templateName = await getTemplateName(templatePath);
-      if (!templateName) throw Error(EXIT);
+      const templateName = !shouldCreateAll ? await getTemplateName(templatePath, selectedExampleTemplate.label) : '';
       const newTemplatePath = path.join(templatePath, templateName);
-
-      if (fsx.existsSync(newTemplatePath)) {
-        this.log('Template already exists.');
-        return vscode.window.showErrorMessage('Template already exists.');
-      }
 
       this.log('Creating new template directory...');
       fsx.ensureDirSync(newTemplatePath);
-      fsx.copySync(exampleTemplatePath, newTemplatePath);
-
-      const newIndexPath = path.join(newTemplatePath, './variables.jsonc');
-
-      this.log('Opening new template file in editor...');
-      const newFile = await vscode.workspace.openTextDocument(newIndexPath);
-      await vscode.window.showTextDocument(newFile, undefined, true);
+      fsx.copySync(path.join(exampleTemplatePath, !shouldCreateAll ? `./${selectedExampleTemplate.value}` : ''), newTemplatePath);
 
       vscode.window.showInformationMessage(`✨ ${templateName} template has been created successfully! 🎉`);
       this.log(`[SUCCESS] Template '${templateName}' has been created successfully! Time to celebrate! 🎉🎈`);
@@ -227,7 +215,7 @@ export class FileTemplate extends TemplateUtils {
       const outFolder = this.context.fsPathFolder || this.context.workspaceFolder;
       this.context.out = normalizeSeparator(path.resolve(outFolder, interpolateFormat(this.context.out, this.context) || outFolder));
 
-      await this._promptInputs(Object.keys(this.context.input), true);
+      await this._promptInputs(Object.keys(this.context.inputConfig), true);
 
       this.log("Listing all template files... Let's see what we have here! 📂");
       const allTemplateFiles = await listNestedFiles(

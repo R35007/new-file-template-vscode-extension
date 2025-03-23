@@ -1,7 +1,7 @@
 import * as fsx from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { getValueFromCallback, isArray, isPlainObject } from '.';
+import { getValueFromCallback, isCollection, isPlainObject } from '.';
 import { Settings } from '../../Settings';
 import { Commands, Context, EXIT, InputConfig } from '../../types';
 import { interpolateFormat } from './interpolation';
@@ -17,8 +17,8 @@ export const promptToCreateNewSampleTemplate = async () => {
   return;
 };
 
-export const getTemplatePath = (templatePaths: string[]) =>
-  vscode.window.showQuickPick(
+export const getTemplatePath = async (templatePaths: string[]) => {
+  const picked = await vscode.window.showQuickPick(
     templatePaths.map((tPath) => ({
       label: path.basename(tPath),
       value: tPath,
@@ -33,19 +33,93 @@ export const getTemplatePath = (templatePaths: string[]) =>
     }
   );
 
-export const getTemplateName = (templatePath: string) =>
-  vscode.window.showInputBox({
+  if (!picked) throw Error(EXIT);
+
+  return picked.value;
+};
+
+export const getExampleTemplatePath = async () => {
+  const exampleTemplates = [
+    { label: 'Advanced', value: '12. Advanced', description: 'A collection of templates showcasing advanced features and techniques.' },
+    { label: 'Simple', value: '1. Simple', description: 'A straightforward and basic template example.' },
+    { label: 'Using Template JS', value: '2. Using Template JS', description: 'An example utilizing JavaScript templates.' },
+    {
+      label: 'Using Template JS with Config',
+      value: '3. Using Template JS with Config',
+      description: 'A template example using JavaScript with configuration options.'
+    },
+    {
+      label: 'Escaping BackTicks',
+      value: '4. Escaping BackTicks',
+      description: 'An example demonstrating the escape of backticks in templates.'
+    },
+    {
+      label: 'Prompt Inputs on Demand',
+      value: '5. Prompt Inputs on Demand',
+      description: 'An example showcasing how to prompt inputs dynamically.'
+    },
+    {
+      label: 'Input Configurations',
+      value: '6. Input Configurations',
+      description: 'A template example with various input configuration options.'
+    },
+    { label: 'Hooks', value: '7. Hooks', description: 'An example illustrating the usage of hooks in templates.' },
+    {
+      label: 'Find and Replace',
+      value: '8. Find and Replace',
+      description: 'An example demonstrating the find-and-replace functionality within templates.'
+    },
+    {
+      label: 'Generate Template Multiple Times',
+      value: '9. Generate Template Multiple Times',
+      description: 'An example of generating a template multiple times for different scenarios.'
+    },
+    {
+      label: 'Generate Multiple Output Files',
+      value: '10. Generate Multiple Output Files',
+      description: 'An example of creating multiple output files from a single template.'
+    },
+    {
+      label: 'Snippet Generation',
+      value: '11. Snippet Generation',
+      description: 'An example focusing on generating small code snippets or segments.'
+    },
+    { label: 'Create All', value: 'Create All', description: 'A convenient option for generating all templates at once.' }
+  ];
+
+  const picked = await vscode.window.showQuickPick(exampleTemplates, {
+    title: 'Example Templates',
+    ignoreFocusOut: true,
+    matchOnDescription: true,
+    matchOnDetail: true,
+    placeHolder: 'Please pick a sample template'
+  });
+
+  if (!picked) throw Error(EXIT);
+
+  return picked;
+};
+
+export const getTemplateName = async (templatePath: string, defaultName: string) => {
+  const value = await vscode.window.showInputBox({
     title: 'Template Name',
-    value: 'React_Component',
+    value: defaultName,
     ignoreFocusOut: true,
     placeHolder: 'Please enter the template name',
     validateInput: (value) =>
       fsx.existsSync(path.join(templatePath, value)) ? 'Template already exist. Please provide a different name.' : undefined
   });
 
+  if (!value) throw Error(EXIT);
+
+  return value;
+};
+
 export const pickTemplateFolders = async (templates: string[]): Promise<string[]> => {
   const picked = await vscode.window.showQuickPick(
-    templates.map((template) => ({ label: path.basename(template), value: template, description: template, picked: true })),
+    templates
+      .map((template) => ({ label: path.basename(template), value: template, description: template, picked: true }))
+      .sort((a, b) => parseInt(a.label) - parseInt(b.label)),
     {
       title: 'Templates',
       placeHolder: 'Please select a template',
@@ -115,11 +189,22 @@ export const getInput = async (
 
     if (picked === undefined) return;
 
-    const value = isPlainObject(picked) ? picked.value : isArray(picked) ? picked.map((pick) => pick.value) : picked;
+    const value = inputConfig.canPickMany
+      ? isCollection(picked)
+        ? picked.map((p) => p.value)
+        : picked
+      : isPlainObject(picked)
+        ? picked.value
+        : picked;
     return transformValue(value);
   };
 
   const validateInput = (value: any) => {
+    if (inputConfig.pattern?.trim().length) {
+      const pattern = new RegExp(inputConfig.pattern);
+      return pattern.test(value) ? undefined : 'Invalid pattern';
+    }
+
     if (!inputConfig.validateInput) return;
     if (typeof inputConfig.validateInput === 'string' && inputConfig.validateInput.length > 0)
       return interpolateFormat(inputConfig.validateInput, { ...context, value });

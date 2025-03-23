@@ -1,5 +1,5 @@
 // Escape all backticks (`) and dollar ($) symbols inside the template
-module.exports = async ({ componentName, camelCaseComponentName }) => `import styled from 'styled-components';
+module.exports = async ({ componentName, camelCaseComponentName, commentDescription }) => `import styled from 'styled-components';
 export interface ${componentName}Props {};
 
 const Styled${componentName} = styled.div\`
@@ -9,7 +9,7 @@ const Styled${componentName} = styled.div\`
 \`;
 
 export const ${componentName} = (${camelCaseComponentName}Props: ${componentName}Props) => { 
-  // your component logic goes here 👇
+  // ${commentDescription} 👇
   return <Styled${componentName} {...${camelCaseComponentName}Props} />
 };
 `;

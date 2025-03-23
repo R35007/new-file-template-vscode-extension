@@ -1,22 +1,23 @@
-import fg from 'fast-glob';
+import * as fg from 'fast-glob';
 import * as fsx from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Context, EXIT } from '../../types';
 import { getWorkSpaceFolder } from './pathDetails';
 
-export function getTopLevelFolders(folderPaths: string[]): Promise<string[]> {
-  const folderPromises = folderPaths.map((folderPath) =>
-    fg(`${folderPath.replace(/\\/g, '/')}/*`, {
+export function getTopLevelFolders(folderPaths: string[]): string[] {
+  const folders = folderPaths.map((folderPath) =>
+    fg.globSync(`${folderPath.replace(/\\/g, '/')}/*`, {
       onlyDirectories: true,
       deep: 1
     })
   );
-  return Promise.all(folderPromises).then((folders) => folders.flat());
+  return folders.flat();
 }
 
 export const isPlainObject = (val?: any): val is Record<string, any> => !!(val && typeof val === 'object' && !Array.isArray(val));
 export const isArray = (val?: any): val is any[] => !isPlainObject(val) && Array.isArray(val);
+export const isCollection = (val?: any): val is any[] => isArray(val) && val.every(isPlainObject);
 
 export const parseInputTransformVariable = (inputNameString: string, context: Context) => {
   const convertToMethodName = Object.keys(context.Case || {}).find((methodName) => inputNameString.endsWith(methodName)) as
@@ -38,7 +39,7 @@ const getFormattedPatternPaths = (folder: string, paths: string[]) =>
 export async function listNestedFiles(folder: string, excludes: string[] = [], includes: string[] = []): Promise<string[]> {
   const formattedExclude = getFormattedPatternPaths(folder, excludes);
   const formattedInclude = getFormattedPatternPaths(folder, includes);
-  const files = await fg(formattedInclude.length ? formattedInclude : [`${folder.replace(/\\/g, '/')}/**/*`], {
+  const files = await fg.glob(formattedInclude.length ? formattedInclude : [`${folder.replace(/\\/g, '/')}/**/*`], {
     ignore: formattedExclude,
     onlyFiles: true
   });
@@ -69,9 +70,8 @@ const merge = (target: any, source: any) => {
 export function mergeContext(existingContext: Record<string, unknown> = {}, newContext: Record<string, unknown> = {}): Partial<Context> {
   merge(existingContext, newContext);
 
-  ['variables', 'input', 'inputValues'].forEach((key) => {
-    if (newContext[key] === undefined) return;
-    if (key === 'input' && isPlainObject(newContext[key])) return;
+  ['variables', 'input'].forEach((key) => {
+    if (newContext[key] === undefined || !isPlainObject(newContext[key])) return;
     merge(existingContext, newContext[key]);
   });
 
@@ -161,9 +161,3 @@ export async function getTimes(context: Context): Promise<Array<Partial<Context>
 
   return Array.from({ length: parsedTimes });
 }
-
-export const getInputValue = (context: Context, inputName: string) =>
-  context[inputName] ??
-  context.inputValues[inputName] ??
-  context.variables[inputName] ??
-  (!isPlainObject(context.input[inputName]) ? context.input[inputName] : undefined);

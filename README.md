@@ -111,20 +111,6 @@ We've added **more example templates** to this repository to help you get starte
 For detailed examples, please refer to the following link:  
 [Example Templates](https://github.com/R35007/new-file-template-vscode-extension/tree/master/Example%20Templates)
 
-#### What to Expect in Example Templates
-- Simple Templates
-- Templates with JS Integration
-- Templates with JS Config
-- Prompt Inputs on Demand
-- Backtick Escaping
-- Find and Replace Templates
-- Multi-template Generation
-- Output File Generation
-- Snippet Generation
-
-Explore these examples to learn how to utilize this extension to its full potential. We hope these templates help streamline your development process!
-
-
 ### Case Conversions
 
 ```jsonc
@@ -180,9 +166,9 @@ export type Hooks = {
 export type UserConfig = Hooks & {
   times: number | ((context: Context) => Promise<false | number | Array<false | Context | ((context: Context) => Promise<Partial<Context>>)>>); // define number of times to generate template multiple times
   out: string; // Output directory for generated files.
-  inputValues: Record<string, unknown>; // Predefined input values for template generation.
   variables: Record<string, unknown>; // Additional variables for template generation.
-  input: Record<string, InputConfig | ((context: Context) => InputConfig | unknown) | unknown>; // Configuration for user input prompts.
+  input: Record<string, unknown>; // Predefined input values for template generation.
+  inputConfig: Record<string, InputConfig | ((context: Context) => InputConfig | unknown) | unknown>; // Configuration for user input prompts.
   overwriteExistingFile?: 'prompt' | 'never' | 'always' | ((context: Context) => Promise<'prompt' | 'never' | 'always'>); // Behavior for overwriting existing files.
   promptTemplateFiles?: boolean | ((context: Context) => Promise<boolean>); // Whether to prompt for template files.
   enableSnippetGeneration?: boolean | ((context: Context) => Promise<boolean>); // Whether to enable snippet generation.
@@ -233,7 +219,7 @@ The extension can be configured using the following settings in your `settings.j
 - `new-file-template.settings.promptTemplateFiles`: If true, prompts a multiple-choice picker to select the template files to generate.
 - `new-file-template.settings.interpolateByLine`: If true, interpolates each line individually. On error, returns the original line without interpolation.
 - `new-file-template.settings.disableInterpolationErrorMessage`: If true, It ignores interpolation error messages
-- `new-file-template.settings.promptVariablePatterns`: Provide list of patterns to recognize and prmpt the user input variables. Defaults to `["\\$\\{input\\.([^\\}]+)\\}"]`
+- `new-file-template.settings.promptVariablePatterns`: Provide list of patterns to recognize and prmpt the user input variables. Defaults to `["\\${input\\.([a-zA-Z0-9_]+)}"]`
 - `new-file-template.settings.enableSnippetGeneration`: If true, it enables snippet generation for template files. Snippets help with cursor placement using placeholders like `$<number>`.
 - `new-file-template.settings.openAfterGeneration`: If true, opens all generated files. This will always be `true` if `new-file-template.settings.enableSnippetGeneration` is set to `true`.
 - `new-file-template.settings.variables`: Define custom variables for template generation.
@@ -253,7 +239,7 @@ Add the following configuration to your `settings.json` file:
   "new-file-template.settings.promptTemplateFiles": false,
   "new-file-template.settings.interpolateByLine": false,
   "new-file-template.settings.disableInterpolationErrorMessage": false,
-  "new-file-template.settings.promptVariablePatterns": ["\\$\\{input\\.([^\\}]+)\\}"],
+  "new-file-template.settings.promptVariablePatterns": ["\\${input\\.([a-zA-Z0-9_]+)}"],
   "new-file-template.settings.enableSnippetGeneration": false,
   "new-file-template.settings.openAfterGeneration": true,
   "new-file-template.settings.variables": {

@@ -1,4 +1,4 @@
-module.exports = async ({ componentName, camelCaseComponentName, promptInput }) => {
+module.exports = async ({ componentName, camelCaseComponentName, promptInput, commentDescription }) => {
   const name = await promptInput('name', { title: 'What is your name?' }); // make sure to await the response
 
   return `import styled from 'styled-components';
@@ -12,7 +12,7 @@ const Styled${componentName} = styled.div\`
 \`;
 
 export const ${componentName} = (${camelCaseComponentName}Props: ${componentName}Props) => {
-  // your component logic goes here 👇
+  // ${commentDescription} 👇
   return (
     <Styled${componentName} {...${camelCaseComponentName}Props}>
       Hi ${name}!

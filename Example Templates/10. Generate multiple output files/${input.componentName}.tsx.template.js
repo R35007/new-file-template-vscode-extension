@@ -1,8 +1,8 @@
-module.exports = async ({ componentName, camelCaseComponentName }) => `import styled from 'styled-components';
+module.exports = async ({ componentName, camelCaseComponentName, commentDescription }) => `import styled from 'styled-components';
 export interface ${componentName}Props {};
 
 export const ${componentName} = (${camelCaseComponentName}Props: ${componentName}Props) => { 
-  // your component logic goes here 👇
+  // ${commentDescription} 👇
   return <div {...${camelCaseComponentName}Props} />
 };
 `;

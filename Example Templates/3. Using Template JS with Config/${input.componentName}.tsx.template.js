@@ -1,7 +1,7 @@
-module.exports = async ({ componentName, camelCaseComponentName }) => `export interface ${componentName}Props {};
+module.exports = async ({ componentName, camelCaseComponentName, commentDescription }) => `export interface ${componentName}Props {};
 
 export const ${componentName} = (${camelCaseComponentName}Props: ${componentName}Props) => { 
-  // your component logic goes here 👇
+  // ${commentDescription} 👇
   return <div {...${camelCaseComponentName}Props} />
 };
 `;

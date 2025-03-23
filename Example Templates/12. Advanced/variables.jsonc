@@ -13,7 +13,7 @@
   "tags": "${input.tags}", // This prompts the multiple choice as configured in the config file. Please check the _config.js file.
   "inputVariables": "${componentName}, ${tags}, ${foobar}", // any inputs and variables can be directly accessed.
   "inputCaseConversion": "${componentName_toPascalCase}, ${componentName_toCamelCase}", // any inputs and variables can be converted to the given case.
-  "inputValues": ${JSON.stringify(inputValues)},
+  "input": ${JSON.stringify(input)},
   "variables": ${JSON.stringify(variables)},
   "version": "${package.version}", // Access package.json at the root of the workspace folder.
   "nodeGlobals": {

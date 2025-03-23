@@ -57,8 +57,8 @@ export class Settings {
   static get openAfterGeneration() {
     return Settings.getSettings('openAfterGeneration') as boolean;
   }
-  static get input() {
-    return (Settings.getSettings('input') as Context['input']) || ({} as Context['input']);
+  static get inputConfig() {
+    return (Settings.getSettings('inputConfig') as Context['inputConfig']) || ({} as Context['inputConfig']);
   }
   static get variables() {
     return (Settings.getSettings('variables') as Context['variables']) || ({} as Context['variables']);
