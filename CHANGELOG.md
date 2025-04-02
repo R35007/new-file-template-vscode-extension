@@ -2,6 +2,11 @@
 
 All notable changes to the "new-file-template" extension will be documented in this file.
 
+## v5.0.1 🎉 BREAKING CHANGE 🚀
+
+ - Fixed - Template not picking dot files issue fixed.
+ - Updated - sample template file examples
+
 ## v5.0.0 🎉 BREAKING CHANGE 🚀
 
  - Renamed - `input` to `inputConfig` in the template `_config` file. Any input configurations goes into `inputConfig` object instead of `input` object. 

@@ -9,7 +9,8 @@ export function getTopLevelFolders(folderPaths: string[]): string[] {
   const folders = folderPaths.map((folderPath) =>
     fg.globSync(`${folderPath.replace(/\\/g, '/')}/*`, {
       onlyDirectories: true,
-      deep: 1
+      deep: 1,
+      dot: true
     })
   );
   return folders.flat();
@@ -41,7 +42,8 @@ export async function listNestedFiles(folder: string, excludes: string[] = [], i
   const formattedInclude = getFormattedPatternPaths(folder, includes);
   const files = await fg.glob(formattedInclude.length ? formattedInclude : [`${folder.replace(/\\/g, '/')}/**/*`], {
     ignore: formattedExclude,
-    onlyFiles: true
+    onlyFiles: true,
+    dot: true
   });
   return files;
 }

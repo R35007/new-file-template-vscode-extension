@@ -48,8 +48,12 @@ export type PredefinedVariables = Utils & {
   templateName?: string;
 
   /* Template Files */
+  topLevelFolders?: string[];
+  topLevelFolderNames?: string[];
   allTemplateFiles?: string[];
   allTemplateFileNames?: string[];
+  filteredTemplateFiles?: string[];
+  filteredTemplateFileNames?: string[];
   selectedTemplateFiles?: string[];
   selectedTemplateFileNames?: string[];
   templateFile?: string;

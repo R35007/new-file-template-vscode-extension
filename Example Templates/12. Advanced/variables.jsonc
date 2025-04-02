@@ -85,6 +85,8 @@
     "templateName": "${templateName}"
   },
   "templateFiles": {
+    "topLevelFolders": ${JSON.stringify(topLevelFolders)},
+    "topLevelFolderNames": ${JSON.stringify(topLevelFolderNames)},
     "allTemplateFiles": ${JSON.stringify(allTemplateFiles)},
     "allTemplateFileNames": ${JSON.stringify(allTemplateFileNames)},
     "selectedTemplateFiles":${JSON.stringify(selectedTemplateFiles)},

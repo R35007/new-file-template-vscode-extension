@@ -15,9 +15,9 @@ module.exports = async (context) =>
      */
     beforeAll: (context) => {
       context.showInformationMessage("Executing 'beforeAll' hook.");
-      // As an alternative to include/exclude logic, you can update the `templateFiles` paths list here.
+      // As an alternative to include/exclude logic, you can update the `selectedTemplateFiles` paths list here.
       return {
-        templateFiles: context.templateFiles // Sort, filter, or update the `templateFiles` list as needed.
+        selectedTemplateFiles: context.selectedTemplateFiles // Sort, filter, or update the `selectedTemplateFiles` list as needed.
       };
     },
     /**

@@ -4,9 +4,9 @@ module.exports = {
    * You can return a modified context to proceed, `false` to skip the process, or leave it unchanged to continue as is.
    */
   beforeAll: (context) => {
-    // As an alternative to include/exclude logic, you can update the `templateFiles` paths list here.
+    // As an alternative to include/exclude logic, you can update the `selectedTemplateFiles` paths list here.
     return {
-      templateFiles: context.templateFiles // Sort, filter, or update the `templateFiles` list as needed.
+      selectedTemplateFiles: context.selectedTemplateFiles // Sort, filter, or update the `selectedTemplateFiles` list as needed.
     };
   },
   /**
